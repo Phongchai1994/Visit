@@ -744,15 +744,24 @@ class MainFrame(ctk.CTkFrame):
         progressbar.grid(row = 2,column = 0 ,columnspan = 2,pady = 20)
         progressbar.stop()
 
-        def format_date():
+        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
+        date_label.grid(row=0,column=0,columnspan=2,sticky='n', pady=10)
+
+        def update_time_label():
             days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
-            months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน","กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+            months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
+                       "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
+                         "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
 
             current_time = t.localtime()
             day = days[current_time.tm_wday]
             month = months[current_time.tm_mon - 1]
-            return f"วัน {day} ที่ {current_time.tm_mday} {month} {current_time.tm_year} เวลา {t.strftime('%H:%M:%S')}"
-        
+            text = f"วัน {day} ที่ {current_time.tm_mday} {month} {(current_time.tm_year)+543} เวลา {t.strftime('%H:%M:%S')}"
+            date_label.configure(text=text)
+            if popup_reserve_to_visit.winfo_exists():
+                popup_reserve_to_visit.after(1000,update_time_label)
+
+
         def get_capture_fingerprint():
             nonlocal capture_current
             capture = self.zkfp2.AcquireFingerprint()
@@ -793,24 +802,20 @@ class MainFrame(ctk.CTkFrame):
                 # for row in result:
                 #     tree.insert('','end',values=row)
             else:
-                self.after(500,get_capture_fingerprint)
+                if popup_reserve_to_visit.winfo_exists():
+                    self.after(500,get_capture_fingerprint)
+
         def get_relative():
-            
-            self.zkfp2.Init()
-            self.zkfp2.OpenDevice(0)
-
-            progressbar.start()
-            get_capture_fingerprint()
+            try:
+                init = self.zkfp2.Init()
+                opendevice = self.zkfp2.OpenDevice(0)
+                progressbar.start()
+            except Exception as e:
+                print(f'เกิดข้อผิดพลาด {e}')
+            # get_capture_fingerprint()
         
-
-
         capture_current = None
-        current_time = format_date()
-        # button = ctk.CTkButton(popup_reserve_to_visit,text='กดเพื่อสแกนนิ้ว',command=lambda:get_relative())
-        # button.grid(row = 0 ,column = 0,columnspan = 2,sticky = 'n', pady = 10 , padx= 5)
-        date_label = ctk.CTkLabel(popup_reserve_to_visit,text=current_time,font = ('TH SarabunPSK',18,'bold'))
-        date_label.grid(row = 0,column = 0,columnspan = 2,sticky = 'n',pady = 10)
-
+        update_time_label()
         # frame_reserve_to_visit = ctk.CTkFrame(popup_reserve_to_visit)
         tree_container = ctk.CTkFrame(popup_reserve_to_visit)
 
