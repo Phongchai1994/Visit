@@ -812,7 +812,23 @@ class MainFrame(ctk.CTkFrame):
                 progressbar.start()
             except Exception as e:
                 print(f'เกิดข้อผิดพลาด {e}')
-            # get_capture_fingerprint()
+            get_capture_fingerprint()
+
+        def item_select(_):
+            # print(tree.selection())
+            for i in tree.selection():
+                print(i)
+                # print(tree.item(i)['values'])
+
+        def on_close():
+            try:
+                self.zkfp2.CloseDevice()
+            except Exception as e:
+                print(f'ปิดอุปกรณ์ลายนิ้วมือไม่สำเร็จ : {e}')
+            popup_reserve_to_visit.destroy()
+
+
+        
         
         capture_current = None
         update_time_label()
@@ -848,19 +864,9 @@ class MainFrame(ctk.CTkFrame):
         tree.configure(yscrollcommand=scrollbar.set)
 
 
-
-
-
-
-
-
-        
-        def item_select(_):
-            # print(tree.selection())
-            for i in tree.selection():
-                print(i)
-                # print(tree.item(i)['values'])
         tree.bind('<<TreeviewSelect>>',item_select)
+
+        popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
 
     # รายงานการเยี่ยม
     def report_visits(self):
