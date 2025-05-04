@@ -33,6 +33,6 @@ def decrypt_file_onetime(input_file,output_file):
     print('Decode')
 
 
-decrypt_file_onetime(EN_DB,DE_DB)
+# decrypt_file_onetime(EN_DB,DE_DB)
 
-# encrypt_file_onetime(DE_DB,EN_DB)
+encrypt_file_onetime(DE_DB,EN_DB)

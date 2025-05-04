@@ -7,6 +7,7 @@ from pyzkfp import ZKFP2
 import fingerprint.manage_fingerprint as zkfp
 import threading
 import time as t
+from datetime import datetime
 
 class MainFrame(ctk.CTkFrame):
     def __init__(self,parent):
@@ -539,12 +540,6 @@ class MainFrame(ctk.CTkFrame):
         tree.grid(row=0,column=0,sticky='nsew')
         scrollbar.grid(row=0,column=1,sticky='ns')
 
-        ctk.CTkButton(self.show_all_prisoner_frame,
-                      text='ปุ่มทดสอบ',
-                      font=('TH SarabunPSK',18,'bold'),
-                      command=lambda:show_prisoner_select()
-                      ).grid(row = 3,column=0,padx=20, pady=10, sticky="nsew")
-
         all_data = []
 
         def show_prisoner_select():
@@ -772,13 +767,12 @@ class MainFrame(ctk.CTkFrame):
                 capture_current = tmp
                 print(type(capture_current))
                 progressbar.stop()
+                progressbar.grid_forget()
                 result = self.db.get_all_fingerprint()
                 for index,row in enumerate(result):
                     if row[1]:
                         fingerprint_in_db = row[1]
-                        # print(type(fingerprint_in_db))
                         res = self.zkfp2.DBMatch(tmp,fingerprint_in_db)
-                        # print(res,index)
                         
                         if res > 80 :
                             nationnal_id = row[0]
@@ -787,6 +781,8 @@ class MainFrame(ctk.CTkFrame):
                     prisoners_data = self.db.get_join_relatives_and_prisoners(nationnal_id)
                 else:
                     messagebox.showerror('แจ้งเตือนไม่พบข้อมูล','ไม่พบลายนิ้วมือ กรุณาเตรียมบัตรประชาชนติดต่อเจ้าหน้าที่')
+                    progressbar.grid(row = 2,column = 0 ,columnspan = 2,pady = 20)
+                    get_relative()
                     return
                 print(prisoners_data)
                 tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
@@ -795,12 +791,8 @@ class MainFrame(ctk.CTkFrame):
                 for row in tree.get_children():
                     tree.delete(row)
                 for index,row in enumerate(prisoners_data):
-                    # if row[4] != 1: 
                     tree.insert('','end',values=row)
 
-                # result = self.db.get_data_for_ralative_id(entry.get())
-                # for row in result:
-                #     tree.insert('','end',values=row)
             else:
                 if popup_reserve_to_visit.winfo_exists():
                     self.after(500,get_capture_fingerprint)
@@ -815,24 +807,20 @@ class MainFrame(ctk.CTkFrame):
             get_capture_fingerprint()
 
         def item_select(_):
-            # print(tree.selection())
             for i in tree.selection():
-                print(i)
-                # print(tree.item(i)['values'])
+                prisoner_data = tree.item(i)['values']
+            open_next_screen(prisoner_data)
 
         def on_close():
             try:
                 self.zkfp2.CloseDevice()
+                print('Close Device')
             except Exception as e:
                 print(f'ปิดอุปกรณ์ลายนิ้วมือไม่สำเร็จ : {e}')
             popup_reserve_to_visit.destroy()
 
-
-        
-        
         capture_current = None
         update_time_label()
-        # frame_reserve_to_visit = ctk.CTkFrame(popup_reserve_to_visit)
         tree_container = ctk.CTkFrame(popup_reserve_to_visit)
 
         tree_container.grid_rowconfigure(1,weight=1)
@@ -863,10 +851,103 @@ class MainFrame(ctk.CTkFrame):
         scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
 
-
         tree.bind('<<TreeviewSelect>>',item_select)
 
         popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
+
+        def open_next_screen(prisoner_data):
+            next_screen = ctk.CTkToplevel(popup_reserve_to_visit)
+            next_screen.geometry('400x700')
+            next_screen.title('เลือกรอบเยี่ยม')
+            next_screen.grab_set()
+
+            def insert_recerve_to_db():
+                round_time = round_visit_var.get()
+                round_time_strtime = (datetime.strptime(round_time,"%H:%M")).strftime("%H:%M:%S")
+                date_current = datetime.now().strftime("%d-%m-%Y")
+                print(round_time_strtime)
+                print(date_current)
+
+            def next_screen_on_close():
+                next_screen.destroy()
+
+            label = ctk.CTkLabel(next_screen,text='เลือกรอบ',font=('TH SarabunPSK',32,'bold'))
+            label.pack(pady = 5)
+            content = ctk.CTkLabel(next_screen,text=f'{prisoner_data[1]} {prisoner_data[2]}',font=('TH SarabunPSK',30,'bold'))
+            content.pack(pady = 5)
+
+            round_visit_var = ctk.StringVar()
+
+            ctk.CTkLabel(next_screen,text='เช้า',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
+            round_1 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 1 เวลา 09.30 - 09.45',
+                                         variable=round_visit_var,
+                                         value='09:30',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_1.pack(pady = 5)
+            round_2 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 2 เวลา 10.00 - 10.15',
+                                         variable=round_visit_var,
+                                         value='10:00',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_2.pack(pady = 5)
+            round_3 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 3 เวลา 10.30 - 10.45',
+                                         variable=round_visit_var,
+                                         value='10:30',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_3.pack(pady = 5)
+            round_4 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 4 เวลา 11.00 - 11.15',
+                                         variable=round_visit_var,
+                                         value='11:00',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_4.pack(pady = 5)
+
+            ctk.CTkLabel(next_screen,text='บ่าย',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
+            round_5 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 5 เวลา 13.15 - 13.30',
+                                         variable=round_visit_var,
+                                         value='13:15',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_5.pack(pady = 5)
+            round_6 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 6 เวลา 13.45 - 14.00',
+                                         variable=round_visit_var,
+                                         value='13:45',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_6.pack(pady = 5)
+            round_7 = ctk.CTkRadioButton(next_screen,
+                                         text='รอบที่ 7 เวลา 14.15 - 14.30',
+                                         variable=round_visit_var,
+                                         value='14:15',
+                                         font=('TH SarabunPSK',24,'bold')
+                                         )
+            round_7.pack(pady = 5)
+
+            submit = ctk.CTkButton(next_screen,
+                                   text='ยืนยันการจองเยี่ยม',
+                                   command=lambda:insert_recerve_to_db(),
+                                   font=('TH SarabunPSK',24,'bold'),
+                                   height=100
+                                   )
+            submit.pack(pady = 20)
+            cancel = ctk.CTkButton(next_screen,
+                                   text='ยกเลิก',
+                                   command=lambda:next_screen_on_close(),
+                                   font=('TH SarabunPSK',24,'bold'),
+                                   height=40,
+                                   fg_color='red'
+                                   )
+            cancel.pack(pady = 20)
+
+            
 
     # รายงานการเยี่ยม
     def report_visits(self):
