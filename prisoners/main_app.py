@@ -877,59 +877,32 @@ class MainFrame(ctk.CTkFrame):
             content.pack(pady = 5)
 
             round_visit_var = ctk.StringVar()
+                    # รอบเวลาเช้า
 
             ctk.CTkLabel(next_screen,text='เช้า',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
-            round_1 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 1 เวลา 09.30 - 09.45',
-                                         variable=round_visit_var,
-                                         value='09:30',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_1.pack(pady = 5)
-            round_2 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 2 เวลา 10.00 - 10.15',
-                                         variable=round_visit_var,
-                                         value='10:00',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_2.pack(pady = 5)
-            round_3 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 3 เวลา 10.30 - 10.45',
-                                         variable=round_visit_var,
-                                         value='10:30',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_3.pack(pady = 5)
-            round_4 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 4 เวลา 11.00 - 11.15',
-                                         variable=round_visit_var,
-                                         value='11:00',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_4.pack(pady = 5)
+            for text,value in [('รอบที่ 1 เวลา 09.30 - 09.45','09:30'),
+                               ('รอบที่ 2 เวลา 10.00 - 10.15','10:00'),
+                               ('รอบที่ 3 เวลา 10.30 - 10.45','10:30'),
+                               ('รอบที่ 4 เวลา 11.00 - 11.15','11:00')]:
+                ctk.CTkRadioButton(next_screen,
+                                   text=text,
+                                   variable = round_visit_var,
+                                   value = value,
+                                   font=('TH SarabunPSK',24,'bold')
+                                   ).pack(pady = 5)
+
 
             ctk.CTkLabel(next_screen,text='บ่าย',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
-            round_5 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 5 เวลา 13.15 - 13.30',
-                                         variable=round_visit_var,
-                                         value='13:15',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_5.pack(pady = 5)
-            round_6 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 6 เวลา 13.45 - 14.00',
-                                         variable=round_visit_var,
-                                         value='13:45',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_6.pack(pady = 5)
-            round_7 = ctk.CTkRadioButton(next_screen,
-                                         text='รอบที่ 7 เวลา 14.15 - 14.30',
-                                         variable=round_visit_var,
-                                         value='14:15',
-                                         font=('TH SarabunPSK',24,'bold')
-                                         )
-            round_7.pack(pady = 5)
+
+            for text,value in [('รอบที่ 5 เวลา 13.15 - 13.30','13:15'),
+                               ('รอบที่ 6 เวลา 13.45 - 14.00','13:45'),
+                               ('รอบที่ 7 เวลา 14.15 - 14.30','14:15')]:
+                ctk.CTkRadioButton(next_screen,
+                                   text=text,
+                                   variable = round_visit_var,
+                                   value=value,
+                                   font=('TH SarabunPSK',24,'bold')
+                                   ).pack(pady = 5)
 
             submit = ctk.CTkButton(next_screen,
                                    text='ยืนยันการจองเยี่ยม',
