@@ -243,7 +243,7 @@ class SQLiteDB:
         self.decode_db()
         self.connect()
 
-        self.cursor.execute('SELECT relative_id,fingerprint FROM relatives')
+        self.cursor.execute('SELECT relative_id,title,f_name,l_name,fingerprint FROM relatives')
         data = self.cursor.fetchall()
         self.close()
         self.encode_db()
@@ -253,7 +253,6 @@ class SQLiteDB:
     def get_join_relatives_and_prisoners(self,id):
         self.decode_db()
         self.connect()
-        print('id ของ สแกนนิ้ว',id)
         try:
             self.cursor.execute('''
                                 SELECT 
@@ -283,6 +282,38 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
+
+    def add_data_visits_to_db(self,data):
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                INSERT INTO visits 
+                                (date_reserve,
+                                time_reserve,
+                                prisoner_id,
+                                relative_id_1,
+                                relative_id_2,
+                                relative_id_3,
+                                relative_id_4,
+                                relative_id_5) 
+                                VALUES (?,?,?,?,?,?,?,?)
+                                ''',(data))
+        except Exception as e:
+            print(f'Error : {e}')
+        finally:
+            self.close()
+            self.encode_db()
+
+
+    # def get_duplicate_visit(self,prisoner_id,relative_id,date,time):
+    #     self.decode_db()
+    #     self.connect()
+
+    #     self.cursor.execute('SELECT COUNT(*) FROM visits')
+
+    #     self.close()
+    #     self.encode_db()
 
     def decode_db(self):
         if os.path.exists(self.EN_DB):
