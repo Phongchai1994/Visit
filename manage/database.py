@@ -250,6 +250,26 @@ class SQLiteDB:
             self.close()
             self.encode_db()
     
+    def get_join_prisoners_and_relatives_not_follower(self,prisoner_id,national_id):
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                SELECT
+                                    relatives.relative_id,
+                                    relatives.title,
+                                    relatives.f_name,
+                                    relatives.l_name
+                                FROM relations
+                                JOIN relatives ON relations.relative_id = relatives.relative_id
+                                WHERE relations.prisoner_id = ? AND NOT relations.relative_id = ?
+                                ''',(prisoner_id,national_id))
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f'ERROR : {e}')
+            self.msgbox(e)
+            return False
+
     def get_data_relation(self,id):
         self.decode_db()
         self.connect()
