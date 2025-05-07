@@ -1,6 +1,8 @@
 import sqlite3
 import os
 from manage.encryption_utils import decrypt_file,encrypt_file
+import customtkinter as ctk
+from tkinter import messagebox
 
 class SQLiteDB:
     def __init__(self,db_path= 'data/visit_report.db'):
@@ -10,6 +12,9 @@ class SQLiteDB:
         # โปรแกรมถอดรหัส และเข้ารหัส
         self.EN_DB = 'data/visit_report.db.enc'
         self.DE_DB = 'data/visit_report.db'
+
+    def msgbox(self,e):
+        messagebox.showerror('ฐานข้อมูล',f'{e}')
 
     def connect(self):
         self.conn =sqlite3.connect(self.db_path)
@@ -34,15 +39,19 @@ class SQLiteDB:
             self.cursor.execute('INSERT INTO prisoners (prisoner_id,sex,f_name,l_name,lawsuit,level,dan) VALUES (?,?,?,?,?,?,?)',data)
             return True
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
@@ -58,17 +67,21 @@ class SQLiteDB:
             self.cursor.execute('INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel) VALUES (?,?,?,?,?,?)',(data[0],data[1],data[2],data[3],data[4],data[5]))
             print('บันทึกข้อมูลตาราง relatives')
             self.conn.commit()
-        
+            return True
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(e)
             return False
         finally:
@@ -86,15 +99,19 @@ class SQLiteDB:
             return True
         
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(e)
             return False
         finally:
@@ -109,6 +126,7 @@ class SQLiteDB:
             self.all_data = self.cursor.fetchall()
             return self.all_data
         except Exception as e:
+            self.msgbox(e)
             print(f'เกิดข้อผิดพลาด {e}')
             return False
         finally:
@@ -122,15 +140,19 @@ class SQLiteDB:
             self.cursor.execute('SELECT * FROM prisoners WHERE prisoner_id = ?',(prisoner_id,))
             return self.cursor.fetchone()
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
@@ -145,15 +167,19 @@ class SQLiteDB:
             self.cursor.execute('SELECT * FROM relatives WHERE relative_id = ?',(id,))
             return self.cursor.fetchone()
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(e)
             return False
         finally:
@@ -167,15 +193,19 @@ class SQLiteDB:
             self.cursor.execute('UPDATE relatives SET fingerprint = ? WHERE relative_id = ?',(fingerprint,id))
             return True
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
@@ -201,15 +231,19 @@ class SQLiteDB:
                                 ''',(prisoner_id,))   
             return self.cursor.fetchall()
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
@@ -224,15 +258,19 @@ class SQLiteDB:
             self.cursor.execute('SELECT prisoner_id,relative_id FROM relations WHERE prisoner_id = ?',(id,))
             return self.cursor.fetchall()
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(e)
             return False
         finally:
@@ -268,15 +306,19 @@ class SQLiteDB:
                                 ''',(id,))
             return self.cursor.fetchall()
         except sqlite3.OperationalError as e:
+            self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
             return False
         except sqlite3.ProgrammingError as e:
+            self.msgbox(e)
             print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
             return False
         except sqlite3.DatabaseError as e:
+            self.msgbox(e)
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
@@ -300,20 +342,39 @@ class SQLiteDB:
                                 VALUES (?,?,?,?,?,?,?,?)
                                 ''',(data))
         except Exception as e:
+            self.msgbox(e)
             print(f'Error : {e}')
         finally:
             self.close()
             self.encode_db()
 
+    def add_visits(self,query,data):
+        # print(f'{query},',data)
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute(query,data)
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            print(f'Error : {e}')
+            return False
+        finally:
+            self.close()
+            self.encode_db()
 
-    # def get_duplicate_visit(self,prisoner_id,relative_id,date,time):
-    #     self.decode_db()
-    #     self.connect()
-
-    #     self.cursor.execute('SELECT COUNT(*) FROM visits')
-
-    #     self.close()
-    #     self.encode_db()
+    def get_visits(self,data_visit):
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('SELECT time_stamp,date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5 FROM visits WHERE date_visit = ? AND time_visit = ? ',(data_visit[0],data_visit[1]))
+            result = self.cursor.fetchall()
+            return result
+        except Exception as e:
+            self.msgbox(e)
+        finally:
+            self.close()
+            self.encode_db()
 
     def decode_db(self):
         if os.path.exists(self.EN_DB):
