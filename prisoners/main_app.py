@@ -498,6 +498,27 @@ class MainFrame(ctk.CTkFrame):
 #   ค้นหาผู้ต้องขังทั้งหมด
 ##############################################################################################################################################################################
     def search_all_prisoner(self):
+
+        # insert ข้อมูลให้อยู่ในตาราง treeview
+        def show_prisoners(data):
+            for row in tree.get_children():
+                tree.delete(row)
+            for row in data:
+                tree.insert('','end',values=row)
+
+        # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
+        def search_one_var_prisoners():
+            keyword = search_all_var.get().lower()
+            filtered = [row for row in all_data if keyword in row[2].lower()]
+            print(filtered)
+            show_prisoners(filtered)
+
+        def resize_tree_columns():
+            tree_container.update_idletasks()
+            total_width = tree_container.winfo_width()
+            for col, ratio in column_ratios.items():
+                tree.column(col,width=int(total_width * ratio),anchor='w')
+
         self.show_all_prisoner_frame.grid_rowconfigure(2,weight=1)
         self.show_all_prisoner_frame.grid_columnconfigure(0,weight=1)
 
@@ -548,27 +569,19 @@ class MainFrame(ctk.CTkFrame):
 
         all_data = []
 
-        def show_prisoner_select():
-            print(tree.selection())
-            for i in tree.selection():
-                print(tree.item(i)['values'])
-
-        # insert ข้อมูลให้อยู่ในตาราง treeview
-        def show_prisoners(data):
-            for row in tree.get_children():
-                tree.delete(row)
-            for row in data:
-                tree.insert('','end',values=row)
-
-        # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
-        def search_one_var_prisoners():
-            keyword = search_all_var.get().lower()
-            filtered = [row for row in all_data if keyword in row[2].lower()]
-            print(filtered)
-            show_prisoners(filtered)
+        column_ratios = {
+            'prisoner_id' : 0.14,
+            'sex' : 0.08,
+            'f_name' : 0.19,
+            'l_name' : 0.19,
+            'lawsuit' : 0.20,
+            'level' : 0.12,
+            'dan' : 0.08
+        }
 
         all_data = self.db.get_data_all()
         show_prisoners(all_data)
+        tree.bind('<Configure>',lambda e:resize_tree_columns())
 
 ##############################################################################################################################################################################
     # ลงทะเบียนลายนิ้วมือ
@@ -1087,6 +1100,12 @@ class MainFrame(ctk.CTkFrame):
     # รายงานการเยี่ยม
 ##############################################################################################################################################################################
     def report_visits(self):
+        def resize_tree_column():
+            tree_container.update_idletasks()
+            total_width = tree_container.winfo_width()
+            for col, ratio in column_ratios.items():
+                tree.column(col,width=int(total_width * ratio),anchor='w')
+
         def print_table():
             try:
 
@@ -1102,7 +1121,7 @@ class MainFrame(ctk.CTkFrame):
 
                 # หัวตารางและความกว้าง
                 columns = tree["columns"]
-                col_widths = [6*cm] * len(columns)
+                col_widths = [ (width -4*cm) / len(columns)] * len(columns)
                 headers = [tree.heading(col)["text"] for col in columns]
 
                 # ตำแหน่งเริ่ม
@@ -1119,7 +1138,7 @@ class MainFrame(ctk.CTkFrame):
                     x += col_widths[i]
                 
                 # วาดข้อมูล
-                y -+ row_height
+                y += row_height
                 for child_id in tree.get_children():
                     x = start_x
                     values = tree.item(child_id,"values")
@@ -1128,7 +1147,7 @@ class MainFrame(ctk.CTkFrame):
                         text = str(value)
 
                         # จัดชิดขวาถ้าเป็นตัวเลข
-                        if isinstance(value,int) or str(value).isdigit():
+                        if text.isdigit():
                             text_width = c.stringWidth(text,"Helvetica",10)
                             c.drawString(x+col_widths[i]-text_width-0.2*cm,y+0.3*cm,text)
                         else:
@@ -1138,7 +1157,7 @@ class MainFrame(ctk.CTkFrame):
                 c.save()
                 
                 # สั่งพิมพ์
-                os.startfile(temp_pdf,'print')
+                os.startfile(temp_pdf)
                 messagebox.showinfo('กำลังพิมพ์','สั่งพิมพ์เรียบร้อย')
 
             except Exception as e:
@@ -1203,10 +1222,23 @@ class MainFrame(ctk.CTkFrame):
         tree.column('relation_id_4')
         tree.column('relation_id_5')
 
-        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview())
+        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
 
+        # กำหนดความกว้าง column
+        column_ratios = {
+            'time_stamp' : 0.12,
+            'date_visit' : 0.10,
+            'time_visit' : 0.08,
+            'prisoner_id' : 0.15,
+            'relation_id_1' : 0.11,
+            'relation_id_2' : 0.11,
+            'relation_id_3' : 0.11,
+            'relation_id_4' : 0.11,
+            'relation_id_5' : 0.11
+        }
 
+        tree_container.bind('<Configure>',lambda e: resize_tree_column())
 
 
 

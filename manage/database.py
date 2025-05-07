@@ -377,9 +377,11 @@ class SQLiteDB:
             self.encode_db()
 
     def decode_db(self):
-        if os.path.exists(self.EN_DB):
-            decrypt_file(self.EN_DB,self.DE_DB)
+        pass
+        # if os.path.exists(self.EN_DB):
+        #     decrypt_file(self.EN_DB,self.DE_DB)
 
     def encode_db(self):
-        encrypt_file(self.DE_DB,self.EN_DB)
+        pass
+        # encrypt_file(self.DE_DB,self.EN_DB)
 
