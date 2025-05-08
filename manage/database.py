@@ -392,6 +392,21 @@ class SQLiteDB:
             return result
         except Exception as e:
             self.msgbox(e)
+            return False
+        finally:
+            self.close()
+            self.encode_db()
+
+    def get_relatives_id_fname_lname(self):
+        self.decode_db()
+        self.connect()
+
+        try:
+            self.cursor.execute('SELECT relative_id,f_name,l_name FROM relatives')
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.msgbox(e)
+            return False
         finally:
             self.close()
             self.encode_db()
