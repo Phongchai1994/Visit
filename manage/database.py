@@ -66,7 +66,6 @@ class SQLiteDB:
             # บันทึกข้อมูล ในตารางญาติ
             self.cursor.execute('INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel) VALUES (?,?,?,?,?,?)',(data[0],data[1],data[2],data[3],data[4],data[5]))
             print('บันทึกข้อมูลตาราง relatives')
-            self.conn.commit()
             return True
         except sqlite3.OperationalError as e:
             self.msgbox(e)
@@ -387,7 +386,29 @@ class SQLiteDB:
         self.decode_db()
         self.connect()
         try:
-            self.cursor.execute('SELECT time_stamp,date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5 FROM visits WHERE date_visit = ? AND time_visit = ? ',(data_visit[0],data_visit[1]))
+            self.cursor.execute('''
+                                SELECT
+                                    visits.time_stamp,
+                                    visits.date_visit,
+                                    visits.time_visit,
+                                    prisoners.f_name || " " || prisoners.l_name AS prisoner_name,
+                                    COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
+                                    COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
+                                    COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
+                                    COALESCE(r4.title || " " || r4.f_name || " " || r4.l_name, '-') AS relative_4,
+                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5
+                                FROM
+                                    visits
+                                JOIN prisoners ON visits.prisoner_id = prisoners.prisoner_id
+                                LEFT JOIN relatives AS r1 ON visits.relative_id_1 = r1.relative_id
+                                LEFT JOIN relatives AS r2 ON visits.relative_id_2 = r2.relative_id
+                                LEFT JOIN relatives AS r3 ON visits.relative_id_3 = r3.relative_id
+                                LEFT JOIN relatives AS r4 ON visits.relative_id_4 = r4.relative_id
+                                LEFT JOIN relatives AS r5 ON visits.relative_id_5 = r5.relative_id
+                                WHERE 
+                                    visits.date_visit = ? AND visits.time_visit = ? ''',
+                                    (data_visit[0],data_visit[1])
+                                )
             result = self.cursor.fetchall()
             return result
         except Exception as e:
@@ -410,6 +431,8 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
+
+
 
     def decode_db(self):
         pass

@@ -398,41 +398,45 @@ class MainFrame(ctk.CTkFrame):
                 last_name = popup_entry_lname_relative.get().strip()
                 address = popup_entry_address_relative.get().strip()
                 tel = popup_entry_tel_relative.get().strip()
-                data = [national_id_number,title,first_name,last_name,address,tel]
                 relation = popup_combo_relation_relative.get().strip()
 
-                result = self.db.get_data_relation(prisoner_id)
-                check_data = (prisoner_id,int(national_id_number))
+                data = [national_id_number, title, first_name, last_name, address, tel]
 
-                for index,item in enumerate(result):
-                    if result[index] == check_data:
-                        messagebox.showinfo('แจ้งข้อมูลซ้ำ',f'รหัสประจำตัวเลขที่ {national_id_number} มีการบันทึกข้อมูลแล้ว')
-                        break
+                if not all(data) or not relation:
+                    messagebox.showerror('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบทุกช่อง')
+                    return
+
+                result = self.db.get_data_relation(prisoner_id)
+                check_data = (prisoner_id, int(national_id_number))
+
+                # ตรวจสอบข้อมูลซ้ำ
+                if check_data in result:
+                    messagebox.showinfo('แจ้งข้อมูลซ้ำ', f'รหัสประจำตัวเลขที่ {national_id_number} มีการบันทึกข้อมูลแล้ว')
+                    return
+
+                # ตรวจสอบจำนวนญาติ
+                if len(result) >= 10:
+                    messagebox.showerror('ข้อมูลญาติ', 'ข้อมูลญาติเกิน 10 คน')
+                    return
+
+                # บันทึกข้อมูล
+                result_add = self.db.add_data_ralative_to_relatives(prisoner_id, data, relation)
+                if result_add:
+                    success = self.db.add_data_relation_to_ralations(prisoner_id, data, relation)
+                else:
+                    messagebox.showerror('การบันทึกข้อมูล','ไม่สามารถบันทึกข้อมูลได้')
+                    return
+                if success:
+                    continue_save = messagebox.askyesno(
+                        'แจ้งเตือนการบันทึกข้อมูล',
+                        f'บันทึกข้อมูล "{title}{first_name} {last_name}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่'
+                    )
+                    if continue_save:
+                        clear_popup_regis()
                     else:
-                        if len(result) < 10:
-                            if all(data):
-                                result = self.db.add_data_ralative_to_relatives(prisoner_id,data,relation)
-                                print(f'result add_data_ralative_to_relatives = {result}')
-                                if result:
-                                    print(f'result = {result}')
-                                    continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล',f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
-                                    if continue_save:
-                                        clear_popup_regis()
-                                    else:
-                                        popup_register_relation.destroy()
-                                else:
-                                    result = self.db.add_data_relation_to_ralations(prisoner_id,data,relation)
-                                    print(f'result add_data_relation_to_ralations = {result}')
-                                    continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล',f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
-                                    if continue_save:
-                                        clear_popup_regis()
-                                    else:
-                                        popup_register_relation.destroy()
-                            else:
-                                messagebox.showerror('แจ้งเตือน','กรุณากรอกข้อมูลให้ครบทุกช่อง')
-                        else:
-                            messagebox.showerror('ข้อมูลญาติ','ข้อมูลญาติเกิน 10 คน')
-                        break
+                        popup_register_relation.destroy()
+                else:
+                    messagebox.showerror('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล')
 
             def clear_popup_regis():
                 popup_entry_id_relative.delete(0,ctk.END)
@@ -445,14 +449,19 @@ class MainFrame(ctk.CTkFrame):
 
         # แสดงข้อมูลญาติ
         def show_list_relative():
+            def resize_tree_columns():
+                print('resize')
+                tree_container.update_idletasks()
+                total_width = tree_container.winfo_width()
+                for col, ratio in column_ratio.items():
+                    tree.column(col,width=int(total_width * ratio),anchor='w')
+
             nonlocal prisoner_id_in_search_one
             nonlocal prisoner_name_in_search_one
             popup_show_list = ctk.CTkToplevel(self)
             popup_show_list.title('รายชื่อญาติ')
             popup_show_list.geometry('720x480+1+1')
             popup_show_list.grab_set()
-            # prisoner_id_in_search_one = showdata_id_data.cget('text')
-            # prisoner_name_in_search_one = f'{showdata_fname_data} {showdata_lname_data}'
             ctk.CTkLabel(popup_show_list,text=f'ข้อมูลญาติของ {prisoner_name_in_search_one}',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,sticky = 'nsew')
 
             tree_container = ctk.CTkFrame(popup_show_list)
@@ -460,6 +469,8 @@ class MainFrame(ctk.CTkFrame):
 
             tree_container.grid_rowconfigure(1,weight=1)
             tree_container.grid_columnconfigure(0,weight=1)
+            popup_show_list.grid_rowconfigure(2, weight=1)
+            popup_show_list.grid_columnconfigure(0, weight=1)
 
             # กำหนด style สำหรับ treeview 
             style = ttk.Style()
@@ -476,23 +487,34 @@ class MainFrame(ctk.CTkFrame):
             tree.heading('tel',text='โทร')
             tree.heading('relation',text='ความสัมพันธ์')
 
-            tree.column('relative_id')
-            tree.column('title')
-            tree.column('f_name')
-            tree.column('l_name')
-            tree.column('address')
-            tree.column('tel')
-            tree.column('relation')
+            tree.column('relative_id',anchor='w')
+            tree.column('title',anchor='w')
+            tree.column('f_name',anchor='w')
+            tree.column('l_name',anchor='w')
+            tree.column('address',anchor='w')
+            tree.column('tel',anchor='w')
+            tree.column('relation',anchor='w')
 
             scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
             tree.configure(yscrollcommand=scrollbar.set)
             tree.grid(row=1,column=0,sticky='nsew')
             scrollbar.grid(row=1,column=1,sticky='ns')
 
+            column_ratio ={
+                        'relative_id' : 0.16,
+                        'title' : 0.08,
+                        'f_name' : 0.16,
+                        'l_name' : 0.16,
+                        'address' : 0.20,
+                        'tel' : 0.12,
+                        'relation' : 0.12
+            }
+            
             result = self.db.get_join_prisoners_and_relatives(prisoner_id_in_search_one)
             print(result)
             for row in result:
                 tree.insert('','end',values=row)
+            tree.bind('<Configure>',lambda e:resize_tree_columns())
 
 ##############################################################################################################################################################################
 #   ค้นหาผู้ต้องขังทั้งหมด
@@ -524,7 +546,6 @@ class MainFrame(ctk.CTkFrame):
 
         search_all_var = tk.StringVar()
         
-        prisoner_select = None
         # หัวข้อ
         ctk.CTkLabel(self.show_all_prisoner_frame,text='ผู้ต้องขังทั้งหมด',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,pady = 10,sticky = 'n')
 
@@ -821,8 +842,18 @@ class MainFrame(ctk.CTkFrame):
         flag_status = False
         nationnal_id = None
         popup_reserve_to_visit.bind('<Escape>',lambda:on_close())
+        days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
+        months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
+                    "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
+                    "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+
+        current_time = t.localtime()
+        day = days[current_time.tm_wday]
+        month = months[current_time.tm_mon - 1]
 
         def config_label():
+            # relative_label.grid_forget()
+            # tree_container.grid_forget()
             progressbar.grid(row = 2,column = 0 ,columnspan = 2,pady = 20)
             progressbar.stop()
             label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
@@ -832,17 +863,8 @@ class MainFrame(ctk.CTkFrame):
             get_relative()
 
         def update_time_label():
-            days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
-            months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
-                      "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
-                      "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
-
-            current_time = t.localtime()
-            day = days[current_time.tm_wday]
-            month = months[current_time.tm_mon - 1]
             text = f"วัน {day} ที่ {current_time.tm_mday} {month} {(current_time.tm_year)+543} เวลา {t.strftime('%H:%M:%S')}"
             date_label.configure(text=text)
-
             if popup_reserve_to_visit.winfo_exists():
                 popup_reserve_to_visit.after(1000,update_time_label)
 
@@ -875,22 +897,44 @@ class MainFrame(ctk.CTkFrame):
                     else:
                         label_content.configure(text = '\n\n\nไม่พบลายนิ้วมือ\nกรุณาเตรียมบัตรประชาชนเพื่อติดต่อเจ้าหน้าที่',text_color = 'red')
                         progressbar.grid(row = 2,column = 0 ,columnspan = 2,pady = 20)
-                        self.after(5000,config_label)
+                        self.after(3000,config_label)
                         return
                     
                     progressbar.stop()
                     flag_status = False
                     progressbar.grid_forget()
                     label_content.grid_forget()
-                    relative_label.configure(text =f'ยินดีต้อนรับ {relative_data} กรุณากดเลือกเพื่อจองเยี่ยม' )
-                    relative_label.grid(row=1,column=0,columnspan=2,sticky='nsew' )
-                    tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
-                    tree_container.grid(row = 2,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
-                    scrollbar.grid(row=1,column=1,sticky='ns')
+
+                    allowed_dan_by_dan = {
+                        "จันทร์" : [5], 
+                        "อังคาร" : [6], 
+                        "พุธ" : [1,2,3,4,7], 
+                        "พฤหัสบดี" : [5,6], 
+                        "ศุกร์" : [1,2,3,4,7]
+                    }
+
+                    allower_dan = allowed_dan_by_dan.get(day,[])
+                    print(f'วันนี้ = {day}')
+                    for row in prisoners_data:
+                        print(f'ข้อมูลใน prisoner_data : {row}')
                     for row in tree.get_children():
                         tree.delete(row)
+
                     for index,row in enumerate(prisoners_data):
+                        if row[4] not in allower_dan:
+                            continue
                         tree.insert('','end',values=row)
+
+                    if len(tree.get_children()) == 0:
+                        alert = ALERT(popup_reserve_to_visit,['ไม่พบข้อมูลผู้ต้องขังที่เยี่ยมได้\nกรุณาตรวจสอบวันและเวลาเยี่ยม'],button=False)
+                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                    else:
+
+                        relative_label.configure(text =f'ยินดีต้อนรับ {relative_data} กรุณากดเลือกเพื่อจองเยี่ยม' )
+                        relative_label.grid(row=1,column=0,columnspan=2,sticky='nsew' )
+                        tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
+                        tree_container.grid(row = 2,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
+                        scrollbar.grid(row=1,column=1,sticky='ns')
                 else:
                     if popup_reserve_to_visit.winfo_exists():
                         self.after(500,get_capture_fingerprint)
@@ -1258,8 +1302,8 @@ class MainFrame(ctk.CTkFrame):
                 messagebox.showerror('ข้อผิดพลาด',f'ไม่สามารถพิมพ์ได้ :\n{e}')
         def get_visits():
             round_time = combo_round.get()
-            # round_date = datetime.now().strftime("%d/%m/%Y")
-            round_date = '06/05/2025'
+            round_date = datetime.now().strftime("%d/%m/%Y")
+            # round_date = '06/05/2025'
             data = [round_date,round_time]
             result =  self.db.get_visits(data)
             for row in tree.get_children():
