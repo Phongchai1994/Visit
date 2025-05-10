@@ -67,20 +67,7 @@ class SQLiteDB:
             self.cursor.execute('INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel) VALUES (?,?,?,?,?,?)',(data[0],data[1],data[2],data[3],data[4],data[5]))
             print('บันทึกข้อมูลตาราง relatives')
             return True
-        except sqlite3.OperationalError as e:
-            self.msgbox(e)
-            print(f'syntax ผิด / database lock : {e}')
-            return False
-        except sqlite3.ProgrammingError as e:
-            self.msgbox(e)
-            print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
-            return False
-        except sqlite3.DatabaseError as e:
-            self.msgbox(e)
-            print(f'database เสียหาย : {e}')
-            return False
         except Exception as e:
-            self.msgbox(e)
             print(e)
             return False
         finally:
@@ -96,21 +83,7 @@ class SQLiteDB:
             self.cursor.execute('INSERT INTO relations (prisoner_id,relative_id,relation) VALUES (?,?,?)',(id,data[0],relation))
             print('เชื่อมข้อมูลระหว่าง prisoner_id และ relative_id และระบุความสัมพันธ์')
             return True
-        
-        except sqlite3.OperationalError as e:
-            self.msgbox(e)
-            print(f'syntax ผิด / database lock : {e}')
-            return False
-        except sqlite3.ProgrammingError as e:
-            self.msgbox(e)
-            print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
-            return False
-        except sqlite3.DatabaseError as e:
-            self.msgbox(e)
-            print(f'database เสียหาย : {e}')
-            return False
         except Exception as e:
-            self.msgbox(e)
             print(e)
             return False
         finally:
@@ -275,7 +248,9 @@ class SQLiteDB:
 
         try:
             self.cursor.execute('SELECT prisoner_id,relative_id FROM relations WHERE prisoner_id = ?',(id,))
-            return self.cursor.fetchall()
+            result = self.cursor.fetchall()
+            print(result)
+            return result
         except sqlite3.OperationalError as e:
             self.msgbox(e)
             print(f'syntax ผิด / database lock : {e}')
