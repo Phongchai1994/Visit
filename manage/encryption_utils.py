@@ -2,9 +2,6 @@ from cryptography.fernet import Fernet
 import manage.set_key
 import os
 
-EN_DB = 'data/visit_report.db.enc'
-DE_DB = 'data/visit_report.db'
-
 def encrypt_file(input_file,output_file):
     key = manage.set_key.load_key()
     f = Fernet(key)

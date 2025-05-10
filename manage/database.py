@@ -3,23 +3,39 @@ import os
 from manage.encryption_utils import decrypt_file,encrypt_file
 import customtkinter as ctk
 from tkinter import messagebox
+import json
+from pathlib import Path
+import tempfile
+
+CONFIG_FILE = os.path.join("config","config.json")
+TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE,'r') as f:
+            return json.load(f).get('db_path')
+    return ''
 
 class SQLiteDB:
-    def __init__(self,db_path= 'data/visit_report.db'):
+    def __init__(self,db_path= TEMP_DIR / 'visit_report.db'):
         self.db_path = db_path
         self.conn = None
         self.cursor = None
         # โปรแกรมถอดรหัส และเข้ารหัส
-        self.EN_DB = 'data/visit_report.db.enc'
-        self.DE_DB = 'data/visit_report.db'
+        self.EN_DB = load_config()  # โหลดข้อมูลจาก ไฟล์ config.json
+        self.DE_DB = TEMP_DIR / 'visit_report.db'
 
     def msgbox(self,e):
         messagebox.showerror('ฐานข้อมูล',f'{e}')
 
     def connect(self):
-        self.conn =sqlite3.connect(self.db_path)
-        self.conn.execute('PRAGMA foreign_keys = ON')
-        self.cursor = self.conn.cursor()
+        try:
+            self.conn =sqlite3.connect(self.db_path)
+            self.conn.execute('PRAGMA foreign_keys = ON')
+            self.cursor = self.conn.cursor()
+        except Exception as e:
+            messagebox.showerror('เชื่อมต่อฐานข้อมูลไม่สำเร็จ',e)
+
 
         print('เชื่อมต่อฐานข้อมูล')
 
@@ -407,14 +423,27 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    def get_count_visit(self,prisoner_id,today,month):
+        self.decode_db()
+        self.connect()
 
+        try:
+            self.cursor.execute('SELECT COUNT(*) FROM visits WHERE prisoner_id = ? AND date_visit = ?',(prisoner_id,today))
+            count_today = self.cursor.fetchone()[0]
+            self.cursor.execute('SELECT COUNT(*) FROM visits WHERE prisoner_id = ? AND strftime("%Y-%m", date_visit) = ?',(prisoner_id,month))
+            count_month = self.cursor.fetchone()[0]
+            return count_today,count_month
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+            self.encode_db()
 
     def decode_db(self):
-        pass
-        # if os.path.exists(self.EN_DB):
-        #     decrypt_file(self.EN_DB,self.DE_DB)
+        if os.path.exists(self.EN_DB):
+            decrypt_file(self.EN_DB,self.DE_DB)
 
     def encode_db(self):
-        pass
-        # encrypt_file(self.DE_DB,self.EN_DB)
+        encrypt_file(self.DE_DB,self.EN_DB)
 

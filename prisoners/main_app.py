@@ -916,8 +916,8 @@ class MainFrame(ctk.CTkFrame):
         month = months[current_time.tm_mon - 1]
 
         def config_label():
-            # relative_label.grid_forget()
-            # tree_container.grid_forget()
+            relative_label.grid_forget()
+            tree_container.grid_forget()
             progressbar.grid(row = 2,column = 0 ,columnspan = 2,pady = 20)
             progressbar.stop()
             label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
@@ -970,12 +970,11 @@ class MainFrame(ctk.CTkFrame):
                     label_content.grid_forget()
 
                     allowed_dan_by_dan = {
-                        "จันทร์" : [5],
-                        "อังคาร" : [6],
-                        "พุธ" : [1,2,3,4,7],
-                        "พฤหัสบดี" : [5,6],
-                        "ศุกร์" : [1,2,3,4,7],
-                        "เสาร์" : [1,2,3,4,5,6,7,'รจช'] #อย่าลืมเอาออก
+                        "จันทร์" : [5,'รจช'],
+                        "อังคาร" : [6,'รจช'],
+                        "พุธ" : [1,2,3,4,7,'รจช'],
+                        "พฤหัสบดี" : [5,6,'รจช'],
+                        "ศุกร์" : [1,2,3,4,7,'รจช']
                         
                     }
 
@@ -1037,6 +1036,47 @@ class MainFrame(ctk.CTkFrame):
             popup_reserve_to_visit.destroy()
         
         def open_next_screen(data):
+            # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
+            psn_id = data[0]
+            psn_level = data[3]
+            today = datetime.today().date().isoformat()
+            today_month = datetime.today().strftime('%Y-%m')
+            check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
+            print(type(check_visit[1]))
+
+            if check_visit[0] > 0 :
+                alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'เยี่ยม' and check_visit[1] >= 8 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 8 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ดีมาก' and check_visit[1] >= 6 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 6 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ดี' and check_visit[1] >= 4 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 4 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'กลาง' and check_visit[1] >= 3 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ระหว่างพิจารณาคดี' and check_visit[1] >= 3 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ปรับปรุง' and check_visit[1] >= 2 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 2 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ปรับปรุงมาก' and check_visit[1] >= 1 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อเดือน'],button=False)
+                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                return
+
 
             relative_dict = {}
             data_relatives = self.db.get_relatives_id_fname_lname()
@@ -1134,7 +1174,7 @@ class MainFrame(ctk.CTkFrame):
                 # date time จากการเลือกรอบเยี่ยม
                 round_time = round_visit_var.get()
                 round_time_strtime = (datetime.strptime(round_time,"%H:%M")).strftime("%H:%M:%S")
-                date_current = datetime.now().strftime("%d/%m/%Y")
+                date_current = datetime.now().strftime("%Y-%m-%d")
 
                 followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id,nationnal_id)
                 ctk.CTkLabel(frame_follower_visit,text='กรุณาเลือกผู้ติดตาม',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
@@ -1179,7 +1219,7 @@ class MainFrame(ctk.CTkFrame):
                 select_fl_id = [rid for rid,var in follower_vars if var.get()]
                 prepare_data = [date_current,round_time_strtime,prisoner_id,nationnal_id]
 
-                ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nโดย {relative_dict.get(nationnal_id)}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
+                ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nโดย {relative_dict.get(nationnal_id)}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
                 for index,row in enumerate(select_fl_id):
                     prepare_data.append(row)
                     ctk.CTkLabel(frame_confirm_visit,text=f'คนที่ {index +1} {relative_dict.get(row)}',font=('TH SarabunPSK',28)).pack(pady = 5)
@@ -1371,8 +1411,7 @@ class MainFrame(ctk.CTkFrame):
                 messagebox.showerror('ข้อผิดพลาด',f'ไม่สามารถพิมพ์ได้ :\n{e}')
         def get_visits():
             round_time = combo_round.get()
-            # round_date = datetime.now().strftime("%d/%m/%Y")
-            round_date = '08/05/2025'  #อย่าลืมเอาออก
+            round_date = datetime.now().strftime("%Y-%m-%d")
             data = [round_date,round_time]
             result =  self.db.get_visits(data)
             for row in tree.get_children():
