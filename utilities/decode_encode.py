@@ -1,9 +1,21 @@
 from cryptography.fernet import Fernet
 import manage.set_key as set_key
 import os
+import json
+from pathlib import Path
+import tempfile
 
-EN_DB = 'data/visit_report.db.enc'
-DE_DB = 'data/visit_report.db'
+CONFIG_FILE = os.path.join("config","config.json")
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE,'r') as f:
+            return json.load(f).get('db_path')
+    return ''
+
+TEMP_DIR = Path(tempfile.gettempdir())
+EN_DB = load_config()
+DE_DB = TEMP_DIR / 'visit_report.db'
 
 def encrypt_file_onetime(input_file,output_file):
     key = set_key.load_key()

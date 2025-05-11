@@ -895,7 +895,7 @@ class MainFrame(ctk.CTkFrame):
         popup_reserve_to_visit.geometry('1280x720+1+1')
         popup_reserve_to_visit.grab_set()
         popup_reserve_to_visit.focus()
-        # popup_reserve_to_visit.attributes('-fullscreen',True)
+        popup_reserve_to_visit.attributes('-fullscreen',True)
 
         popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
         popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
@@ -905,7 +905,6 @@ class MainFrame(ctk.CTkFrame):
         relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
         flag_status = False
         nationnal_id = None
-        popup_reserve_to_visit.bind('<Escape>',lambda:on_close)
         days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
         months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
                     "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
@@ -1339,6 +1338,11 @@ class MainFrame(ctk.CTkFrame):
         tree.bind('<<TreeviewSelect>>',item_select)
 
         popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
+
+        def on_close_reserve(event=None):
+            popup_reserve_to_visit.destroy()
+
+        popup_reserve_to_visit.bind_all('<Alt-q>', on_close_reserve)
 
 ##############################################################################################################################################################################
     # รายงานการเยี่ยม

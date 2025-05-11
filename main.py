@@ -5,7 +5,6 @@ import tkinter as tk
 from tkinter import filedialog
 import json
 import os
-from manage.database import SQLiteDB
 
 ctk.set_appearance_mode('system')
 ctk.set_default_color_theme('blue')
