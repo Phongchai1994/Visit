@@ -16,6 +16,7 @@ class App_Prisoners(ctk.CTk):
         super().__init__()
         self.geometry('1366x768+1+1')
         self.title('โปรแกรมจองเยี่ยมญาติ')
+        self.attributes('-fullscreen',True)
         
         self.grid_columnconfigure(1,weight=1)
         self.grid_rowconfigure(0,weight=1)

@@ -892,7 +892,7 @@ class MainFrame(ctk.CTkFrame):
 
         popup_reserve_to_visit = ctk.CTkToplevel(self) 
         popup_reserve_to_visit.title('จองเยี่ยม')
-        popup_reserve_to_visit.geometry('1280x720+1+1')
+        popup_reserve_to_visit.geometry('1920x1080+1+1')
         popup_reserve_to_visit.grab_set()
         popup_reserve_to_visit.focus()
         popup_reserve_to_visit.attributes('-fullscreen',True)
