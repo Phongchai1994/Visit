@@ -19,8 +19,7 @@ ctk.set_appearance_mode('system')
 ctk.set_default_color_theme('blue')
 
 def get_config_path():
-    """ คืน path ที่เขียนได้ (ไม่ใช้ resource_path) """
-    return os.path.join(os.getcwd(), "config\config.json")
+    return os.path.join(os.getcwd(), "config", "config.json")
 
 def load_config():
     config_path = get_config_path()
@@ -31,6 +30,7 @@ def load_config():
 
 def save_config(file_path):
     config_path = get_config_path()
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)  # ✅ สร้างโฟลเดอร์ถ้ายังไม่มี
     with open(config_path, 'w', encoding='utf-8') as f:
         json.dump({'db_path': file_path}, f)
 
