@@ -7,8 +7,6 @@ import json
 import os
 import sys
 
-
-
 def resource_path(relative_path):
     """ให้ path ทำงานได้ทั้งตอนรันจาก .py และ .exe"""
     try:
@@ -20,7 +18,21 @@ def resource_path(relative_path):
 ctk.set_appearance_mode('system')
 ctk.set_default_color_theme('blue')
 
-CONFIG_FILE = resource_path(os.path.join("config","config.json"))
+def get_config_path():
+    """ คืน path ที่เขียนได้ (ไม่ใช้ resource_path) """
+    return os.path.join(os.getcwd(), "config\config.json")
+
+def load_config():
+    config_path = get_config_path()
+    if os.path.exists(config_path):
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f).get('db_path')
+    return ''
+
+def save_config(file_path):
+    config_path = get_config_path()
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump({'db_path': file_path}, f)
 
 class App_Prisoners(ctk.CTk):
     def __init__(self):
@@ -52,16 +64,10 @@ class App_Prisoners(ctk.CTk):
         self.config(menu=menu_bar)
 
     def select_database(self):
-        file_path = filedialog.askopenfilename(filetypes=[('SQLite Database','*.enc')])
+        file_path = filedialog.askopenfilename(filetypes=[('SQLite Database', '*.enc')])
         if file_path:
             self.db_path = file_path
-            self.save_config(file_path)
-
-    def save_config(self,file_path):
-        # บันทึกค่าฐานข้อมูลที่เลือกลง config.json
-        os.makedirs(os.path.dirname(CONFIG_FILE),exist_ok=True)
-        with open(CONFIG_FILE,'w') as f:
-            json.dump({'db_path':file_path},f)
+            save_config(file_path)  # อัปเดต path ไปยัง config.json (เขียนได้)
 
 if __name__ == "__main__":
     app = App_Prisoners()
