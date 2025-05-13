@@ -30,15 +30,11 @@ def load_config():
             return json.load(f).get('db_path')
     return ''
 
-def get_config_path():
-    return os.path.join(os.getcwd(),"config.json")
-
-def load_config():
+def save_config(file_path):
     config_path = get_config_path()
-    if os.path.exists(config_path):
-        with open(config_path,'r',encoding='utf-8') as f:
-            return json.load(f).get('db_path')
-    return ''
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)  # ✅ สร้างโฟลเดอร์ถ้ายังไม่มี
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump({'db_path': file_path}, f)
 
 class SQLiteDB:
     def __init__(self,db_path= TEMP_DIR / 'visit_report.db'):

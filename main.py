@@ -67,7 +67,7 @@ class App_Prisoners(ctk.CTk):
         file_path = filedialog.askopenfilename(filetypes=[('SQLite Database', '*.enc')])
         if file_path:
             self.db_path = file_path
-            save_config(file_path)  # อัปเดต path ไปยัง config.json (เขียนได้)
+            save_config(file_path)  # จะสร้าง config/config.json พร้อมโฟลเดอร์ถ้ายังไม่มี
 
 if __name__ == "__main__":
     app = App_Prisoners()
