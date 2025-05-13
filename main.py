@@ -20,7 +20,7 @@ ctk.set_default_color_theme('blue')
 
 def get_config_path():
     """ คืน path ที่เขียนได้ (ไม่ใช้ resource_path) """
-    return os.path.join(os.getcwd(), "config\config.json")
+    return os.path.join(os.getcwd(), "config.json")
 
 def load_config():
     config_path = get_config_path()

@@ -21,7 +21,7 @@ import sys
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
 
 def get_config_path():
-    return os.path.join(os.getcwd(), "config.json")
+    return os.path.join(os.getcwd(), "config", "config.json")
 
 def load_config():
     config_path = get_config_path()
@@ -31,7 +31,7 @@ def load_config():
     return ''
 
 def get_config_path():
-    return os.path.join(os.getcwd(),"config\config.json")
+    return os.path.join(os.getcwd(),"config.json")
 
 def load_config():
     config_path = get_config_path()
@@ -59,7 +59,6 @@ class SQLiteDB:
             self.cursor = self.conn.cursor()
         except Exception as e:
             messagebox.showerror('เชื่อมต่อฐานข้อมูลไม่สำเร็จ',e)
-
 
         print('เชื่อมต่อฐานข้อมูล')
 
