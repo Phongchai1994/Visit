@@ -1514,4 +1514,3 @@ class MainFrame(ctk.CTkFrame):
         elif page_name == 'รายงาน':
             self.popup_report_visits.pack(fill='both',expand = True)
             self.report_visits()
-   

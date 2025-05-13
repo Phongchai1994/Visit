@@ -5,18 +5,29 @@ import tkinter as tk
 from tkinter import filedialog
 import json
 import os
+import sys
+
+
+
+def resource_path(relative_path):
+    """ให้ path ทำงานได้ทั้งตอนรันจาก .py และ .exe"""
+    try:
+        base_path = sys._MEIPASS  # pyinstaller สร้าง temp folder
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 ctk.set_appearance_mode('system')
 ctk.set_default_color_theme('blue')
 
-CONFIG_FILE = os.path.join("config","config.json")
+CONFIG_FILE = resource_path(os.path.join("config","config.json"))
 
 class App_Prisoners(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.geometry('1366x768+1+1')
         self.title('โปรแกรมจองเยี่ยมญาติ')
-        self.attributes('-fullscreen',True)
+        # self.attributes('-fullscreen',True)
         
         self.grid_columnconfigure(1,weight=1)
         self.grid_rowconfigure(0,weight=1)

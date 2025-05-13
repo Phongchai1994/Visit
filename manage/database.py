@@ -6,13 +6,23 @@ from tkinter import messagebox
 import json
 from pathlib import Path
 import tempfile
+import sys
 
-CONFIG_FILE = os.path.join("config","config.json")
+def resource_path(relative_path):
+    """ คืน path ที่ถูกต้องทั้งตอนรันจาก .py และ .exe """
+    try:
+        base_path = sys._MEIPASS  # ใช้เมื่อรันจาก .exe ที่ PyInstaller สร้าง
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+CONFIG_FILE = resource_path(os.path.join("config","config.json"))
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE,'r') as f:
+        with open(CONFIG_FILE,'r',encoding='utf-8') as f:
             return json.load(f).get('db_path')
     return ''
 
@@ -441,9 +451,15 @@ class SQLiteDB:
             self.encode_db()
 
     def decode_db(self):
-        if os.path.exists(self.EN_DB):
-            decrypt_file(self.EN_DB,self.DE_DB)
+        if self.EN_DB and os.path.exists(self.EN_DB):
+            try:
+                decrypt_file(self.EN_DB,self.DE_DB)
+            except Exception as e:
+                self.msgbox(f'ถอดรหัสฐานข้อมูลล้มเหลว : {e}')
 
     def encode_db(self):
-        encrypt_file(self.DE_DB,self.EN_DB)
+        try:
+            encrypt_file(self.DE_DB,self.EN_DB)
+        except Exception as e:
+            self.msgbox(f'เข้ารหัสฐานข้อมูลล้มเหลว : {e}')
 
