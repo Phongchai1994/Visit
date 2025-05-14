@@ -969,11 +969,11 @@ class MainFrame(ctk.CTkFrame):
                     label_content.grid_forget()
 
                     allowed_dan_by_dan = {
-                        "จันทร์" : [5,'รจช'],
-                        "อังคาร" : [6,'รจช'],
-                        "พุธ" : [1,2,3,4,7,'รจช'],
-                        "พฤหัสบดี" : [5,6,'รจช'],
-                        "ศุกร์" : [1,2,3,4,7,'รจช']
+                        "จันทร์" : ['6','รจช'],
+                        "อังคาร" : ['5','รจช'],
+                        "พุธ" : ['1','2','3','4','7','รจช'],
+                        "พฤหัสบดี" : ['5','6','รจช'],
+                        "ศุกร์" : ['1','2','3','4','7','รจช']
                         
                     }
 
@@ -1121,10 +1121,10 @@ class MainFrame(ctk.CTkFrame):
 
                 # รอบเวลาเช้า
                 ctk.CTkLabel(frame_select_round,text='รอบเช้า',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
-                for text,value in [('รอบที่ 1 เวลา 09.30 - 09.45','09:30'),
-                                ('รอบที่ 2 เวลา 10.00 - 10.15','10:00'),
-                                ('รอบที่ 3 เวลา 10.30 - 10.45','10:30'),
-                                ('รอบที่ 4 เวลา 11.00 - 11.15','11:00')]:
+                for text,value in [('รอบที่ 1 เวลา 09.30 - 09.45','09:30:00'),
+                                ('รอบที่ 2 เวลา 10.00 - 10.15','10:00:00'),
+                                ('รอบที่ 3 เวลา 10.30 - 10.45','10:30:00'),
+                                ('รอบที่ 4 เวลา 11.00 - 11.15','11:00:00')]:
                     ctk.CTkRadioButton(frame_select_round,
                                     text=text,
                                     variable = round_visit_var,
@@ -1134,9 +1134,9 @@ class MainFrame(ctk.CTkFrame):
 
                 # รอบเวลาบ่าย
                 ctk.CTkLabel(frame_select_round,text='รอบบ่าย',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
-                for text,value in [('รอบที่ 5 เวลา 13.15 - 13.30','13:15'),
-                                ('รอบที่ 6 เวลา 13.45 - 14.00','13:45'),
-                                ('รอบที่ 7 เวลา 14.15 - 14.30','14:15')]:
+                for text,value in [('รอบที่ 5 เวลา 13.15 - 13.30','13:15:00'),
+                                ('รอบที่ 6 เวลา 13.45 - 14.00','13:45:00'),
+                                ('รอบที่ 7 เวลา 14.15 - 14.30','14:15:00')]:
                     ctk.CTkRadioButton(frame_select_round,
                                     text=text,
                                     variable = round_visit_var,
@@ -1166,14 +1166,24 @@ class MainFrame(ctk.CTkFrame):
                     widget.destroy()
                 frame_select_round.pack_forget()
                 frame_confirm_visit.pack_forget()
+
+                # date time จากการเลือกรอบเยี่ยม
+                round_time = round_visit_var.get()
+                round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
+                date_current = datetime.now().strftime("%Y-%m-%d")
+                count_visit = self.db.get_count_visit_on_round(round_time,date_current)
                 
+                print(f'count_visit = {count_visit}')
+
+                if count_visit > 14:
+                    count_alert = ALERT(next_screen,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
+                    select_round()
+                    return
+                                          
                 frame_follower_visit.pack(fill = 'both',expand = True)
                 text_from_round = f'จองเยี่ยม\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
                 ctk.CTkLabel(frame_follower_visit,text=text_from_round,font=('TH SarabunPSK',28)).pack(pady = 10)
-                # date time จากการเลือกรอบเยี่ยม
-                round_time = round_visit_var.get()
-                round_time_strtime = (datetime.strptime(round_time,"%H:%M")).strftime("%H:%M:%S")
-                date_current = datetime.now().strftime("%Y-%m-%d")
+
 
                 followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id,nationnal_id)
                 ctk.CTkLabel(frame_follower_visit,text='กรุณาเลือกผู้ติดตาม',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
@@ -1203,7 +1213,7 @@ class MainFrame(ctk.CTkFrame):
                                     command=lambda:select_round(),
                                     font=('TH SarabunPSK',24,'bold'),
                                     height=40,
-                                    fg_color='red'
+                                    fg_color='orange'
                                     )
                 cancel.pack(side = 'bottom',pady = 10)
                 submit.pack(side = 'bottom',pady = 10)
@@ -1341,6 +1351,7 @@ class MainFrame(ctk.CTkFrame):
 
         def on_close_reserve(event=None):
             popup_reserve_to_visit.destroy()
+            self.db.encode_db()
 
         popup_reserve_to_visit.bind_all('<Alt-q>', on_close_reserve)
 

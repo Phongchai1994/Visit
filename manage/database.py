@@ -8,16 +8,6 @@ from pathlib import Path
 import tempfile
 import sys
 
-# def resource_path(relative_path):
-#     """ คืน path ที่ถูกต้องทั้งตอนรันจาก .py และ .exe """
-#     try:
-#         base_path = sys._MEIPASS  # ใช้เมื่อรันจาก .exe ที่ PyInstaller สร้าง
-#     except Exception:
-#         base_path = os.path.abspath(".")
-
-#     return os.path.join(base_path, relative_path)
-
-# CONFIG_FILE = resource_path(os.path.join("config","config.json"))
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
 
 def get_config_path():
@@ -29,12 +19,6 @@ def load_config():
         with open(config_path, 'r', encoding='utf-8') as f:
             return json.load(f).get('db_path')
     return ''
-
-def save_config(file_path):
-    config_path = get_config_path()
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)  # ✅ สร้างโฟลเดอร์ถ้ายังไม่มี
-    with open(config_path, 'w', encoding='utf-8') as f:
-        json.dump({'db_path': file_path}, f)
 
 class SQLiteDB:
     def __init__(self,db_path= TEMP_DIR / 'visit_report.db'):
@@ -452,6 +436,22 @@ class SQLiteDB:
             self.cursor.execute('SELECT COUNT(*) FROM visits WHERE prisoner_id = ? AND strftime("%Y-%m", date_visit) = ?',(prisoner_id,month))
             count_month = self.cursor.fetchone()[0]
             return count_today,count_month
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+            self.encode_db()
+
+    def get_count_visit_on_round(self,round_time,date_current):
+        self.decode_db()
+        self.connect()
+        print(round_time,date_current)
+
+        try:
+            self.cursor.execute('SELECT count (*) FROM visits WHERE time_visit = ? AND date_visit = ?',(round_time,date_current))
+            count = self.cursor.fetchone()[0]
+            return count
         except Exception as e:
             self.msgbox(e)
             return False

@@ -7,6 +7,9 @@ import json
 import os
 import sys
 
+ctk.set_appearance_mode('system')
+ctk.set_default_color_theme('blue')
+
 def resource_path(relative_path):
     """ให้ path ทำงานได้ทั้งตอนรันจาก .py และ .exe"""
     try:
@@ -14,9 +17,6 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
-
-ctk.set_appearance_mode('system')
-ctk.set_default_color_theme('blue')
 
 def get_config_path():
     return os.path.join(os.getcwd(), "config", "config.json")

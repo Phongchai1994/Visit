@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[('dll\\libzkfpcsharp.dll', '.')],
-    datas=[('dll/libzkfpcsharp.dll', 'dell'), ('data/database_visit.pdf', 'data'), ('data/prisoners.pdf', 'data'), ('data/relations.pdf', 'data'), ('data/relatives.pdf', 'data'), ('data/visit_report.db.enc', 'data'), ('driver/ZKFinger_Driver-5.3.zip', 'driver'), ('font/THSarabun Bold.ttf', 'font'), ('font/THSarabun BoldItalic.ttf', 'font'), ('font/THSarabun Italic.ttf', 'font'), ('font/THSarabun.ttf', 'font'), ('font/THSarabunITù Bold.ttf', 'font'), ('font/THSarabunITù BoldItalic.ttf', 'font'), ('font/THSarabunITù Italic.ttf', 'font'), ('font/THSarabunITù.ttf', 'font'), ('key/secret.key', 'key')],
+    datas=[('dll/libzkfpcsharp.dll', 'dll'), ('data/database_visit.pdf', 'data'), ('data/prisoners.pdf', 'data'), ('data/relations.pdf', 'data'), ('data/relatives.pdf', 'data'), ('data/visit_report.db.enc', 'data'), ('driver/ZKFinger_Driver-5.3.zip', 'driver'), ('font/THSarabun Bold.ttf', 'font'), ('font/THSarabun BoldItalic.ttf', 'font'), ('font/THSarabun Italic.ttf', 'font'), ('font/THSarabun.ttf', 'font'), ('key/secret.key', 'key')],
     hiddenimports=['clr', 'System'],
     hookspath=[],
     hooksconfig={},
