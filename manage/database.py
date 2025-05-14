@@ -260,6 +260,9 @@ class SQLiteDB:
             print(f'ERROR : {e}')
             self.msgbox(e)
             return False
+        finally:
+            self.close()
+            self.encode_db()
 
     def get_data_relation(self,id):
         self.decode_db()

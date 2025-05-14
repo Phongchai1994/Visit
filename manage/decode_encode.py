@@ -67,8 +67,14 @@ def encrypt_file_onetime(input_file, output_file):
 def insert_datas_to_db():
     db_path = DE_DB
 
-    file_path = "prisoner_data.xlsx"
+    CURRENT_DIR = os.path.dirname(__file__)
+    file_path = os.path.join(CURRENT_DIR,"prisoner_data.xlsx")
     sheet_name = "1"
+
+    print(db_path)
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f'ไม่พบไฟล์ Excel: {file_path}')
+    
     df = pd.read_excel(file_path,sheet_name=sheet_name,engine='openpyxl')
 
     conn = sqlite3.connect(db_path)
@@ -78,13 +84,14 @@ def insert_datas_to_db():
         INSERT INTO prisoners (prisoner_id,sex,f_name,l_name,lawsuit,level,dan)
         VALUES (?,?,?,?,?,?,?)
     """
-    print(df.values.tolist())
-    # cursor.executemany(sql,df.values.tolist())
 
+    cursor.executemany(sql,df.values.tolist())
+    conn.commit()
     conn.close()
-    encrypt_file_onetime(DE_DB,EN_DB)
+    # encrypt_file_onetime(DE_DB,EN_DB)
 
-insert_datas_to_db()
 # decrypt_file_onetime(EN_DB,DE_DB)
 
-# encrypt_file_onetime(DE_DB,EN_DB)
+# insert_datas_to_db()
+
+encrypt_file_onetime(DE_DB,EN_DB)
