@@ -31,7 +31,15 @@ class MenuFrame(ctk.CTkFrame):
                       fg_color='#87BFE5',
                       command=lambda:self.main_frame.show_page('ค้นหาผู้ต้องขัง')
                       ).pack(pady=10)
-        
+        ctk.CTkButton(self,
+                      text='ย้ายแดน,ปรับชั้น',
+                      border_color='black',
+                      border_width=2,
+                      font=('TH SarabunPSK',20,'bold'),
+                      text_color='black',
+                      fg_color='#87BFE5',
+                      command=lambda:self.main_frame.show_page('ย้ายแดน,ปรับชั้น')
+                      ).pack(pady=10)
         ctk.CTkButton(self,
                       text='ผู้ต้องขังทั้งหมด',
                       border_color='black',
