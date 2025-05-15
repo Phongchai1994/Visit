@@ -64,7 +64,7 @@ class App_Prisoners(ctk.CTk):
         self.config(menu=menu_bar)
 
     def select_database(self):
-        file_path = filedialog.askopenfilename(filetypes=[('SQLite Database', '*.enc')])
+        file_path = filedialog.askopenfilename(filetypes=[('SQLite Database', '*.db')])
         if file_path:
             self.db_path = file_path
             save_config(file_path)  # จะสร้าง config/config.json พร้อมโฟลเดอร์ถ้ายังไม่มี

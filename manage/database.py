@@ -21,13 +21,13 @@ def load_config():
     return ''
 
 class SQLiteDB:
-    def __init__(self,db_path= TEMP_DIR / 'visit_report.db'):
+    def __init__(self,db_path=load_config()):
         self.db_path = db_path
         self.conn = None
         self.cursor = None
         # โปรแกรมถอดรหัส และเข้ารหัส
-        self.EN_DB = load_config()  # โหลดข้อมูลจาก ไฟล์ config.json
-        self.DE_DB = TEMP_DIR / 'visit_report.db'
+        # self.EN_DB = load_config()  # โหลดข้อมูลจาก ไฟล์ config.json
+        # self.DE_DB = TEMP_DIR / 'visit_report.db'
 
     def msgbox(self,e):
         messagebox.showerror('ฐานข้อมูล',f'{e}')
@@ -462,7 +462,20 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    def update_level_and_dan(self,id,level,dan):
+
+        self.connect()
+        try:
+            self.cursor.execute('UPDATE prisoners SET level = ? ,dan = ? WHERE prisoner_id = ?',(level,dan,id))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()    
+
     def decode_db(self):
+        return
         if self.EN_DB and os.path.exists(self.EN_DB):
             try:
                 decrypt_file(self.EN_DB, self.DE_DB)
@@ -470,6 +483,7 @@ class SQLiteDB:
                 self.msgbox(f'ถอดรหัสฐานข้อมูลล้มเหลว: {e}')
 
     def encode_db(self):
+        return
         try:
             encrypt_file(self.DE_DB, self.EN_DB)
         except Exception as e:

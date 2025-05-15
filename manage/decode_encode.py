@@ -90,8 +90,8 @@ def insert_datas_to_db():
     conn.close()
     # encrypt_file_onetime(DE_DB,EN_DB)
 
-# decrypt_file_onetime(EN_DB,DE_DB)
+decrypt_file_onetime(EN_DB,DE_DB)
 
 # insert_datas_to_db()
 
-encrypt_file_onetime(DE_DB,EN_DB)
+# encrypt_file_onetime(DE_DB,EN_DB)
