@@ -1155,7 +1155,7 @@ class MainFrame(ctk.CTkFrame):
             except Exception as e:
                 print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
 
-        def on_close():
+        def on_close(e = None):
             try:
                 self.zkfp2.CloseDevice()
                 print('Close Device')
@@ -1502,8 +1502,6 @@ class MainFrame(ctk.CTkFrame):
         tree.bind('<<TreeviewSelect>>',item_select)
 
         popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
-
-
         popup_reserve_to_visit.bind_all('<Alt-q>', on_close)
 
 ##############################################################################################################################################################################
