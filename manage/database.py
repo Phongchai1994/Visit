@@ -415,6 +415,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # ดึง ไอดี ชื่อ สกุล ของตารางญาติ
     def get_relatives_id_fname_lname(self):
         self.decode_db()
         self.connect()
@@ -429,6 +430,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # นับครั้งการเยี่ยม เงื่อนไขตามชั้น
     def get_count_visit(self,prisoner_id,today,month):
         self.decode_db()
         self.connect()
@@ -446,6 +448,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # นับครั้งการเยี่ยม ประจำวัน
     def get_count_visit_on_round(self,round_time,date_current):
         self.decode_db()
         self.connect()
@@ -462,8 +465,8 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # แก้ไขชั้นและแดน
     def update_level_and_dan(self,id,level,dan):
-
         self.connect()
         try:
             self.cursor.execute('UPDATE prisoners SET level = ? ,dan = ? WHERE prisoner_id = ?',(level,dan,id))
@@ -473,6 +476,18 @@ class SQLiteDB:
             return False
         finally:
             self.close()    
+
+    # ดึงข้อมูลญาติทั้งหมดใน DB
+    def get_all_relatives(self):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT relative_id,title,f_name,l_name,address,tel FROM relatives')
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
 
     def decode_db(self):
         return

@@ -39,6 +39,9 @@ class MainFrame(ctk.CTkFrame):
         # สร้าง Frame แสดงข้อมูลผู้ต้องขังทั้งหมดเป็นตาราง #
         self.show_all_prisoner_frame = ctk.CTkFrame(self)
 
+        # สร้าง Frame แสดงข้อมูลญาติทั้งหมดเป็นตาราง 
+        self.show_all_relative_frame = ctk.CTkFrame(self)
+
         # สร้าง Frame สำหรับรายงานประวัติการเยี่ยมญาติ
         self.popup_report_visits = ctk.CTkFrame(self) 
 
@@ -180,7 +183,6 @@ class MainFrame(ctk.CTkFrame):
 #   ค้นหาผู้ต้องขังรายบุคคล
 ##############################################################################################################################################################################
     def search_one_prisoner(self):
-
         # แสดงข้อมูลจากการค้นหา 1 คน
         def show_one_prisoner():            
             nonlocal prisoner_id_in_search_one
@@ -590,7 +592,6 @@ class MainFrame(ctk.CTkFrame):
         showdata_button_clear.grid(row = 7,column = 1,sticky = 'w',padx = 5)
         self.showdata_frame.grid_columnconfigure((0,1),minsize=200)
 
-
 ##############################################################################################################################################################################
 #   ย้ายแดน และ ปรับชั้น
 ##############################################################################################################################################################################
@@ -703,6 +704,28 @@ class MainFrame(ctk.CTkFrame):
 #   ค้นหาผู้ต้องขังทั้งหมด
 ##############################################################################################################################################################################
     def search_all_prisoner(self):
+        # menu right click
+        def on_right_click(event):
+            row_id = tree.identify_row(event.y) # ตรวจสอบเมาส์อยุ่ row ไหน
+            if row_id:
+                tree.selection_set(row_id)
+                nonlocal current_right_click_id
+                current_right_click_id = row_id
+                popup_menu.tk_popup(event.x_root,event.y_root)
+
+        def add_relative():
+            print('add relative')
+            pass
+
+        def show_relative():
+            print('show_ralative')
+            pass
+
+        def delete_relative():
+            print('delete_relative')
+            pass
+
+
 
         # insert ข้อมูลให้อยู่ในตาราง treeview
         def show_prisoners(data):
@@ -746,8 +769,8 @@ class MainFrame(ctk.CTkFrame):
         # กำหนด style สำหรับ treeview 
         style = ttk.Style()
         style.theme_use('default')
-        style.configure('Treeview',font =('TH SarabunPSK',18),rowheight = 35)
-        style.configure('Treeview.Heading',font = ('TH SarabunPSK',18,'bold'))
+        style.configure('Treeview',font =('TH SarabunPSK',16),rowheight = 28)
+        style.configure('Treeview.Heading',font = ('TH SarabunPSK',16,'bold'))
 
         tree = ttk.Treeview(tree_container,columns=('prisoner_id','sex','f_name','l_name','lawsuit','level','dan'),show='headings',height=10)
         tree.heading('prisoner_id',text='รหัสประจำตัว')
@@ -783,50 +806,136 @@ class MainFrame(ctk.CTkFrame):
             'dan' : 0.08
         }
 
+        # เมนู คลิกขวา
+        popup_menu = tk.Menu(self.show_all_prisoner_frame,tearoff=0)
+        popup_menu.add_command(label='เพิ่มญาติ',command=add_relative)
+        popup_menu.add_command(label='ดูรายชื่อญาติ',command=show_relative)
+        popup_menu.add_command(label='ลบชื่อ',command=delete_relative)
+
         all_data = self.db.get_data_all()
         show_prisoners(all_data)
         tree.bind('<Configure>',lambda e:resize_tree_columns())
+        tree.bind('<Button-3>',on_right_click)
+        current_right_click_id = None
+        
+##############################################################################################################################################################################
+#   ญาติทั้งหมด
+##############################################################################################################################################################################
+    def search_all_relatives(self):
+
+        # menu right click
+        def on_right_click(event):
+            row_id = tree.identify_row(event.y) # ตรวจสอบเมาส์อยุ่ row ไหน
+            if row_id:
+                tree.selection_set(row_id)
+                nonlocal current_right_click_id
+                current_right_click_id = row_id
+                popup_menu.tk_popup(event.x_root,event.y_root)
+
+        def add_relative():
+            print('add relative')
+            pass
+
+        def show_relative():
+            print('show_ralative')
+            pass
+
+        def delete_relative():
+            print('delete_relative')
+            pass
+
+        # insert ข้อมูลให้อยู่ในตาราง treeview
+        def show_prisoners(data):
+            for row in tree.get_children():
+                tree.delete(row)
+            for row in data:
+                tree.insert('','end',values=row)
+
+        # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
+        def search_one_var_prisoners():
+            keyword = search_all_var.get().lower()
+            filtered = [row for row in all_data if keyword in row[2].lower()]
+            print(filtered)
+            show_prisoners(filtered)
+
+        def resize_tree_columns():
+            tree_container.update_idletasks()
+            total_width = tree_container.winfo_width()
+            for col, ratio in column_ratios.items():
+                tree.column(col,width=int(total_width * ratio),anchor='w')
+
+        self.show_all_relative_frame.grid_rowconfigure(2,weight=1)
+        self.show_all_relative_frame.grid_columnconfigure(0,weight=1)
+
+        search_all_var = tk.StringVar()
+        
+        # หัวข้อ
+        ctk.CTkLabel(self.show_all_relative_frame,text='รายชื่อญาติทั้งหมด',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,pady = 10,sticky = 'n')
+
+        # ช่องค้นหา
+        search_entry = ctk.CTkEntry(self.show_all_relative_frame,placeholder_text='พิมพ์ชื่อเพื่อค้นหา...',font=('TH SarabunPSK',18),width=200,textvariable=search_all_var)
+        search_entry.grid(row = 1,column = 0, pady = 10,sticky = 'n')
+        search_all_var.trace_add("write",lambda *args:search_one_var_prisoners())
+
+        tree_container = ctk.CTkFrame(self.show_all_relative_frame)
+        tree_container.grid(row = 2,column=0,padx=20, pady=10, sticky="nsew")
+
+        tree_container.grid_rowconfigure(0,weight=1)
+        tree_container.grid_columnconfigure(0,weight=1)
+
+        # กำหนด style สำหรับ treeview 
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure('Treeview',font =('TH SarabunPSK',16),rowheight = 35)
+        style.configure('Treeview.Heading',font = ('TH SarabunPSK',16,'bold'))
+
+        tree = ttk.Treeview(tree_container,columns=('relative_id','title','f_name','l_name','address','tel'),show='headings',height=10)
+        tree.heading('relative_id',text='หมายเลขบัตรประชาชน')
+        tree.heading('title',text='คำนำหน้า')
+        tree.heading('f_name',text='ชื่อ')
+        tree.heading('l_name',text='นามสกุล')
+        tree.heading('address',text='ที่อยู่')
+        tree.heading('tel',text='เบอร์โทร')
+
+        tree.column('relative_id')
+        tree.column('title')
+        tree.column('f_name')
+        tree.column('l_name')
+        tree.column('address')
+        tree.column('tel')
+
+        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        tree.grid(row=0,column=0,sticky='nsew')
+        scrollbar.grid(row=0,column=1,sticky='ns')
+
+        all_data = []
+
+        column_ratios = {
+            'relative_id' : 0.14,
+            'title' : 0.08,
+            'f_name' : 0.19,
+            'l_name' : 0.19,
+            'address' : 0.28,
+            'tel' : 0.12,
+        }
+
+        # เมนู คลิกขวา
+        popup_menu = tk.Menu(self.show_all_relative_frame,tearoff=0)
+        popup_menu.add_command(label='เพิ่มญาติ',command=add_relative)
+        popup_menu.add_command(label='ดูรายชื่อญาติ',command=show_relative)
+        popup_menu.add_command(label='ลบชื่อ',command=delete_relative)
+
+        all_data = self.db.get_all_relatives()
+        show_prisoners(all_data)
+        tree.bind('<Configure>',lambda e:resize_tree_columns())
+        tree.bind('<Button-3>',on_right_click)
+        current_right_click_id = None
 
 ##############################################################################################################################################################################
     # ลงทะเบียนลายนิ้วมือ
 ##############################################################################################################################################################################
     def register_fingerprint(self):
-        try:
-            self.zkfp2.Init()
-            self.zkfp2.OpenDevice(0)
-        except Exception as e:
-            messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาเชื่อมต่อเครื่องสแกนนิ้ว')
-            return
-        popup_register_fingerprint = ctk.CTkToplevel(self)
-        popup_register_fingerprint.title('ลงทะเบียนลายนิ้วมือ')
-        popup_register_fingerprint.geometry('480x720+1+1')
-        popup_register_fingerprint.grab_set()
-
-        popup_register_fingerprint.grid_rowconfigure(2,weight=1,uniform='regis_fg')
-        popup_register_fingerprint.grid_columnconfigure((0,1),weight=1,uniform='regis_fg')
-
-
-        show_regis_id_var = ctk.StringVar()
-        show_regis_title = ctk.StringVar()
-        show_regis_entry_fname_var = ctk.StringVar()
-        show_regis_entry_lname_var = ctk.StringVar()
-        show_regis_entry_address_var = ctk.StringVar()
-        show_regis_entry_tel_var = ctk.StringVar()
-
-        ctk.CTkLabel(popup_register_fingerprint,text='ลงทะเบียนลายนิ้วมือ',font=('TH SarabunPSK',28,'bold')).grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew',pady = 30)
-
-        regis_fp_entry = ctk.CTkEntry(popup_register_fingerprint,width=150,font=('TH SarabunPSK',18),validate='key',validatecommand = (self.vcmd,'%P'))
-        regis_fp_entry.grid(row = 1,column = 0,sticky = 'e',padx = 5,pady = 10)
-
-        regis_fp_search_bt = ctk.CTkButton(popup_register_fingerprint,
-                                                text='ค้นหาข้อมูล',
-                                                width=150,
-                                                font=('TH SarabunPSK',18,'bold'),
-                                                command=lambda:get_data_relative())
-        regis_fp_search_bt.grid(row=1,column = 1,sticky = 'w',padx = 5,pady = 10)
-        show_regis_data_search = ctk.CTkFrame(popup_register_fingerprint)
-        label_fingerprint_state = ctk.CTkLabel(show_regis_data_search,font=('TH SarabunPSK',18,'bold'),text='')
-
         def show_regis_data():
             show_regis_data_search.grid(row = 2,column = 0,columnspan = 2,sticky = 'nsew')
             
@@ -922,6 +1031,8 @@ class MainFrame(ctk.CTkFrame):
             popup_fingerprint.geometry('300x300+450+200')
             popup_fingerprint.grab_set()
             popup_fingerprint.focus_set()
+                        # เพิ่มการตรวจสอบว่าเธรดกำลังทำงานหรือไม่
+            is_thread_running = False
 
             label_on_popup_fingerprint = ctk.CTkLabel(popup_fingerprint,text='',font=('TH SarabunPSK',32,'bold'))
             label_on_popup_fingerprint.pack(expand = True,fill = 'both')
@@ -942,46 +1053,99 @@ class MainFrame(ctk.CTkFrame):
             button_cancel.pack(side='right',pady = 5)
 
             def start_capture():
+                try:
+                    self.zkfp2.Init()
+                    self.zkfp2.OpenDevice(0)
+                except Exception as e:
+                    messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาเชื่อมต่อเครื่องสแกนนิ้ว')
+                    return
+                nonlocal is_thread_running
+
+                if is_thread_running:
+                    messagebox.showwarning('คำเตือน', 'โปรแกรมกำลังจับลายนิ้วมืออยู่ โปรดลองอีกครั้ง')
+                    return
+
+                is_thread_running = True
                 button_submit.pack_forget()
                 button_cancel.pack_forget()
-                progressbar.pack(padx=10,pady=10)
+                progressbar.pack(padx=10, pady=10)
                 progressbar.start()
+                
                 def run():
-                    label_on_popup_fingerprint.configure(text = 'เครื่องสแกนพร้อม\nกรุณาวางนิ้วมือบนเครื่อง')
-                    template = []
+                    try:
+                        label_on_popup_fingerprint.configure(text='เครื่องสแกนพร้อม\nกรุณาวางนิ้วมือบนเครื่อง')
+                        template = []
 
-                    for i in range(3):
-                        while True:
-                            capture = self.zkfp2.AcquireFingerprint()
-                            if capture:
-                                tmp, img = capture
-                                template.append(tmp)
+                        for i in range(3):
+                            while True:
+                                capture = self.zkfp2.AcquireFingerprint()
+                                if capture:
+                                    tmp, img = capture
+                                    template.append(tmp)
 
-                                label_on_popup_fingerprint.after(0, lambda i=i: label_on_popup_fingerprint.configure(
-                                    text=f"{i + 1}", font=('TH SarabunPSK', 56, 'bold')
-                                ))
-                                
-                                break
+                                    label_on_popup_fingerprint.after(0, lambda i=i: label_on_popup_fingerprint.configure(
+                                        text=f"{i + 1}", font=('TH SarabunPSK', 56, 'bold')
+                                    ))
 
-                    regTemp, regTempLen = self.zkfp2.DBMerge(*template)
-                    if regTemp:
-                        label_on_popup_fingerprint.configure(text = 'กำลังบันทึกข้อมูล\nกรุณารอสักครู่')
-                        result = self.db.set_fingerprint(show_regis_id_var.get(), bytes(regTemp))
+                                    break
 
-                    if result:
-                        popup_fingerprint.after(0, lambda: (
-                            on_success(),
-                        ))
-                on_success=lambda:(
-                    label_on_popup_fingerprint.configure(text = 'บันทึกเสร็จสิ้น'),
-                    popup_fingerprint.after(1000,lambda:popup_fingerprint.destroy()),
-                    self.zkfp2.CloseDevice(),
+                        regTemp, regTempLen = self.zkfp2.DBMerge(*template)
+                        if regTemp:
+                            label_on_popup_fingerprint.configure(text='กำลังบันทึกข้อมูล\nกรุณารอสักครู่')
+                            result = self.db.set_fingerprint(show_regis_id_var.get(), bytes(regTemp))
+
+                            if result:
+                                on_success()
+                            else:
+                                messagebox.showerror('ผิดพลาด', 'ไม่สามารถบันทึกข้อมูลลายนิ้วมือได้')
+                                return
+                    except Exception as e:
+                        messagebox.showerror('ผิดพลาด', f'เกิดข้อผิดพลาด: {e}')
+                    finally:
+                        is_thread_running = False
+
+                def on_success():
+                    label_on_popup_fingerprint.configure(text='บันทึกเสร็จสิ้น')
+                    popup_fingerprint.after(1000, lambda: popup_fingerprint.destroy())
+                    self.zkfp2.CloseDevice()
                     get_data_relative()
-                    )
+                    # insert_fingerprint_to_db()
+
                 threading.Thread(target=run, daemon=True).start()
+            
         def on_close():
             print('ปิดหน้าต่าง popup_register_fingerprint')
             popup_register_fingerprint.destroy()
+
+        popup_register_fingerprint = ctk.CTkToplevel(self)
+        popup_register_fingerprint.title('ลงทะเบียนลายนิ้วมือ')
+        popup_register_fingerprint.geometry('480x720+1+1')
+        popup_register_fingerprint.grab_set()
+
+        popup_register_fingerprint.grid_rowconfigure(2,weight=1,uniform='regis_fg')
+        popup_register_fingerprint.grid_columnconfigure((0,1),weight=1,uniform='regis_fg')
+
+
+        show_regis_id_var = ctk.StringVar()
+        show_regis_title = ctk.StringVar()
+        show_regis_entry_fname_var = ctk.StringVar()
+        show_regis_entry_lname_var = ctk.StringVar()
+        show_regis_entry_address_var = ctk.StringVar()
+        show_regis_entry_tel_var = ctk.StringVar()
+
+        ctk.CTkLabel(popup_register_fingerprint,text='ลงทะเบียนลายนิ้วมือ',font=('TH SarabunPSK',28,'bold')).grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew',pady = 30)
+
+        regis_fp_entry = ctk.CTkEntry(popup_register_fingerprint,width=150,font=('TH SarabunPSK',18),validate='key',validatecommand = (self.vcmd,'%P'))
+        regis_fp_entry.grid(row = 1,column = 0,sticky = 'e',padx = 5,pady = 10)
+
+        regis_fp_search_bt = ctk.CTkButton(popup_register_fingerprint,
+                                                text='ค้นหาข้อมูล',
+                                                width=150,
+                                                font=('TH SarabunPSK',18,'bold'),
+                                                command=lambda:get_data_relative())
+        regis_fp_search_bt.grid(row=1,column = 1,sticky = 'w',padx = 5,pady = 10)
+        show_regis_data_search = ctk.CTkFrame(popup_register_fingerprint)
+        label_fingerprint_state = ctk.CTkLabel(show_regis_data_search,font=('TH SarabunPSK',18,'bold'),text='')
 
         popup_register_fingerprint.protocol("WM_DELETE_WINDOW", on_close)
 ##############################################################################################################################################################################
@@ -1671,9 +1835,16 @@ class MainFrame(ctk.CTkFrame):
             self.show_all_prisoner_frame.pack(fill='both',expand = True)
             self.search_all_prisoner()
         elif page_name == 'จองเยี่ยม':
+            print(page_name)
             self.reserve_to_visit()
         elif page_name == 'ลงทะเบียนลายนิ้วมือ':
+            print(page_name)
             self.register_fingerprint()
         elif page_name == 'รายงาน':
+            print(page_name)
             self.popup_report_visits.pack(fill='both',expand = True)
             self.report_visits()
+        elif page_name == 'ญาติทั้งหมด':
+            print(page_name)
+            self.show_all_relative_frame.pack(fill='both',expand = True)
+            self.search_all_relatives()

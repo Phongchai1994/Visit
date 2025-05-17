@@ -51,6 +51,21 @@ class MenuFrame(ctk.CTkFrame):
                       ).pack(pady=10)
         
         ctk.CTkLabel(self,
+                     text='เมนูจัดการข้อมูลญาติ',
+                     font=('TH SarabunPSK',28,'bold')
+                     ).pack(pady=10)
+        
+        ctk.CTkButton(self,
+                      text='ญาติทั้งหมด',
+                      border_color='black',
+                      border_width=2,
+                      font=('TH SarabunPSK',20,'bold'),
+                      text_color='black',
+                      fg_color='#87BFE5',
+                      command=lambda:self.main_frame.show_page('ญาติทั้งหมด')
+                      ).pack(pady=10)
+        
+        ctk.CTkLabel(self,
                      text='การเยี่ยมญาติ',
                      font=('TH SarabunPSK',28,'bold')
                      ).pack(pady=10)
