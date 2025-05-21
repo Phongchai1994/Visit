@@ -728,14 +728,14 @@ class MainFrame(ctk.CTkFrame):
 #   ค้นหาผู้ต้องขังทั้งหมด
 ##############################################################################################################################################################################
     def search_all_prisoner(self):
-        # menu right click
-        def on_right_click(event):
-            row_id = tree.identify_row(event.y)  # ตรวจสอบว่าเมาส์อยู่ที่แถวไหน
-            if row_id:
-                tree.selection_set(row_id)  # เลือกแถวที่คลิก
-                nonlocal current_right_click_id
-                current_right_click_id = row_id  # เก็บแถวที่คลิก
-                popup_menu.tk_popup(event.x_root, event.y_root)  # แสดงเมนูคลิกขวา
+        # # menu right click
+        # def on_right_click(event):
+        #     row_id = tree.identify_row(event.y)  # ตรวจสอบว่าเมาส์อยู่ที่แถวไหน
+        #     if row_id:
+        #         tree.selection_set(row_id)  # เลือกแถวที่คลิก
+        #         nonlocal current_right_click_id
+        #         current_right_click_id = row_id  # เก็บแถวที่คลิก
+        #         popup_menu.tk_popup(event.x_root, event.y_root)  # แสดงเมนูคลิกขวา
 
         def add_relative(prisoner_id, f_name, l_name):
             # ใช้ prisoner_id, f_name, l_name ที่ส่งมาจากการคลิกขวา
@@ -1047,16 +1047,15 @@ class MainFrame(ctk.CTkFrame):
                 result =  self.db.update_level_and_dan(id,level,dan,type_data.get(),status_data.get())
                 if result:
                     messagebox.showinfo('แจ้งอัพเดทข้อมูล',f'อัพเดทข้อมูลของ {fname_data.cget('text')} {lname_data.cget('text')} สำเร็จ')
-                    search_frame.grid_forget()
-
+                    load_data_on_db()
+                    on_close()
+                    return
                 else:
                     messagebox.showerror('แจ้งอัพเดทข้อมูล',f'บันทึกข้อมูลไม่สำเร็จ')
 
             def on_close():
                 print('ปิด Move Dan')
                 popup_move_dan.destroy()
-                all_data = self.db.get_data_all()
-                show_prisoners(all_data)
 
             popup_move_dan = ctk.CTkToplevel(self)
             
@@ -1135,6 +1134,7 @@ class MainFrame(ctk.CTkFrame):
 
         # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
         def search_one_var_prisoners():
+            nonlocal all_data
             keyword = search_all_var.get().lower()
             filtered = [row for row in all_data if keyword in row[2].lower()]
             print(filtered)
@@ -1145,6 +1145,12 @@ class MainFrame(ctk.CTkFrame):
             total_width = tree_container.winfo_width()
             for col, ratio in column_ratios.items():
                 tree.column(col,width=int(total_width * ratio),anchor='w')
+
+        def load_data_on_db():
+            nonlocal all_data
+            all_data = []
+            all_data = self.db.get_data_all()
+            show_prisoners(all_data)
 
         self.show_all_prisoner_frame.grid_rowconfigure(2,weight=1)
         self.show_all_prisoner_frame.grid_columnconfigure(0,weight=1)
@@ -1197,8 +1203,6 @@ class MainFrame(ctk.CTkFrame):
         tree.grid(row=0,column=0,sticky='nsew')
         scrollbar.grid(row=0,column=1,sticky='ns')
 
-        all_data = []
-
         column_ratios = {
             'prisoner_id' : 0.10,
             'sex' : 0.06,
@@ -1211,28 +1215,87 @@ class MainFrame(ctk.CTkFrame):
             'status' : 0.11
         }
 
-        # เมนู คลิกขวา
-        popup_menu = tk.Menu(self.show_all_prisoner_frame, tearoff=0)
-        popup_menu.add_command(label='เพิ่มญาติ', command=lambda: add_relative(
-            tree.item(tree.selection()[0])['values'][0],  # prisoner_id
-            tree.item(tree.selection()[0])['values'][2],  # f_name
-            tree.item(tree.selection()[0])['values'][3]   # l_name
-        ))  # ส่ง prisoner_id, f_name, l_name ไปยังฟังก์ชัน
-        popup_menu.add_command(label='ดูรายชื่อญาติ', command=lambda: show_relative(
-            tree.item(tree.selection()[0])['values'][0],  # prisoner_id
-            tree.item(tree.selection()[0])['values'][2],  # f_name
-            tree.item(tree.selection()[0])['values'][3]   # l_name
-        ))  # ส่ง prisoner_id, f_name, l_name ไปยังฟังก์ชัน
-        popup_menu.add_command(label='ย้ายแดน',command=lambda:move_dan_and_adjust_level(
-            tree.item(tree.selection()[0])['values'][0]
-        ))
-        popup_menu.add_command(label='ลบชื่อ', command=delete_relative)
 
-        all_data = self.db.get_data_all()
-        show_prisoners(all_data)
+        # ฟังก์ชันสำหรับแสดงเมนูคลิกขวา
+        def show_ctk_popup(event):
+            # ล้าง popup เก่าถ้ามี
+            global popup_window
+            try:
+                popup_window.destroy()
+            except:
+                pass
+
+            # เลือกแถวใน Treeview
+            selected = tree.identify_row(event.y)
+            if not selected:
+                return
+            tree.selection_set(selected)
+            values = tree.item(selected)['values']
+            if not values:
+                return
+
+            prisoner_id = values[0]
+            f_name = values[2]
+            l_name = values[3]
+
+            # สร้าง popup window
+            popup_window = ctk.CTkToplevel()
+            popup_window.overrideredirect(True)  # ไม่มีกรอบ
+            popup_window.geometry(f"+{event.x_root}+{event.y_root}")
+            popup_window.configure(fg_color="#f0f0f0")
+
+            # เพิ่มปุ่มใน popup
+            def add_rel():
+                popup_window.destroy()
+                add_relative(prisoner_id, f_name, l_name)
+
+            def show_rel():
+                popup_window.destroy()
+                show_relative(prisoner_id, f_name, l_name)
+
+            def move_dan():
+                popup_window.destroy()
+                move_dan_and_adjust_level(prisoner_id)
+
+            def delete_rel():
+                popup_window.destroy()
+                delete_relative()
+
+            # สร้างปุ่มใน popup
+            ctk.CTkButton(popup_window, text="➕ เพิ่มญาติ", command=add_rel, width=160).pack(padx=10, pady=(10, 5))
+            ctk.CTkButton(popup_window, text="👥 ดูรายชื่อญาติ", command=show_rel, width=160).pack(padx=10, pady=5)
+            ctk.CTkButton(popup_window, text="➡️ ย้ายแดน", command=move_dan, width=160).pack(padx=10, pady=5)
+            ctk.CTkButton(popup_window, text="🗑️ ลบชื่อ", command=delete_rel, width=160, fg_color="red").pack(padx=10, pady=(5, 10))
+
+            # เมื่อคลิกข้างนอก popup ให้ปิด
+            popup_window.bind("<FocusOut>", lambda e: popup_window.destroy())
+            popup_window.focus_set()
+
+        # ผูกกับคลิกขวา
+        tree.bind("<Button-3>", show_ctk_popup)
+
+        # # เมนู คลิกขวา
+        # popup_menu = tk.Menu(self.show_all_prisoner_frame, tearoff=0)
+        # popup_menu.add_command(label='เพิ่มญาติ', command=lambda: add_relative(
+        #     tree.item(tree.selection()[0])['values'][0],  # prisoner_id
+        #     tree.item(tree.selection()[0])['values'][2],  # f_name
+        #     tree.item(tree.selection()[0])['values'][3]   # l_name
+        # ))  # ส่ง prisoner_id, f_name, l_name ไปยังฟังก์ชัน
+        # popup_menu.add_command(label='ดูรายชื่อญาติ', command=lambda: show_relative(
+        #     tree.item(tree.selection()[0])['values'][0],  # prisoner_id
+        #     tree.item(tree.selection()[0])['values'][2],  # f_name
+        #     tree.item(tree.selection()[0])['values'][3]   # l_name
+        # ))  # ส่ง prisoner_id, f_name, l_name ไปยังฟังก์ชัน
+        # popup_menu.add_command(label='ย้ายแดน',command=lambda:move_dan_and_adjust_level(
+        #     tree.item(tree.selection()[0])['values'][0]
+        # ))
+        # popup_menu.add_command(label='ลบชื่อ', command=delete_relative)
+
+        # tree.bind('<Button-3>',on_right_click)
         tree.bind('<Configure>',lambda e:resize_tree_columns())
-        tree.bind('<Button-3>',on_right_click)
         current_right_click_id = None
+        all_data = []
+        load_data_on_db()
         
 ##############################################################################################################################################################################
 #   ญาติทั้งหมด
