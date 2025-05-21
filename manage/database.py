@@ -55,7 +55,7 @@ class SQLiteDB:
         self.connect()
         try :
             print('กำลังบันทึกข้อมูล')
-            self.cursor.execute('INSERT INTO prisoners (prisoner_id,sex,f_name,l_name,lawsuit,level,dan) VALUES (?,?,?,?,?,?,?)',data)
+            self.cursor.execute('INSERT INTO prisoners (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status) VALUES (?,?,?,?,?,?,?,?,?)',data)
             return True
         except sqlite3.OperationalError as e:
             self.msgbox(e)
@@ -113,7 +113,7 @@ class SQLiteDB:
         self.decode_db()
         self.connect()
         try:
-            self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan FROM prisoners')
+            self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status FROM prisoners')
             self.all_data = self.cursor.fetchall()
             return self.all_data
         except Exception as e:
@@ -466,10 +466,11 @@ class SQLiteDB:
             self.encode_db()
 
     # แก้ไขชั้นและแดน
-    def update_level_and_dan(self,id,level,dan):
+    def update_level_and_dan(self,id,level,dan,type_data,status):
         self.connect()
         try:
-            self.cursor.execute('UPDATE prisoners SET level = ? ,dan = ? WHERE prisoner_id = ?',(level,dan,id))
+            print(id,level,dan,type_data,status)
+            self.cursor.execute('UPDATE prisoners SET level = ? ,dan = ?,type = ?,status = ? WHERE prisoner_id = ?',(level,dan,type_data,status,id))
             return True
         except Exception as e:
             self.msgbox(e)
