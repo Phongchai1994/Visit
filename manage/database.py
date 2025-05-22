@@ -490,6 +490,21 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # ลบข้อมูลญาติ
+    def delete_relation_from_prisoner_and_relative(self,prisoner_id,relative_id):
+        print(prisoner_id,relative_id)
+        self.connect()
+        try:
+            self.cursor.execute('DELETE FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+            
+
     def decode_db(self):
         return
         if self.EN_DB and os.path.exists(self.EN_DB):

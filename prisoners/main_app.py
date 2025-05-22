@@ -728,14 +728,6 @@ class MainFrame(ctk.CTkFrame):
 #   ค้นหาผู้ต้องขังทั้งหมด
 ##############################################################################################################################################################################
     def search_all_prisoner(self):
-        # # menu right click
-        # def on_right_click(event):
-        #     row_id = tree.identify_row(event.y)  # ตรวจสอบว่าเมาส์อยู่ที่แถวไหน
-        #     if row_id:
-        #         tree.selection_set(row_id)  # เลือกแถวที่คลิก
-        #         nonlocal current_right_click_id
-        #         current_right_click_id = row_id  # เก็บแถวที่คลิก
-        #         popup_menu.tk_popup(event.x_root, event.y_root)  # แสดงเมนูคลิกขวา
 
         def add_relative(prisoner_id, f_name, l_name):
             # ใช้ prisoner_id, f_name, l_name ที่ส่งมาจากการคลิกขวา
@@ -957,54 +949,62 @@ class MainFrame(ctk.CTkFrame):
             popup_register_relation.protocol("WM_DELETE_WINDOW", on_close)
 
         def show_relative(prisoner_id, f_name, l_name):
-
             def resize_tree_columns():
-                tree_container.update_idletasks()
-                total_width = tree_container.winfo_width()
+                tree_container_relative.update_idletasks()
+                total_width = tree_container_relative.winfo_width()
                 for col, ratio in column_ratio.items():
-                    tree.column(col,width=int(total_width * ratio),anchor='w')
+                    tree_relative.column(col,width=int(total_width * ratio),anchor='w')
 
             def on_close():
                 print('ปิด show list')
                 popup_show_list.destroy()
 
-            def show_menu_delete_relation(e):
-                # ล้าง popup ถ้ามี
-                nonlocal popup_window
-                try:
-                    popup_window.destroy()
-                except:
-                    pass
-
-                seleted = tree.identify_row(e.y)
-                if not seleted:
+            def show_menu_delete_relation(event):
+                selected = tree_relative.identify_row(event.y)
+                if not selected:
                     return
-                
-                tree.selection_set(seleted)
-                values = tree.item(seleted)['values']
-                if not values:
-                    return
-                
-                relative_id = values[0]
 
-
-                # สร้าง popup window
-                popup_window = ctk.CTkToplevel()
-                popup_window.overrideredirect(True)
-                popup_window.geometry(f'+{e.x_root}+{e.y_root}')
-                popup_window.configure(fg_color ='#f0f0f0')
+                tree_relative.selection_set(selected)
+                relative = tree_relative.item(selected)['values']
+                relative_id = relative[0]
+                relative_name = f'{relative[2]} {relative[3]}'
+                popup_window_delete_relative = ctk.CTkToplevel(popup_show_list)  # ✅ set parent เป็น popup_show_list
+                popup_window_delete_relative.overrideredirect(True)
+                popup_window_delete_relative.geometry(f"+{event.x_root}+{event.y_root}")
+                popup_window_delete_relative.configure(fg_color="#f0f0f0")
+                popup_window_delete_relative.attributes("-topmost", True)
+                popup_window_delete_relative.transient(popup_show_list)
+                popup_window_delete_relative.lift()
 
                 def delete_rel():
-                    popup_window.destroy()
-                    print(prisoner_id,' ',relative_id)
+                    popup_window_delete_relative.destroy()
+                    print("ลบ:", prisoner_id, relative_id)
+                    confirm_delete = messagebox.askyesno('การลบข้อมูล',f'ต้องการลบข้อมูลของ {relative_name} หรือไม่')
+                    if confirm_delete:
+                        result_delete = self.db.delete_relation_from_prisoner_and_relative(prisoner_id,relative_id)
+                        if result_delete:
+                            messagebox.showinfo('ลบข้อมูล','ลบข้อมูลของเสร็จสิ้น')
+                            result = self.db.get_join_prisoners_and_relatives(prisoner_id)
+                            print(result)
+                            for row in tree_relative.get_children():
+                                tree_relative.delete(row)
+                            for row in result:
+                                tree_relative.insert('','end',values=row)
 
-                ctk.CTkButton(popup_window,text='ลบรายชื่อญาติ',font =('TH SarabunPSK',18,'bold'),width=120,command=delete_rel).pack(padx=10, pady=(10, 5))
 
-                # เมื่อคลิกข้างนอกให้ popup ปิดตัว
-                popup_window.bind("<FocusOut>",lambda e:popup_window.destroy())
-                popup_window.focus_set()                
+                ctk.CTkButton(
+                    popup_window_delete_relative,
+                    text='ลบรายชื่อญาติ',
+                    font=('TH SarabunPSK', 18, 'bold'),
+                    width=120,
+                    command=delete_rel
+                ).pack(padx=10, pady=(10, 5))
 
-            
+                # ✅ ให้โฟกัสหลังจากเปิด (ป้องกัน focus ไม่ติด)
+                popup_window_delete_relative.after(100, lambda: popup_window_delete_relative.focus_force())
+                popup_window_delete_relative.bind("<FocusOut>", lambda e: popup_window_delete_relative.destroy())
+
+
 
             popup_show_list = ctk.CTkToplevel(self)
             popup_show_list.title('รายชื่อญาติ')
@@ -1012,34 +1012,34 @@ class MainFrame(ctk.CTkFrame):
             popup_show_list.grab_set()
             ctk.CTkLabel(popup_show_list,text=f'ข้อมูลญาติของ {f_name} {l_name}',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,sticky = 'nsew')
 
-            tree_container = ctk.CTkFrame(popup_show_list)
-            tree_container.grid(row = 2,column=0,padx=20, pady=10, sticky="nsew")
+            tree_container_relative = ctk.CTkFrame(popup_show_list)
+            tree_container_relative.grid(row = 2,column=0,padx=20, pady=10, sticky="nsew")
 
-            tree_container.grid_rowconfigure(1,weight=1)
-            tree_container.grid_columnconfigure(0,weight=1)
+            tree_container_relative.grid_rowconfigure(1,weight=1)
+            tree_container_relative.grid_columnconfigure(0,weight=1)
             popup_show_list.grid_rowconfigure(2, weight=1)
             popup_show_list.grid_columnconfigure(0, weight=1)
 
-            tree = ttk.Treeview(tree_container,columns=('relative_id','title','f_name','l_name','address','tel','relation'),show='headings',height=10)
-            tree.heading('relative_id',text='รหัสประจำตัว')
-            tree.heading('title',text='คำนำหน้า')
-            tree.heading('f_name',text='ชื่อ')
-            tree.heading('l_name',text='นามสกุล')
-            tree.heading('address',text='ที่อยู่')
-            tree.heading('tel',text='โทร')
-            tree.heading('relation',text='ความสัมพันธ์')
+            tree_relative = ttk.Treeview(tree_container_relative,columns=('relative_id','title','f_name','l_name','address','tel','relation'),show='headings',height=10)
+            tree_relative.heading('relative_id',text='รหัสประจำตัว')
+            tree_relative.heading('title',text='คำนำหน้า')
+            tree_relative.heading('f_name',text='ชื่อ')
+            tree_relative.heading('l_name',text='นามสกุล')
+            tree_relative.heading('address',text='ที่อยู่')
+            tree_relative.heading('tel',text='โทร')
+            tree_relative.heading('relation',text='ความสัมพันธ์')
 
-            tree.column('relative_id',anchor='w')
-            tree.column('title',anchor='w')
-            tree.column('f_name',anchor='w')
-            tree.column('l_name',anchor='w')
-            tree.column('address',anchor='w')
-            tree.column('tel',anchor='w')
-            tree.column('relation',anchor='w')
+            tree_relative.column('relative_id',anchor='w')
+            tree_relative.column('title',anchor='w')
+            tree_relative.column('f_name',anchor='w')
+            tree_relative.column('l_name',anchor='w')
+            tree_relative.column('address',anchor='w')
+            tree_relative.column('tel',anchor='w')
+            tree_relative.column('relation',anchor='w')
 
-            scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
-            tree.configure(yscrollcommand=scrollbar.set)
-            tree.grid(row=1,column=0,sticky='nsew')
+            scrollbar = ttk.Scrollbar(tree_container_relative,orient='vertical',command=tree.yview)
+            tree_relative.configure(yscrollcommand=scrollbar.set)
+            tree_relative.grid(row=1,column=0,sticky='nsew')
             scrollbar.grid(row=1,column=1,sticky='ns')
 
             column_ratio ={
@@ -1055,9 +1055,11 @@ class MainFrame(ctk.CTkFrame):
             result = self.db.get_join_prisoners_and_relatives(prisoner_id)
             print(result)
             for row in result:
-                tree.insert('','end',values=row)
-            tree.bind('<Configure>',lambda e:resize_tree_columns())
-            tree.bind('<Button-3>',show_menu_delete_relation)
+                tree_relative.insert('','end',values=row)
+
+            popup_window_delete_relative = None
+            tree_relative.bind('<Configure>',lambda e:resize_tree_columns())
+            tree_relative.bind("<Button-3>",show_menu_delete_relation)
             popup_show_list.protocol("WM_DELETE_WINDOW", on_close)
 
 
