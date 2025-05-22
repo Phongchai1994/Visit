@@ -964,6 +964,48 @@ class MainFrame(ctk.CTkFrame):
                 for col, ratio in column_ratio.items():
                     tree.column(col,width=int(total_width * ratio),anchor='w')
 
+            def on_close():
+                print('ปิด show list')
+                popup_show_list.destroy()
+
+            def show_menu_delete_relation(e):
+                # ล้าง popup ถ้ามี
+                nonlocal popup_window
+                try:
+                    popup_window.destroy()
+                except:
+                    pass
+
+                seleted = tree.identify_row(e.y)
+                if not seleted:
+                    return
+                
+                tree.selection_set(seleted)
+                values = tree.item(seleted)['values']
+                if not values:
+                    return
+                
+                relative_id = values[0]
+
+
+                # สร้าง popup window
+                popup_window = ctk.CTkToplevel()
+                popup_window.overrideredirect(True)
+                popup_window.geometry(f'+{e.x_root}+{e.y_root}')
+                popup_window.configure(fg_color ='#f0f0f0')
+
+                def delete_rel():
+                    popup_window.destroy()
+                    print(prisoner_id,' ',relative_id)
+
+                ctk.CTkButton(popup_window,text='ลบรายชื่อญาติ',font =('TH SarabunPSK',18,'bold'),width=120,command=delete_rel).pack(padx=10, pady=(10, 5))
+
+                # เมื่อคลิกข้างนอกให้ popup ปิดตัว
+                popup_window.bind("<FocusOut>",lambda e:popup_window.destroy())
+                popup_window.focus_set()                
+
+            
+
             popup_show_list = ctk.CTkToplevel(self)
             popup_show_list.title('รายชื่อญาติ')
             popup_show_list.geometry('720x480+1+1')
@@ -1015,11 +1057,9 @@ class MainFrame(ctk.CTkFrame):
             for row in result:
                 tree.insert('','end',values=row)
             tree.bind('<Configure>',lambda e:resize_tree_columns())
-
-            def on_close():
-                print('ปิด show list')
-                popup_show_list.destroy()
+            tree.bind('<Button-3>',show_menu_delete_relation)
             popup_show_list.protocol("WM_DELETE_WINDOW", on_close)
+
 
         def delete_relative():
             print('delete_relative')
@@ -1219,7 +1259,7 @@ class MainFrame(ctk.CTkFrame):
         # ฟังก์ชันสำหรับแสดงเมนูคลิกขวา
         def show_ctk_popup(event):
             # ล้าง popup เก่าถ้ามี
-            global popup_window
+            nonlocal popup_window
             try:
                 popup_window.destroy()
             except:
@@ -1262,10 +1302,10 @@ class MainFrame(ctk.CTkFrame):
                 delete_relative()
 
             # สร้างปุ่มใน popup
-            ctk.CTkButton(popup_window, text="➕ เพิ่มญาติ", command=add_rel, width=160).pack(padx=10, pady=(10, 5))
-            ctk.CTkButton(popup_window, text="👥 ดูรายชื่อญาติ", command=show_rel, width=160).pack(padx=10, pady=5)
-            ctk.CTkButton(popup_window, text="➡️ ย้ายแดน", command=move_dan, width=160).pack(padx=10, pady=5)
-            ctk.CTkButton(popup_window, text="🗑️ ลบชื่อ", command=delete_rel, width=160, fg_color="red").pack(padx=10, pady=(5, 10))
+            ctk.CTkButton(popup_window, text="➕ เพิ่มญาติ",font =('TH SarabunPSK',18,'bold'), command=add_rel, width=160).pack(padx=10, pady=(10, 5))
+            ctk.CTkButton(popup_window, text="👥 ดูรายชื่อญาติ",font =('TH SarabunPSK',18,'bold'), command=show_rel, width=160).pack(padx=10, pady=5)
+            ctk.CTkButton(popup_window, text="➡️ ย้ายแดน",font =('TH SarabunPSK',18,'bold'), command=move_dan, width=160).pack(padx=10, pady=5)
+            # ctk.CTkButton(popup_window, text="🗑️ ลบชื่อญาติ",font =('TH SarabunPSK',18,'bold'), command=delete_rel, width=160, fg_color="red").pack(padx=10, pady=(5, 10))
 
             # เมื่อคลิกข้างนอก popup ให้ปิด
             popup_window.bind("<FocusOut>", lambda e: popup_window.destroy())
@@ -1273,27 +1313,8 @@ class MainFrame(ctk.CTkFrame):
 
         # ผูกกับคลิกขวา
         tree.bind("<Button-3>", show_ctk_popup)
-
-        # # เมนู คลิกขวา
-        # popup_menu = tk.Menu(self.show_all_prisoner_frame, tearoff=0)
-        # popup_menu.add_command(label='เพิ่มญาติ', command=lambda: add_relative(
-        #     tree.item(tree.selection()[0])['values'][0],  # prisoner_id
-        #     tree.item(tree.selection()[0])['values'][2],  # f_name
-        #     tree.item(tree.selection()[0])['values'][3]   # l_name
-        # ))  # ส่ง prisoner_id, f_name, l_name ไปยังฟังก์ชัน
-        # popup_menu.add_command(label='ดูรายชื่อญาติ', command=lambda: show_relative(
-        #     tree.item(tree.selection()[0])['values'][0],  # prisoner_id
-        #     tree.item(tree.selection()[0])['values'][2],  # f_name
-        #     tree.item(tree.selection()[0])['values'][3]   # l_name
-        # ))  # ส่ง prisoner_id, f_name, l_name ไปยังฟังก์ชัน
-        # popup_menu.add_command(label='ย้ายแดน',command=lambda:move_dan_and_adjust_level(
-        #     tree.item(tree.selection()[0])['values'][0]
-        # ))
-        # popup_menu.add_command(label='ลบชื่อ', command=delete_relative)
-
-        # tree.bind('<Button-3>',on_right_click)
         tree.bind('<Configure>',lambda e:resize_tree_columns())
-        current_right_click_id = None
+        popup_window = None
         all_data = []
         load_data_on_db()
         
@@ -1818,35 +1839,35 @@ class MainFrame(ctk.CTkFrame):
 
             if check_visit[0] > 0 :
                 alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'เยี่ยม' and check_visit[1] >= 8 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 8 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'ดีมาก' and check_visit[1] >= 6 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 6 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'ดี' and check_visit[1] >= 4 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 4 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'กลาง' and check_visit[1] >= 3 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'ระหว่างพิจารณาคดี' and check_visit[1] >= 3 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'ปรับปรุง' and check_visit[1] >= 2 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 2 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
             if psn_level == 'ปรับปรุงมาก' and check_visit[1] >= 1 :
                 alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อเดือน'],button=False)
-                alert.after(2000,lambda: (alert.destroy(),config_label()))
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
                 return
 
 
