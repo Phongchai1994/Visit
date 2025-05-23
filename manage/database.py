@@ -303,8 +303,9 @@ class SQLiteDB:
         self.encode_db()
 
         return data
-
-    def get_join_relatives_and_prisoners(self,id):
+    
+    # ดึงตารางข้อมูลผู้ต้องขัง อ้างอิงด้วย เลขบัตรประชาชนญาติ
+    def get_join_relatives_and_prisoners(self,relative_id):
         self.decode_db()
         self.connect()
         try:
@@ -319,7 +320,7 @@ class SQLiteDB:
                                 FROM prisoners 
                                 JOIN relations ON prisoners.prisoner_id = relations.prisoner_id
                                 WHERE relations.relative_id = ?
-                                ''',(id,))
+                                ''',(relative_id,))
             return self.cursor.fetchall()
         except sqlite3.OperationalError as e:
             self.msgbox(e)
@@ -341,29 +342,8 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
-    def add_data_visits_to_db(self,data):
-        self.decode_db()
-        self.connect()
-        try:
-            self.cursor.execute('''
-                                INSERT INTO visits 
-                                (date_reserve,
-                                time_reserve,
-                                prisoner_id,
-                                relative_id_1,
-                                relative_id_2,
-                                relative_id_3,
-                                relative_id_4,
-                                relative_id_5) 
-                                VALUES (?,?,?,?,?,?,?,?)
-                                ''',(data))
-        except Exception as e:
-            self.msgbox(e)
-            print(f'Error : {e}')
-        finally:
-            self.close()
-            self.encode_db()
 
+    # เพิ่มข้อมูลการเยี่ยมลงตาราง visit
     def add_visits(self,query,data):
         # print(f'{query},',data)
         self.decode_db()
@@ -379,6 +359,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # รายงานการเยี่ยมประจำวัน
     def get_visits(self,data_visit):
         self.decode_db()
         self.connect()

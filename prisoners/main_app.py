@@ -54,7 +54,7 @@ class MainFrame(ctk.CTkFrame):
 ##############################################################################################################################################################################
     def validate_number_input(self,new_value):
         return new_value.isdigit() or new_value ==''  
-          
+
 ##############################################################################################################################################################################
 #   ลงทะเบียนผู้ต้องขัง 
 ##############################################################################################################################################################################
@@ -1327,24 +1327,98 @@ class MainFrame(ctk.CTkFrame):
 
         # menu right click
         def on_right_click(event):
-            row_id = tree.identify_row(event.y) # ตรวจสอบเมาส์อยุ่ row ไหน
-            if row_id:
-                tree.selection_set(row_id)
-                nonlocal current_right_click_id
-                current_right_click_id = row_id
-                popup_menu.tk_popup(event.x_root,event.y_root)
+            nonlocal popup_window
+            try:
+                popup_window.destroy()
+            except:
+                pass
 
-        def add_relative():
-            print('add relative')
-            pass
+            # เลือกแถวในตาราง tree
+            selected = tree.identify_row(event.y)
+            if not selected:
+                return
+            tree.selection_set(selected)
+            values = tree.item(selected)['values']
+            if not values:
+                return
+            
+            relative_id = values[0]
+            relative_name = f'{values[2]} {values[3]}'
+        
+            popup_window = ctk.CTkToplevel()
+            popup_window.overrideredirect(True)
+            popup_window.geometry(f'+{event.x_root}+{event.y_root}')
+            popup_window.configure(fg_color = '#f0f0f0')
 
-        def show_relative():
-            print('show_ralative')
-            pass
+            def show_rel():
+                popup_window.destroy()
+                print(relative_id,relative_name)
+                show_relative(relative_id,relative_name)
 
-        def delete_relative():
-            print('delete_relative')
-            pass
+            ctk.CTkButton(popup_window,text='ดูรายชื่อผุ้ต้องขัง',font =('TH SarabunPSK',18,'bold'),command=show_rel,width=160).pack(padx = 10,pady = (10,5))
+
+        def show_relative(relative_id,relative_name):
+            def resize_tree_columns():
+                tree_container_relative.update_idletasks()
+                total_width = tree_container_relative.winfo_width()
+                for col, ratio in column_ratio.items():
+                    tree_relative.column(col,width=int(total_width * ratio),anchor='w')
+
+            def on_close():
+                print('ปิด show list')
+                popup_show_list.destroy()
+
+            popup_show_list = ctk.CTkToplevel()
+            popup_show_list.title('รายชื่อญาติ')
+            popup_show_list.geometry('720x480+1+1')
+            popup_show_list.grab_set()
+            popup_show_list.focus_set()
+            ctk.CTkLabel(popup_show_list,text=f'ข้อมูลญาติของ {relative_name}',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,sticky = 'nsew')
+
+            tree_container_relative = ctk.CTkFrame(popup_show_list)
+            tree_container_relative.grid(row = 2,column=0,padx=20, pady=10, sticky="nsew")
+
+            tree_container_relative.grid_rowconfigure(1,weight=1)
+            tree_container_relative.grid_columnconfigure(0,weight=1)
+            popup_show_list.grid_rowconfigure(2, weight=1)
+            popup_show_list.grid_columnconfigure(0, weight=1)
+
+            tree_relative = ttk.Treeview(tree_container_relative,columns=('prisoner_id','f_name','l_name','level','dan','relation'),show='headings',height=10)
+            tree_relative.heading('prisoner_id',text='รหัสประจำตัว')
+            tree_relative.heading('f_name',text='ชื่อ')
+            tree_relative.heading('l_name',text='นามสกุล')
+            tree_relative.heading('level',text='ชั้น')
+            tree_relative.heading('dan',text='แดน')
+            tree_relative.heading('relation',text='ความสัมพันธ์')
+
+            tree_relative.column('prisoner_id')
+            tree_relative.column('f_name')
+            tree_relative.column('l_name')
+            tree_relative.column('level')
+            tree_relative.column('dan')
+            tree_relative.column('relation')
+
+            scrollbar = ttk.Scrollbar(tree_container_relative,orient='vertical',command=tree.yview)
+            tree_relative.configure(yscrollcommand=scrollbar.set)
+            tree_relative.grid(row=1,column=0,sticky='nsew')
+            scrollbar.grid(row=1,column=1,sticky='ns')
+
+            column_ratio ={
+                'prisoner_id' : 0.15,
+                'f_name' : 0.20,
+                'l_name' : 0.20,
+                'level' : 0.15,
+                'dan' : 0.15,
+                'relation' : 0.15,
+            }
+            result = self.db.get_join_relatives_and_prisoners(relative_id)
+            print(result)
+            for row in result:
+                tree_relative.insert('','end',values=row)
+
+            tree_relative.bind('<Configure>',lambda e:resize_tree_columns())
+            popup_show_list.protocol("WM_DELETE_WINDOW", on_close)
+
 
         # insert ข้อมูลให้อยู่ในตาราง treeview
         def show_prisoners(data):
@@ -1422,17 +1496,11 @@ class MainFrame(ctk.CTkFrame):
             'tel' : 0.12,
         }
 
-        # เมนู คลิกขวา
-        popup_menu = tk.Menu(self.show_all_relative_frame,tearoff=0)
-        popup_menu.add_command(label='.....',command=add_relative)
-        popup_menu.add_command(label='.....',command=show_relative)
-        popup_menu.add_command(label='.....',command=delete_relative)
-
         all_data = self.db.get_all_relatives()
         show_prisoners(all_data)
         tree.bind('<Configure>',lambda e:resize_tree_columns())
         tree.bind('<Button-3>',on_right_click)
-        current_right_click_id = None
+        popup_window = None
 
 ##############################################################################################################################################################################
     # ลงทะเบียนลายนิ้วมือ
@@ -1678,8 +1746,6 @@ class MainFrame(ctk.CTkFrame):
                 if button:
                     ctk.CTkButton(frame_inner,text='รับทราบ',font=('TH SarabunPSK',28,'bold'),command=lambda:self.destroy()).pack(side = 'bottom',pady = 20)
         
-        
-
         popup_reserve_to_visit = ctk.CTkToplevel(self) 
         popup_reserve_to_visit.title('จองเยี่ยม')
         popup_reserve_to_visit.geometry('1920x1080+1+1')
