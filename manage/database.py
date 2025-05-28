@@ -447,11 +447,23 @@ class SQLiteDB:
             self.encode_db()
 
     # แก้ไขชั้นและแดน
-    def update_level_and_dan(self,id,level,dan,type_data,status):
+    def update_level_and_dan(self,id,sex,f_name,l_name,lawsuit,level,dan,type_data,status):
         self.connect()
         try:
             print(id,level,dan,type_data,status)
-            self.cursor.execute('UPDATE prisoners SET level = ? ,dan = ?,type = ?,status = ? WHERE prisoner_id = ?',(level,dan,type_data,status,id))
+            self.cursor.execute('''UPDATE 
+                                    prisoners 
+                                SET 
+                                    sex = ? ,
+                                    f_name = ? ,
+                                    l_name = ? ,
+                                    lawsuit = ? ,
+                                    level = ? ,
+                                    dan = ?,
+                                    type = ?,
+                                    status = ? 
+                                WHERE 
+                                    prisoner_id = ?''',(sex,f_name,l_name,lawsuit,level,dan,type_data,status,id))
             return True
         except Exception as e:
             self.msgbox(e)
