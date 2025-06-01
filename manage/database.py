@@ -50,6 +50,7 @@ class SQLiteDB:
             self.cursor = None
             print('ปิดฐานข้อมูล')
 
+    # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners
     def add_data(self,data):
         self.decode_db()
         self.connect()
@@ -76,7 +77,8 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
-    
+
+    # เพิ่มข้อมูลญาติใสในตาราง relatives
     def add_data_ralative_to_relatives(self,id,data,relation):
         self.decode_db()
         self.connect()
@@ -93,6 +95,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # เพิมความสัมพันธ์ของญาติและผู้ต้องขังโดยใส่ในตาราง relations
     def add_data_relation_to_ralations(self,id,data,relation):
         self.decode_db()
         self.connect()
@@ -109,6 +112,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # ดึงข้อมูลผู้ต้องขังใสตาราง prisoners 
     def get_data_all(self):
         self.decode_db()
         self.connect()
@@ -124,6 +128,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # ดึงข้อมูลผู้ต้องขัง 1 คน ในตาราง prisoners ด้วย prisoner_id
     def get_data_one(self,prisoner_id):
         self.decode_db()
         self.connect()
@@ -150,6 +155,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # ดึงข้อมูลญาติ โดยการค้นหาด้วย relative_id
     def get_data_for_ralative_id(self,id):
         self.decode_db()
         self.connect()
@@ -177,6 +183,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # ลงทะเบียนลายนิ้วมือในตาราง relatives 
     def set_fingerprint(self,id,fingerprint):
         self.decode_db()
         self.connect()
@@ -202,6 +209,7 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
+
 
     def get_join_prisoners_and_relatives(self,prisoner_id):
         self.decode_db()
@@ -293,6 +301,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
     
+
     def get_all_fingerprint(self):
         self.decode_db()
         self.connect()
@@ -366,6 +375,7 @@ class SQLiteDB:
         try:
             self.cursor.execute('''
                                 SELECT
+                                    visits.visit_id,
                                     visits.time_stamp,
                                     visits.date_visit,
                                     visits.time_visit,
@@ -496,6 +506,30 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # ลบข้อมูลผู้ต้องขัง
+    def delete_prisoner(self,id):
+        self.connect()
+        try:
+            print(type(id))
+            self.cursor.execute('DELETE FROM prisoners WHERE prisoner_id = ?',(id,))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    def edit_relative(self,data,id):
+        self.connect()
+        try:
+            self.cursor.execute('UPDATE relatives SET title = ?, f_name = ?, l_name = ?, address = ?, tel = ? WHERE relative_id = ?',(*data, id))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            print(e)
+            return False
+        finally:
+            self.close()
             
 
     def decode_db(self):

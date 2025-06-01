@@ -82,6 +82,17 @@ class MenuFrame(ctk.CTkFrame):
                       ).pack(pady=10)
         
         ctk.CTkButton(self,
+                      text='จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน',
+                      border_color='black',
+                      border_width=2,
+                      font=('TH SarabunPSK',20,'bold'),
+                      text_color='black',
+                      fg_color='#87BFE5',
+                      hover_color='#63FF5B',
+                      command=lambda:self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')
+                      ).pack(pady=10)
+        
+        ctk.CTkButton(self,
                       text='รายงาน',
                       border_color='black',
                       border_width=2,
