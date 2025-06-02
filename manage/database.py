@@ -248,9 +248,9 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
-    
+
+    # ดึงข้อมูลญาติที่ไม่ใช่ผู้ติดตามของผู้ต้องขัง
     def get_join_prisoners_and_relatives_not_follower(self,prisoner_id,national_id):
-        self.decode_db()
         self.connect()
         try:
             self.cursor.execute('''
@@ -270,10 +270,8 @@ class SQLiteDB:
             return False
         finally:
             self.close()
-            self.encode_db()
 
     def get_data_relation(self,id):
-        self.decode_db()
         self.connect()
 
         try:
@@ -519,6 +517,7 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # แก้ไขข้อมูลญาติ
     def edit_relative(self,data,id):
         self.connect()
         try:
@@ -531,6 +530,65 @@ class SQLiteDB:
         finally:
             self.close()
             
+    # ย้ายรอบเยี่ยม
+    def update_visit_round(self,new_round,visit_id):
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('UPDATE visits SET time_visit = ? WHERE visit_id = ?',(new_round,visit_id))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    # ลบข้อมูลการเยี่ยม
+    def remove_visit(self,visit_id):
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('DELETE FROM visits WHERE visit_id = ?',(visit_id,))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    # ดึงข้อมูลตาราง visits ทั้งหมดอ้างอิงด้วย visit_id
+    def get_visit_by_id(self,visit_id):
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('SELECT * FROM visits WHERE visit_id = ?',(visit_id,))
+            return self.cursor.fetchone()
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    def get_join_prisoners_and_relatives(self,prisoner_id):
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                SELECT
+                                    relatives.relative_id,
+                                    relatives.title,
+                                    relatives.f_name,
+                                    relatives.l_name
+                                FROM relations
+                                JOIN relatives ON relations.relative_id = relatives.relative_id
+                                WHERE relations.prisoner_id = ?
+                                ''',(prisoner_id,))
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f'ERROR : {e}')
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
 
     def decode_db(self):
         return
