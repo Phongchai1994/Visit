@@ -211,43 +211,30 @@ class SQLiteDB:
             self.encode_db()
 
 
-    def get_join_prisoners_and_relatives(self,prisoner_id):
-        self.decode_db()
+    def get_join_prisoners_and_relatives_alldata(self,prisoner_id):
         self.connect()
         try:
             self.cursor.execute('''
-                                SELECT
-                                    r.relative_id,
-                                    r.title,
-                                    r.f_name,
-                                    r.l_name,
-                                    r.address,
-                                    r.tel,
-                                    rel.relation
-                                FROM relations rel
-                                JOIN relatives r ON rel.relative_id = r.relative_id
-                                WHERE rel.prisoner_id = ?
-                                ''',(prisoner_id,))   
-            return self.cursor.fetchall()
-        except sqlite3.OperationalError as e:
-            self.msgbox(e)
-            print(f'syntax ผิด / database lock : {e}')
-            return False
-        except sqlite3.ProgrammingError as e:
-            self.msgbox(e)
-            print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
-            return False
-        except sqlite3.DatabaseError as e:
-            self.msgbox(e)
-            print(f'database เสียหาย : {e}')
-            return False
+                                    SELECT
+                                        r.relative_id,
+                                        r.title,
+                                        r.f_name,
+                                        r.l_name,
+                                        r.address,
+                                        r.tel,
+                                        rel.relation
+                                    FROM relations rel
+                                    JOIN relatives r ON rel.relative_id = r.relative_id
+                                    WHERE rel.prisoner_id = ?
+                                ''',(prisoner_id,))
+            data =  self.cursor.fetchall()
+            return data
         except Exception as e:
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
             self.close()
-            self.encode_db()
 
     # ดึงข้อมูลญาติที่ไม่ใช่ผู้ติดตามของผู้ต้องขัง
     def get_join_prisoners_and_relatives_not_follower(self,prisoner_id,national_id):
@@ -348,7 +335,6 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
-
 
     # เพิ่มข้อมูลการเยี่ยมลงตาราง visit
     def add_visits(self,query,data):
@@ -585,6 +571,59 @@ class SQLiteDB:
             return self.cursor.fetchall()
         except Exception as e:
             print(f'ERROR : {e}')
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    def count_relative(self,prisoner_id,relative_id):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT count (*) FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id,))
+            count = self.cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            print(e)
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    def prisoner_id_on_table_visits(self,visit_id):
+        print(f'visit_id on db = {visit_id}')
+        self.connect()
+        try:
+            self.cursor.execute('SELECT prisoner_id FROM visits WHERE visit_id = ?',(visit_id,))
+            data = self.cursor.fetchone()[0]
+            return data
+        except Exception as e:
+            print(e)
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    def execute_manual(self,query):
+        self.connect()
+        try:
+            self.cursor.execute(query)
+            data = self.cursor.fetchall()
+            print(data)
+            return data
+        except Exception as e:
+            print(e)
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    def add_relative_to_visits(self,data):
+        self.connect()
+        try:
+            self.cursor.execute('UPDATE visits SET relative_id_1 = ?,relative_id_2 = ?,relative_id_3 = ?,relative_id_4 = ?,relative_id_5 =? WHERE visit_id = ?',(data))
+            return True
+        except Exception as e:
+            print(e)
             self.msgbox(e)
             return False
         finally:

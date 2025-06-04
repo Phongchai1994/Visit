@@ -6,7 +6,7 @@ import emoji
 from pyzkfp import ZKFP2
 import threading
 import time as t
-from datetime import datetime
+from datetime import datetime,timedelta
 from prisoners.card_reader import ThaiIDReader
 
 from reportlab.pdfgen import canvas
@@ -1020,6 +1020,7 @@ class MainFrame(ctk.CTkFrame):
             popup_register_relation.protocol("WM_DELETE_WINDOW", on_close)
 
         def show_relative(prisoner_id, f_name, l_name):
+            print('show_relative fn')
             def resize_tree_columns():
                 tree_container_relative.update_idletasks()
                 total_width = tree_container_relative.winfo_width()
@@ -1055,7 +1056,7 @@ class MainFrame(ctk.CTkFrame):
                         result_delete = self.db.delete_relation_from_prisoner_and_relative(prisoner_id,relative_id)
                         if result_delete:
                             messagebox.showinfo('ลบข้อมูล','ลบข้อมูลของเสร็จสิ้น')
-                            result = self.db.get_join_prisoners_and_relatives(prisoner_id)
+                            result = self.db.get_join_prisoners_and_relatives_alldata(prisoner_id)
                             print(result)
                             for row in tree_relative.get_children():
                                 tree_relative.delete(row)
@@ -1120,9 +1121,9 @@ class MainFrame(ctk.CTkFrame):
                         'tel' : 0.12,
                         'relation' : 0.12
             }
-            
-            result = self.db.get_join_prisoners_and_relatives(prisoner_id)
-            print(result)
+            print('prisoner_id = ',prisoner_id)
+            result = self.db.get_join_prisoners_and_relatives_alldata(prisoner_id)
+            print('in show_relative ',result)
             for row in result:
                 tree_relative.insert('','end',values=row)
 
@@ -1362,6 +1363,7 @@ class MainFrame(ctk.CTkFrame):
 
             def show_rel():
                 popup_window.destroy()
+                print('show relative')
                 show_relative(prisoner_id, f_name, l_name)
 
             def move_dan():
@@ -1746,6 +1748,18 @@ class MainFrame(ctk.CTkFrame):
                 widgets.grid_forget()
 
         def get_data_relative():
+            def read_card():
+                try:
+                    self.thai_id_reader.read_card()
+                    info = self.thai_id_reader.get_person_info()
+                except Exception as e:
+                    print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
+                    messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
+                    return 
+                return info['cid']
+            if read_card():
+                regis_fp_entry.delete(0,tk.END)
+                regis_fp_entry.insert(0,read_card())
             if not regis_fp_entry.get():
                 messagebox.showwarning('แจ้งเตือน','กรุณากรอกข้อมูล')
             else:
@@ -1894,54 +1908,7 @@ class MainFrame(ctk.CTkFrame):
     # รายการจองเยี่ยม
 ##############################################################################################################################################################################
     def reserve_to_visit(self):
-        # class ALERT(ctk.CTkToplevel):
-        #     def __init__(self,parent,msg = None,text_color = None,button=True):
-        #         super().__init__(parent)
-        #         self.geometry('300x200+840+440')
-        #         self.grab_set()
-        #         self.attributes('-topmost',True)
-        #         self.title('แจ้งเตือน')
-        #         self.overrideredirect(True)
-        #         frame_border = ctk.CTkFrame(self,corner_radius=5,fg_color='black')
-        #         frame_border.pack(fill = 'both',expand=True,padx = 2,pady = 2)
-        #         frame_inner = ctk.CTkFrame(frame_border,corner_radius=3,)
-        #         frame_inner.pack(fill ='both',expand = True,padx = 3,pady=3)
-        #         if text_color is None:
-        #             text_color = 'red'
-        #         for line in msg:
-        #             ctk.CTkLabel(
-        #                 frame_inner,
-        #                 text=line,
-        #                 text_color=text_color,
-        #                 font=('TH SarabunPSK',28,'bold')
-        #             ).pack(pady = 10)
-        #         if button:
-        #             ctk.CTkButton(frame_inner,text='รับทราบ',font=('TH SarabunPSK',28,'bold'),command=lambda:self.destroy()).pack(side = 'bottom',pady = 20)
-        
-        popup_reserve_to_visit = ctk.CTkToplevel(self) 
-        popup_reserve_to_visit.title('จองเยี่ยม')
-        popup_reserve_to_visit.geometry('1920x1080+1+1')
-        popup_reserve_to_visit.grab_set()
-        popup_reserve_to_visit.focus()
-        popup_reserve_to_visit.attributes('-fullscreen',True)
-
-        popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
-        popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
-        progressbar = ctk.CTkProgressBar(popup_reserve_to_visit,mode='indeterminate')
-        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
-        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
-        relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
-        flag_status = False
-        nationnal_id = None
-        days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
-        months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
-                    "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
-                    "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
-
-        current_time = t.localtime()
-        day = days[current_time.tm_wday]
-        month = months[current_time.tm_mon - 1]
-
+       
         def config_label():
             relative_label.grid_forget()
             tree_container.grid_forget()
@@ -2036,15 +2003,16 @@ class MainFrame(ctk.CTkFrame):
             nonlocal flag_status
             if not flag_status:
                 progressbar.grid(row = 2,column = 0 ,columnspan = 2,pady = 20)
-            try:
-                self.zkfp2.Init()
-                self.zkfp2.OpenDevice(0)
                 progressbar.start()
                 flag_status = True
-            except Exception as e:
-                messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาตรวจสอบการเชื่อต่อเครื่องสแกนลายนิ้วมือ')
-                on_close()
-                return
+            # try:
+            #     self.zkfp2.Init()
+            #     self.zkfp2.OpenDevice(0)
+            # except Exception as e:
+            #     print(f'เกิดข้อผิดพลาด get_relative() : {e}')
+            #     messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาตรวจสอบการเชื่อต่อเครื่องสแกนลายนิ้วมือ')
+            #     on_close()
+            #     return
             get_capture_fingerprint()
 
         def item_select(_):
@@ -2065,473 +2033,20 @@ class MainFrame(ctk.CTkFrame):
                 print('Close Device')
             except Exception as e:
                 print(f'ปิดอุปกรณ์ลายนิ้วมือไม่สำเร็จ : {e}')
-            popup_reserve_to_visit.destroy()
-        
-        def open_next_screen(data):
-            
-            # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
-            psn_id = data[0]
-            psn_level = data[3]
-            today = datetime.today().date().isoformat()
-            today_month = datetime.today().strftime('%Y-%m')
-            check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
-            print(type(check_visit[1]))
-
-            if check_visit[0] > 0 :
-                alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'เยี่ยม' and check_visit[1] >= 8 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 8 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'ดีมาก' and check_visit[1] >= 6 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 6 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'ดี' and check_visit[1] >= 4 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 4 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'กลาง' and check_visit[1] >= 3 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'ระหว่างพิจารณาคดี' and check_visit[1] >= 3 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'ปรับปรุง' and check_visit[1] >= 2 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 2 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-            if psn_level == 'ปรับปรุงมาก' and check_visit[1] >= 1 :
-                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อเดือน'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-                return
-
-
-            relative_dict = {}
-            data_relatives = self.db.get_relatives_id_fname_lname()
-            for rel_id,f_name,l_name in data_relatives:
-                full_name = f'{f_name} {l_name}'
-                relative_dict[rel_id] = full_name
-
-            next_screen = ctk.CTkToplevel(popup_reserve_to_visit)
-            next_screen.geometry('400x750')
-            next_screen.title('เลือกรอบเยี่ยม')
-            next_screen.grab_set()
-            next_screen.attributes('-topmost',True)
-            next_screen.minsize(400,750)
-            next_screen.maxsize(400,750)
-            prisoner_id = data[0]
-            # frame เลือกรอบ
-            frame_select_round = ctk.CTkFrame(next_screen)
-            # frame เลือกผู้ติดตาม
-            frame_follower_visit = ctk.CTkFrame(next_screen)
-            # frame ยืนยันการจอง
-            frame_confirm_visit = ctk.CTkFrame(next_screen)
-
-            round_visit_var = ctk.StringVar()
-            follower_vars = []
-
-
-            def next_screen_on_close():
-                
-                self.open_nextscreen_window = None
-                tree_container.grid_forget()
-                relative_label.grid_forget()
-                next_screen.destroy()
-                config_label()
-
-            def select_round():
-                for widget in frame_select_round.winfo_children():
-                    widget.destroy()
-
-                frame_follower_visit.pack_forget()
-                frame_select_round.pack(fill='both', expand=True)
-
-                label = ctk.CTkLabel(frame_select_round, text='เลือกรอบเยี่ยม', font=('TH SarabunPSK', 40, 'bold'))
-                label.pack(pady=5)
-                content = ctk.CTkLabel(frame_select_round, text=f'{data[1]} {data[2]}', font=('TH SarabunPSK', 30))
-                content.pack(pady=5)
-
-                now = datetime.now().time()
-
-                # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
-                morning_rounds = [
-                    ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
-                    ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
-                    ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:30:00'),
-                    ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '11:00:00'),
-                ]
-
-                ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                for text, start, close in morning_rounds:
-                    close_time = datetime.strptime(close, "%H:%M:%S").time()
-                    if now < close_time:
-                        ctk.CTkRadioButton(
-                            frame_select_round,
-                            text=text,
-                            variable=round_visit_var,
-                            value=start,
-                            font=('TH SarabunPSK', 32, 'bold')
-                        ).pack(pady=5)
-
-                # 🔹 รอบบ่าย
-                afternoon_rounds = [
-                    ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
-                    ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
-                    ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
-                ]
-
-                ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                for text, start, close in afternoon_rounds:
-                    close_time = datetime.strptime(close, "%H:%M:%S").time()
-                    if now < close_time:
-                        ctk.CTkRadioButton(
-                            frame_select_round,
-                            text=text,
-                            variable=round_visit_var,
-                            value=start,
-                            font=('TH SarabunPSK', 32, 'bold')
-                        ).pack(pady=5)
-
-                # 🔸 ปุ่ม
-                submit = ctk.CTkButton(
-                    frame_select_round,
-                    text='เลือกผู้ติดตาม',
-                    command=lambda: select_follower() if round_visit_var.get() else ALERT(frame_select_round, msg=['\nกรุณาเลือกรอบเยี่ยม']),
-                    font=('TH SarabunPSK', 24, 'bold'),
-                    height=100
-                )
-
-                cancel = ctk.CTkButton(
-                    frame_select_round,
-                    text='ยกเลิก',
-                    command=next_screen_on_close,
-                    font=('TH SarabunPSK', 24, 'bold'),
-                    height=40,
-                    fg_color='red'
-                )
-
-                cancel.pack(side='bottom', pady=10)
-                submit.pack(side='bottom', pady=10)
-
-            def select_follower():
-                for widget in frame_follower_visit.winfo_children():
-                    widget.destroy()
-                frame_select_round.pack_forget()
-                frame_confirm_visit.pack_forget()
-
-                # date time จากการเลือกรอบเยี่ยม
-                round_time = round_visit_var.get()
-                round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
-                date_current = datetime.now().strftime("%Y-%m-%d")
-                count_visit = self.db.get_count_visit_on_round(round_time,date_current)
-                
-                print(f'count_visit = {count_visit}')
-
-                if count_visit > 14:
-                    count_alert = ALERT(next_screen,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
-                    select_round()
-                    return
-                                          
-                frame_follower_visit.pack(fill = 'both',expand = True)
-                text_from_round = f'จองเยี่ยม\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
-                ctk.CTkLabel(frame_follower_visit,text=text_from_round,font=('TH SarabunPSK',28)).pack(pady = 10)
-
-
-                followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id,nationnal_id)
-                ctk.CTkLabel(frame_follower_visit,text='กรุณาเลือกผู้ติดตาม',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
-                ctk.CTkLabel(frame_follower_visit,text='(เลือกผู้ติดตามได้สูงสุด 4 คน)',text_color='red',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
-                if followers:
-                    for follower in followers:
-                        rid,title,fname,lname = follower
-                        var = ctk.BooleanVar()
-                        chk = ctk.CTkCheckBox(frame_follower_visit,
-                                              text=f'{title}{fname} {lname}',
-                                              variable=var,
-                                              font=('TH SarabunPSK',28,'bold'))
-                        chk.pack(pady = 5,padx = 50,anchor = 'nw')
-                        follower_vars.append((rid,var))
-                else:
-                    ctk.CTkLabel(frame_follower_visit,text='ไม่มีผู้ติดตาม',font=('TH SarabunPSK',28,'bold')).pack(pady = 10)
-
-                submit = ctk.CTkButton(frame_follower_visit,
-                                    text='ถัดไป',
-                                    command=lambda:confirm_visit(round_time_strtime,date_current),
-                                    font=('TH SarabunPSK',24,'bold'),
-                                    height=100
-                                    )
-                
-                cancel = ctk.CTkButton(frame_follower_visit,
-                                    text='ย้อนกลับ',
-                                    command=lambda:select_round(),
-                                    font=('TH SarabunPSK',24,'bold'),
-                                    height=40,
-                                    fg_color='orange'
-                                    )
-                cancel.pack(side = 'bottom',pady = 10)
-                submit.pack(side = 'bottom',pady = 10)
-
-            def confirm_visit(round_time_strtime,date_current):
-                for widget in frame_confirm_visit.winfo_children():
-                    widget.destroy()
-
-                frame_follower_visit.pack_forget()
-                frame_confirm_visit.pack(fill = 'both',expand = True)
-                ctk.CTkLabel(frame_confirm_visit,text='กรุณาตรวจสอบข้อมูลให้ถูกต้อง',font=('TH SarabunPSK',24,'bold')).pack(pady = 20)
-                select_fl_id = [rid for rid,var in follower_vars if var.get()]
-                prepare_data = [date_current,round_time_strtime,prisoner_id,nationnal_id]
-
-                ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nโดย {relative_dict.get(nationnal_id)}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
-                for index,row in enumerate(select_fl_id):
-                    prepare_data.append(row)
-                    ctk.CTkLabel(frame_confirm_visit,text=f'คนที่ {index +1} {relative_dict.get(row)}',font=('TH SarabunPSK',28)).pack(pady = 5)
-
-                select_fl_id.clear()
-
-                if len(prepare_data) > 8:
-                    print(f'ใน if = {prepare_data}')
-                    prepare_data.clear()
-                    follower_vars.clear()
-                    select_follower()
-                    alert = ALERT(frame_follower_visit,msg=['เลือกผู้ติดตามได้ไม่เกิน 4 คน','กรุณาเลือกใหม่'])
-                
-                submit = ctk.CTkButton(frame_confirm_visit,
-                                    text='ยืนยันการจองเยี่ยม',
-                                    command=lambda:insert_reserve_visit_to_db(prepare_data),
-                                    font=('TH SarabunPSK',24,'bold'),
-                                    height=100
-                                    )
-            
-                back = ctk.CTkButton(frame_confirm_visit,
-                                    text='ย้อนกลับ',
-                                    command=lambda:go_back() ,
-                                    font=('TH SarabunPSK',24,'bold'),
-                                    height=40,
-                                    fg_color='orange'
-                                    )
-                cancel = ctk.CTkButton(frame_confirm_visit,
-                                    text='ยกเลิกการจอง',
-                                    command=lambda:next_screen_on_close(),
-                                    font=('TH SarabunPSK',24,'bold'),
-                                    height=40,
-                                    fg_color='red'
-                                    )
-                cancel.pack(side = 'bottom',pady = 20)
-                back.pack(side = 'bottom',pady = 20)
-                submit.pack(side = 'bottom',pady = 20)
-
-                def go_back():
-                    prepare_data.clear()
-                    follower_vars.clear()
-                    select_follower()
-                    
-            def insert_reserve_visit_to_db(prepare_data):
-                print(prepare_data)
-                if len(prepare_data) == 8:
-                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5) VALUES (?,?,?,?,?,?,?,?)"
-                    result = self.db.add_visits(query,prepare_data)
-                    if result:
-                        insert_succress(prepare_data[1])
-                        return
-                elif len(prepare_data) == 7:
-                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4) VALUES (?,?,?,?,?,?,?)"
-                    result = self.db.add_visits(query,prepare_data)
-                    if result:
-                        insert_succress(prepare_data[1])
-                        return
-                elif len(prepare_data) == 6:
-                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3) VALUES (?,?,?,?,?,?)"
-                    result = self.db.add_visits(query,prepare_data)
-                    if result:
-                        insert_succress(prepare_data[1])
-                        return
-                elif len(prepare_data) == 5:
-                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2) VALUES (?,?,?,?,?)"
-                    result = self.db.add_visits(query,prepare_data)
-                    if result:
-                        insert_succress(prepare_data[1])
-                        return
-                elif len(prepare_data) == 4:
-                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1) VALUES (?,?,?,?)"
-                    result = self.db.add_visits(query,prepare_data)
-                    if result:
-                        insert_succress(prepare_data[1])
-                        return
-                
-            def insert_succress(time_visit):
-                alert = ALERT(next_screen,[f'จองเยี่ยมเรียบร้อย\nกรุณามาก่อนเวลา {time_visit} น.'],'black',button=False)
-                alert.after(3000,lambda:next_screen_on_close())
-            
-            select_round()
-            next_screen.protocol("WM_DELETE_WINDOW", next_screen_on_close)
-            return next_screen
-
-        capture_current = None
-
-        tree_container = ctk.CTkFrame(popup_reserve_to_visit)
-        tree_container.grid_rowconfigure(1,weight=1)
-        tree_container.grid_columnconfigure(0,weight=1)
-        config_label()
-        # update_time_label()
-        # get_relative()
-
-        # กำหนด style สำหรับ treeview 
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure('Treeview',font =('TH SarabunPSK',18),rowheight = 35)
-        style.configure('Treeview.Heading',font = ('TH SarabunPSK',18,'bold'))
-
-        tree = ttk.Treeview(tree_container,columns=('prisoner_id','f_name','l_name','level','dan','relation'),show='headings',height=10)
-        tree.heading('prisoner_id',text='รหัสประจำตัว')
-        tree.heading('f_name',text='ชื่อ')
-        tree.heading('l_name',text='นามสกุล')
-        tree.heading('level',text='ชั้น')
-        tree.heading('dan',text='แดน')
-        tree.heading('relation',text='ความสัมพันธ์')
-
-        tree.column('prisoner_id')
-        tree.column('f_name')
-        tree.column('l_name')
-        tree.column('level')
-        tree.column('dan')
-        tree.column('relation')
-
-        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
-
-        tree.bind('<<TreeviewSelect>>',item_select)
-
-        popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
-        popup_reserve_to_visit.bind_all('<Alt-q>', on_close)
-
-##############################################################################################################################################################################
-    # รายการจองเยี่ยมด้วยเลขบัตรประชาชน
-##############################################################################################################################################################################
-    def reserve_visit_by_national_id(self):
-
-        popup_reserve_to_visit = ctk.CTkToplevel(self) 
-        popup_reserve_to_visit.title('จองเยี่ยม')
-        popup_reserve_to_visit.geometry('720x480+1+1')
-        popup_reserve_to_visit.grab_set()
-        popup_reserve_to_visit.focus()
-        popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
-        popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
-        insert_national_frame = ctk.CTkFrame(popup_reserve_to_visit)
-        insert_national_frame.grid_rowconfigure(0,weight=1,uniform='popup_reserve')
-        insert_national_frame.grid_columnconfigure((0,1,2),weight=1,uniform='popup_reserve')
-        
-        insert_label = ctk.CTkLabel(insert_national_frame,text='กรุณากรอกเลขบัตรประชาชน :',font=('TH SarabunPSK', 32, 'bold'))
-        insert_label.grid(row=0,column=0,pady=10,sticky='e',padx = 10)
-        btn_read_id = ctk.CTkButton(insert_national_frame,
-                                    text='อ่านข้อมูล',
-                                    font=('TH SarabunPSK', 32, 'bold'),
-                                    command=lambda : get_relative(True))
-        btn_read_id.grid(row=0,column=2,pady=10,sticky='w',padx = 10)
-        national_id_entry = ctk.CTkEntry(insert_national_frame,font=('TH SarabunPSK', 32, 'bold'),placeholder_text='เลขบัตรประชาชน 13 หลัก',width=300)
-        national_id_entry.grid(row=0,column=1,pady=10,sticky='ew',padx = 10)
-        national_id_entry.bind('<Return>',lambda e: get_relative())
-        national_id_entry.bind('<KP_Enter>',lambda e: get_relative())
-
-        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
-        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
-        relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
-        flag_status = False
-        nationnal_id = None
-        days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
-        months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
-                    "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
-                    "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
-
-        current_time = t.localtime()
-        day = days[current_time.tm_wday]
-        month = months[current_time.tm_mon - 1]
-
-        def config_label():
-            relative_label.grid_forget()
-            tree_container.grid_forget()
-            label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
-            date_label.grid(row=0,column=0,columnspan=2,sticky='n', pady=10)
-            insert_national_frame.grid(row=1,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
-            update_time_label()
-            # get_relative()
-
-        def update_time_label():
-            text = f"วัน {day} ที่ {current_time.tm_mday} {month} {(current_time.tm_year)+543} เวลา {t.strftime('%H:%M:%S')}"
-            date_label.configure(text=text)
-            if popup_reserve_to_visit.winfo_exists():
-                popup_reserve_to_visit.after(1000,update_time_label)
-
-        def get_relative(state = None):
-            if state:
-                try:
-                    self.thai_id_reader.read_card()
-                    info = self.thai_id_reader.get_person_info()
-                    national_id_entry.delete(0, 'end')
-                    national_id_entry.insert(0, info['cid'])
-                except Exception as e:
-                    print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
-                    messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
-                    return
-            if not national_id_entry.get():
-                alert = ALERT(popup_reserve_to_visit,['กรุณากรอกเลขบัตรประชาชน'],button=True)
-                return
-            nonlocal nationnal_id
-            nationnal_id = national_id_entry.get()
-            prisoners_data = self.db.get_join_relatives_and_prisoners(national_id_entry.get())
-            if prisoners_data != []:
-                print(prisoners_data)
-            else:
-                alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {national_id_entry.get()}'],button=True)
-                national_id_entry.delete(0, 'end')
-                return
-            allowed_dan_by_dan = {
-                                "จันทร์" : ['6','รจช'],
-                                "อังคาร" : ['5','รจช'],
-                                "พุธ" : ['1','2','3','4','7','รจช'],
-                                "พฤหัสบดี" : ['5','6','รจช'],
-                                "ศุกร์" : ['1','2','3','4','7','รจช']        
-                                }
-
-            allower_dan = allowed_dan_by_dan.get(day,[])
-            print(f'วันนี้ = {day}')
-            for row in prisoners_data:
-                print(f'ข้อมูลใน prisoner_data : {row}')
-            for row in tree.get_children():
-                tree.delete(row)
-
-            for index,row in enumerate(prisoners_data):
-                if row[4] not in allower_dan:
-                    continue
-                tree.insert('','end',values=row)
-
-            if len(tree.get_children()) == 0:
-                alert = ALERT(popup_reserve_to_visit,['ไม่พบข้อมูลผู้ต้องขังที่เยี่ยมได้\nกรุณาตรวจสอบวันและเวลาเยี่ยม'],button=False)
-                alert.after(3000,lambda: (alert.destroy(),config_label()))
-            else:
-                relative_label.configure(text =f'กรุณากดเลือกเพื่อจองเยี่ยม' )
-                relative_label.grid(row=1,column=0,columnspan=2,sticky='nsew' )
-                tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
-                tree_container.grid(row = 2,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
-
-
-        def item_select(_):
             try:
-                for i in tree.selection():
-                    prisoner_data = tree.item(i)['values']
-                    break
-                if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
-                    self.open_nextscreen_window = open_next_screen(prisoner_data)
-                else:
-                    self.open_nextscreen_window.lift()
-            except Exception as e:
-                print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
+                popup_reserve_to_visit.destroy()
+            except Exception:
+                pass
 
-        def on_close(e = None):
-            popup_reserve_to_visit.destroy()
+        def can_reserve_for_next_day():
+            now = datetime.now()
+            if now.hour > 14 or (now.hour == 14 and now.minute >= 0):
+                return True
+            return False
+
+        def get_next_reserve_date():
+            # คืนค่าวันถัดไปในรูปแบบ YYYY-MM-DD
+            return (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         
         def open_next_screen(data):
             
@@ -2542,6 +2057,11 @@ class MainFrame(ctk.CTkFrame):
             today_month = datetime.today().strftime('%Y-%m')
             check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
             print(type(check_visit[1]))
+
+            reserve_date = datetime.now().strftime("%Y-%m-%d")
+
+            if can_reserve_for_next_day():
+                reserve_date = get_next_reserve_date()
 
             if check_visit[0] > 0 :
                 alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
@@ -2601,7 +2121,6 @@ class MainFrame(ctk.CTkFrame):
             round_visit_var = ctk.StringVar()
             follower_vars = []
 
-
             def next_screen_on_close():
                 
                 self.open_nextscreen_window = None
@@ -2623,46 +2142,141 @@ class MainFrame(ctk.CTkFrame):
                 content.pack(pady=5)
 
                 now = datetime.now().time()
+                print(day)
+                print(data[4])
+                late_time = datetime.strptime('14:00:00', "%H:%M:%S").time()
 
-                # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
-                morning_rounds = [
-                    ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
-                    ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
-                    ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:30:00'),
-                    ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '11:00:00'),
-                ]
 
-                ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                for text, start, close in morning_rounds:
-                    close_time = datetime.strptime(close, "%H:%M:%S").time()
-                    if now < close_time:
-                        ctk.CTkRadioButton(
-                            frame_select_round,
-                            text=text,
-                            variable=round_visit_var,
-                            value=start,
-                            font=('TH SarabunPSK', 32, 'bold')
-                        ).pack(pady=5)
+                if data[4] == 'รจช':
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    rounds = [
+                        ('เวลา 12.00 - 13.00', '12:00:00', '12:50:00')
+                    ]
+                    for text, start, close in rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
 
-                # 🔹 รอบบ่าย
-                afternoon_rounds = [
-                    ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
-                    ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
-                    ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
-                ]
+                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร'] and data[4] == 5):
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning_rounds = [
+                        ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
+                        ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
+                        ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:30:00'),
+                        ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '11:00:00'),
+                    ]
 
-                ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                for text, start, close in afternoon_rounds:
-                    close_time = datetime.strptime(close, "%H:%M:%S").time()
-                    if now < close_time:
-                        ctk.CTkRadioButton(
-                            frame_select_round,
-                            text=text,
-                            variable=round_visit_var,
-                            value=start,
-                            font=('TH SarabunPSK', 32, 'bold')
-                        ).pack(pady=5)
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in morning_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
 
+                    # 🔹 รอบบ่าย
+                    afternoon_rounds = [
+                        ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
+                        ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
+                        ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in afternoon_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+
+                elif (day in ['อังคาร','พุธ'] and data[4] == 1) or (day in ['พฤหัสบดี','ศุกร์'] and data[4] == 1):
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning_rounds = [
+                        ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
+                        ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
+                        ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:30:00'),
+                        ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '11:00:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in morning_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+
+                elif (day in ['อังคาร','พุธ'] and data[4] in [2,3,4,7]) or (day in ['พฤหัสบดี','ศุกร์'] and data[4] in [2,3,4,7]):
+                    # 🔹 รอบบ่าย
+                    afternoon_rounds = [
+                        ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
+                        ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
+                        ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in afternoon_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                            
                 # 🔸 ปุ่ม
                 submit = ctk.CTkButton(
                     frame_select_round,
@@ -2693,8 +2307,7 @@ class MainFrame(ctk.CTkFrame):
                 # date time จากการเลือกรอบเยี่ยม
                 round_time = round_visit_var.get()
                 round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
-                date_current = datetime.now().strftime("%Y-%m-%d")
-                count_visit = self.db.get_count_visit_on_round(round_time,date_current)
+                count_visit = self.db.get_count_visit_on_round(round_time,reserve_date)
                 
                 print(f'count_visit = {count_visit}')
 
@@ -2726,7 +2339,7 @@ class MainFrame(ctk.CTkFrame):
 
                 submit = ctk.CTkButton(frame_follower_visit,
                                     text='ถัดไป',
-                                    command=lambda:confirm_visit(round_time_strtime,date_current),
+                                    command=lambda:confirm_visit(round_time_strtime,reserve_date),
                                     font=('TH SarabunPSK',24,'bold'),
                                     height=100
                                     )
@@ -2741,7 +2354,7 @@ class MainFrame(ctk.CTkFrame):
                 cancel.pack(side = 'bottom',pady = 10)
                 submit.pack(side = 'bottom',pady = 10)
 
-            def confirm_visit(round_time_strtime,date_current):
+            def confirm_visit(round_time_strtime,reserve_date):
                 for widget in frame_confirm_visit.winfo_children():
                     widget.destroy()
 
@@ -2749,7 +2362,7 @@ class MainFrame(ctk.CTkFrame):
                 frame_confirm_visit.pack(fill = 'both',expand = True)
                 ctk.CTkLabel(frame_confirm_visit,text='กรุณาตรวจสอบข้อมูลให้ถูกต้อง',font=('TH SarabunPSK',24,'bold')).pack(pady = 20)
                 select_fl_id = [rid for rid,var in follower_vars if var.get()]
-                prepare_data = [date_current,round_time_strtime,prisoner_id,nationnal_id]
+                prepare_data = [reserve_date,round_time_strtime,prisoner_id,nationnal_id]
 
                 ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nโดย {relative_dict.get(nationnal_id)}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
                 for index,row in enumerate(select_fl_id):
@@ -2838,6 +2451,636 @@ class MainFrame(ctk.CTkFrame):
             next_screen.protocol("WM_DELETE_WINDOW", next_screen_on_close)
             return next_screen
 
+        try:
+            self.zkfp2.Init()
+            self.zkfp2.OpenDevice(0)
+        except Exception as e:
+            messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาตรวจสอบการเชื่อต่อเครื่องสแกนลายนิ้วมือ')
+            on_close()
+            return
+        popup_reserve_to_visit = ctk.CTkToplevel(self) 
+        popup_reserve_to_visit.title('จองเยี่ยม')
+        popup_reserve_to_visit.geometry('1920x1080+1+1')
+        popup_reserve_to_visit.grab_set()
+        popup_reserve_to_visit.focus()
+        popup_reserve_to_visit.attributes('-fullscreen',True)
+
+        popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
+        popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
+        progressbar = ctk.CTkProgressBar(popup_reserve_to_visit,mode='indeterminate')
+        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
+        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
+        relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
+        flag_status = False
+        nationnal_id = None
+        days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
+        months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
+                    "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
+                    "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+
+        current_time = t.localtime()
+        day = days[current_time.tm_wday]
+        month = months[current_time.tm_mon - 1]
+
+
+        capture_current = None
+
+        tree_container = ctk.CTkFrame(popup_reserve_to_visit)
+        tree_container.grid_rowconfigure(1,weight=1)
+        tree_container.grid_columnconfigure(0,weight=1)
+        config_label()
+        # update_time_label()
+        # get_relative()
+
+        # กำหนด style สำหรับ treeview 
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure('Treeview',font =('TH SarabunPSK',18),rowheight = 35)
+        style.configure('Treeview.Heading',font = ('TH SarabunPSK',18,'bold'))
+
+        tree = ttk.Treeview(tree_container,columns=('prisoner_id','f_name','l_name','level','dan','relation'),show='headings',height=10)
+        tree.heading('prisoner_id',text='รหัสประจำตัว')
+        tree.heading('f_name',text='ชื่อ')
+        tree.heading('l_name',text='นามสกุล')
+        tree.heading('level',text='ชั้น')
+        tree.heading('dan',text='แดน')
+        tree.heading('relation',text='ความสัมพันธ์')
+
+        tree.column('prisoner_id')
+        tree.column('f_name')
+        tree.column('l_name')
+        tree.column('level')
+        tree.column('dan')
+        tree.column('relation')
+
+        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        tree.bind('<<TreeviewSelect>>',item_select)
+
+        popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
+        popup_reserve_to_visit.bind_all('<Alt-q>', on_close)
+
+##############################################################################################################################################################################
+    # รายการจองเยี่ยมด้วยเลขบัตรประชาชน
+##############################################################################################################################################################################
+    def reserve_visit_by_national_id(self):
+        def config_label():
+            relative_label.grid_forget()
+            tree_container.grid_forget()
+            label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
+            date_label.grid(row=0,column=0,columnspan=2,sticky='n', pady=10)
+            insert_national_frame.grid(row=1,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
+            update_time_label()
+            # get_relative()
+
+        def update_time_label():
+            text = f"วัน {day} ที่ {current_time.tm_mday} {month} {(current_time.tm_year)+543} เวลา {t.strftime('%H:%M:%S')}"
+            date_label.configure(text=text)
+            if popup_reserve_to_visit.winfo_exists():
+                popup_reserve_to_visit.after(1000,update_time_label)
+
+        def get_relative(state = None):
+            if state:
+                try:
+                    self.thai_id_reader.read_card()
+                    info = self.thai_id_reader.get_person_info()
+                    national_id_entry.delete(0, 'end')
+                    national_id_entry.insert(0, info['cid'])
+                except Exception as e:
+                    print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
+                    messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
+                    return
+            if not national_id_entry.get():
+                alert = ALERT(popup_reserve_to_visit,['กรุณากรอกเลขบัตรประชาชน'],button=True)
+                return
+            nonlocal nationnal_id
+            nationnal_id = national_id_entry.get()
+
+            # --- เพิ่มส่วนนี้ ---
+            now = datetime.now()
+            show_for_next_day = False
+            if now.hour > 14 or (now.hour == 14 and now.minute >= 0):
+                # วันถัดไป
+                tomorrow = now + timedelta(days=1)
+                tomorrow_day = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"][tomorrow.weekday()]
+                allowed_dan_by_dan = {
+                    "จันทร์" : ['6','รจช'],
+                    "อังคาร" : ['5','รจช'],
+                    "พุธ" : ['1','2','3','4','7','รจช'],
+                    "พฤหัสบดี" : ['5','6','รจช'],
+                    "ศุกร์" : ['1','2','3','4','7','รจช']        
+                }
+                allower_dan = allowed_dan_by_dan.get(tomorrow_day,[])
+                show_for_next_day = True
+            else:
+                allowed_dan_by_dan = {
+                    "จันทร์" : ['6','รจช'],
+                    "อังคาร" : ['5','รจช'],
+                    "พุธ" : ['1','2','3','4','7','รจช'],
+                    "พฤหัสบดี" : ['5','6','รจช'],
+                    "ศุกร์" : ['1','2','3','4','7','รจช']        
+                }
+                allower_dan = allowed_dan_by_dan.get(day,[])
+            # --- จบส่วนเพิ่ม ---
+
+            prisoners_data = self.db.get_join_relatives_and_prisoners(national_id_entry.get())
+
+            if prisoners_data != []:
+                print(prisoners_data)
+            else:
+                alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {national_id_entry.get()}'],button=True)
+                national_id_entry.delete(0, 'end')
+                return
+
+            print(f'วันนี้ = {day}')
+            for row in prisoners_data:
+                print(f'ข้อมูลใน prisoner_data : {row}')
+            for row in tree.get_children():
+                tree.delete(row)
+
+            for index,row in enumerate(prisoners_data):
+                if row[4] not in allower_dan:
+                    continue
+                tree.insert('','end',values=row)
+
+            if len(tree.get_children()) == 0:
+                if show_for_next_day:
+                    alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบแดน\nก่อนจองล่วงหน้า'],button=False)
+                else:
+                    alert = ALERT(popup_reserve_to_visit,['ไม่พบข้อมูลผู้ต้องขังที่เยี่ยมได้\nกรุณาตรวจสอบวันและเวลาเยี่ยม'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+            else:
+                relative_label.configure(text =f'กรุณากดเลือกเพื่อจองเยี่ยม' )
+                relative_label.grid(row=1,column=0,columnspan=2,sticky='nsew' )
+                tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
+                tree_container.grid(row = 2,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
+
+        def item_select(_):
+            try:
+                for i in tree.selection():
+                    prisoner_data = tree.item(i)['values']
+                    break
+                if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
+                    self.open_nextscreen_window = open_next_screen(prisoner_data)
+                else:
+                    self.open_nextscreen_window.lift()
+            except Exception as e:
+                print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
+
+        def on_close(e = None):
+            popup_reserve_to_visit.destroy()
+
+        def can_reserve_for_next_day():
+            now = datetime.now()
+            if now.hour > 14 or (now.hour == 14 and now.minute >= 0):
+                return True
+            return False
+
+        def get_next_reserve_date():
+            # คืนค่าวันถัดไปในรูปแบบ YYYY-MM-DD
+            return (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        def open_next_screen(data):
+            
+            # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
+            psn_id = data[0]
+            psn_level = data[3]
+            today = datetime.today().date().isoformat()
+            today_month = datetime.today().strftime('%Y-%m')
+            check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
+            print(type(check_visit[1]))
+
+            reserve_date = datetime.now().strftime("%Y-%m-%d")
+
+            if can_reserve_for_next_day():
+                reserve_date = get_next_reserve_date()
+
+            if check_visit[0] > 0 :
+                alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'เยี่ยม' and check_visit[1] >= 8 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 8 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ดีมาก' and check_visit[1] >= 6 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 6 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ดี' and check_visit[1] >= 4 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 4 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'กลาง' and check_visit[1] >= 3 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ระหว่างพิจารณาคดี' and check_visit[1] >= 3 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ปรับปรุง' and check_visit[1] >= 2 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 2 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+            if psn_level == 'ปรับปรุงมาก' and check_visit[1] >= 1 :
+                alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อเดือน'],button=False)
+                alert.after(3000,lambda: (alert.destroy(),config_label()))
+                return
+
+
+            relative_dict = {}
+            data_relatives = self.db.get_relatives_id_fname_lname()
+            for rel_id,f_name,l_name in data_relatives:
+                full_name = f'{f_name} {l_name}'
+                relative_dict[rel_id] = full_name
+
+            next_screen = ctk.CTkToplevel(popup_reserve_to_visit)
+            next_screen.geometry('400x750')
+            next_screen.title('เลือกรอบเยี่ยม')
+            next_screen.grab_set()
+            next_screen.attributes('-topmost',True)
+            next_screen.minsize(400,750)
+            next_screen.maxsize(400,750)
+            prisoner_id = data[0]
+            # frame เลือกรอบ
+            frame_select_round = ctk.CTkFrame(next_screen)
+            # frame เลือกผู้ติดตาม
+            frame_follower_visit = ctk.CTkFrame(next_screen)
+            # frame ยืนยันการจอง
+            frame_confirm_visit = ctk.CTkFrame(next_screen)
+
+            round_visit_var = ctk.StringVar()
+            follower_vars = []
+
+            def next_screen_on_close():
+                
+                self.open_nextscreen_window = None
+                tree_container.grid_forget()
+                relative_label.grid_forget()
+                next_screen.destroy()
+                config_label()
+
+            def select_round():
+                for widget in frame_select_round.winfo_children():
+                    widget.destroy()
+
+                frame_follower_visit.pack_forget()
+                frame_select_round.pack(fill='both', expand=True)
+
+                label = ctk.CTkLabel(frame_select_round, text='เลือกรอบเยี่ยม', font=('TH SarabunPSK', 40, 'bold'))
+                label.pack(pady=5)
+                content = ctk.CTkLabel(frame_select_round, text=f'{data[1]} {data[2]}', font=('TH SarabunPSK', 30))
+                content.pack(pady=5)
+
+                now = datetime.now().time()
+                print(day)
+                print(data[4])
+                late_time = datetime.strptime('14:00:00', "%H:%M:%S").time()
+
+
+                if data[4] == 'รจช':
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    rounds = [
+                        ('เวลา 12.00 - 13.00', '12:00:00', '12:50:00')
+                    ]
+                    for text, start, close in rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+
+                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร'] and data[4] == 5):
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning_rounds = [
+                        ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
+                        ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
+                        ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:30:00'),
+                        ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '11:00:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in morning_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+
+                    # 🔹 รอบบ่าย
+                    afternoon_rounds = [
+                        ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
+                        ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
+                        ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in afternoon_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+
+                elif (day in ['อังคาร','พุธ'] and data[4] == 1) or (day in ['พฤหัสบดี','ศุกร์'] and data[4] == 1):
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning_rounds = [
+                        ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
+                        ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
+                        ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:30:00'),
+                        ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '11:00:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in morning_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+
+                elif (day in ['อังคาร','พุธ'] and data[4] in [2,3,4,7]) or (day in ['พฤหัสบดี','ศุกร์'] and data[4] in [2,3,4,7]):
+                    # 🔹 รอบบ่าย
+                    afternoon_rounds = [
+                        ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
+                        ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
+                        ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
+                    ]
+
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start, close in afternoon_rounds:
+                        close_time = datetime.strptime(close, "%H:%M:%S").time()
+                        if now < close_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                        elif now > late_time:
+                            ctk.CTkRadioButton(
+                                frame_select_round,
+                                text=text,
+                                variable=round_visit_var,
+                                value=start,
+                                font=('TH SarabunPSK', 32, 'bold')
+                            ).pack(pady=5)
+                            
+                # 🔸 ปุ่ม
+                submit = ctk.CTkButton(
+                    frame_select_round,
+                    text='เลือกผู้ติดตาม',
+                    command=lambda: select_follower() if round_visit_var.get() else ALERT(frame_select_round, msg=['\nกรุณาเลือกรอบเยี่ยม']),
+                    font=('TH SarabunPSK', 24, 'bold'),
+                    height=100
+                )
+
+                cancel = ctk.CTkButton(
+                    frame_select_round,
+                    text='ยกเลิก',
+                    command=next_screen_on_close,
+                    font=('TH SarabunPSK', 24, 'bold'),
+                    height=40,
+                    fg_color='red'
+                )
+
+                cancel.pack(side='bottom', pady=10)
+                submit.pack(side='bottom', pady=10)
+
+            def select_follower():
+                for widget in frame_follower_visit.winfo_children():
+                    widget.destroy()
+                frame_select_round.pack_forget()
+                frame_confirm_visit.pack_forget()
+
+                # date time จากการเลือกรอบเยี่ยม
+                round_time = round_visit_var.get()
+                round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
+                count_visit = self.db.get_count_visit_on_round(round_time,reserve_date)
+                
+                print(f'count_visit = {count_visit}')
+
+                if count_visit > 14:
+                    count_alert = ALERT(next_screen,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
+                    select_round()
+                    return
+                                          
+                frame_follower_visit.pack(fill = 'both',expand = True)
+                text_from_round = f'จองเยี่ยม\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
+                ctk.CTkLabel(frame_follower_visit,text=text_from_round,font=('TH SarabunPSK',28)).pack(pady = 10)
+
+
+                followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id,nationnal_id)
+                ctk.CTkLabel(frame_follower_visit,text='กรุณาเลือกผู้ติดตาม',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
+                ctk.CTkLabel(frame_follower_visit,text='(เลือกผู้ติดตามได้สูงสุด 4 คน)',text_color='red',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
+                if followers:
+                    for follower in followers:
+                        rid,title,fname,lname = follower
+                        var = ctk.BooleanVar()
+                        chk = ctk.CTkCheckBox(frame_follower_visit,
+                                              text=f'{title}{fname} {lname}',
+                                              variable=var,
+                                              font=('TH SarabunPSK',28,'bold'))
+                        chk.pack(pady = 5,padx = 50,anchor = 'nw')
+                        follower_vars.append((rid,var))
+                else:
+                    ctk.CTkLabel(frame_follower_visit,text='ไม่มีผู้ติดตาม',font=('TH SarabunPSK',28,'bold')).pack(pady = 10)
+
+                submit = ctk.CTkButton(frame_follower_visit,
+                                    text='ถัดไป',
+                                    command=lambda:confirm_visit(round_time_strtime,reserve_date),
+                                    font=('TH SarabunPSK',24,'bold'),
+                                    height=100
+                                    )
+                
+                cancel = ctk.CTkButton(frame_follower_visit,
+                                    text='ย้อนกลับ',
+                                    command=lambda:select_round(),
+                                    font=('TH SarabunPSK',24,'bold'),
+                                    height=40,
+                                    fg_color='orange'
+                                    )
+                cancel.pack(side = 'bottom',pady = 10)
+                submit.pack(side = 'bottom',pady = 10)
+
+            def confirm_visit(round_time_strtime,reserve_date):
+                for widget in frame_confirm_visit.winfo_children():
+                    widget.destroy()
+
+                frame_follower_visit.pack_forget()
+                frame_confirm_visit.pack(fill = 'both',expand = True)
+                ctk.CTkLabel(frame_confirm_visit,text='กรุณาตรวจสอบข้อมูลให้ถูกต้อง',font=('TH SarabunPSK',24,'bold')).pack(pady = 20)
+                select_fl_id = [rid for rid,var in follower_vars if var.get()]
+                prepare_data = [reserve_date,round_time_strtime,prisoner_id,nationnal_id]
+
+                ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nโดย {relative_dict.get(nationnal_id)}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
+                for index,row in enumerate(select_fl_id):
+                    prepare_data.append(row)
+                    ctk.CTkLabel(frame_confirm_visit,text=f'คนที่ {index +1} {relative_dict.get(row)}',font=('TH SarabunPSK',28)).pack(pady = 5)
+
+                select_fl_id.clear()
+
+                if len(prepare_data) > 8:
+                    print(f'ใน if = {prepare_data}')
+                    prepare_data.clear()
+                    follower_vars.clear()
+                    select_follower()
+                    alert = ALERT(frame_follower_visit,msg=['เลือกผู้ติดตามได้ไม่เกิน 4 คน','กรุณาเลือกใหม่'])
+                
+                submit = ctk.CTkButton(frame_confirm_visit,
+                                    text='ยืนยันการจองเยี่ยม',
+                                    command=lambda:insert_reserve_visit_to_db(prepare_data),
+                                    font=('TH SarabunPSK',24,'bold'),
+                                    height=100
+                                    )
+            
+                back = ctk.CTkButton(frame_confirm_visit,
+                                    text='ย้อนกลับ',
+                                    command=lambda:go_back() ,
+                                    font=('TH SarabunPSK',24,'bold'),
+                                    height=40,
+                                    fg_color='orange'
+                                    )
+                cancel = ctk.CTkButton(frame_confirm_visit,
+                                    text='ยกเลิกการจอง',
+                                    command=lambda:next_screen_on_close(),
+                                    font=('TH SarabunPSK',24,'bold'),
+                                    height=40,
+                                    fg_color='red'
+                                    )
+                cancel.pack(side = 'bottom',pady = 20)
+                back.pack(side = 'bottom',pady = 20)
+                submit.pack(side = 'bottom',pady = 20)
+
+                def go_back():
+                    prepare_data.clear()
+                    follower_vars.clear()
+                    select_follower()
+                    
+            def insert_reserve_visit_to_db(prepare_data):
+                print(prepare_data)
+                if len(prepare_data) == 8:
+                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5) VALUES (?,?,?,?,?,?,?,?)"
+                    result = self.db.add_visits(query,prepare_data)
+                    if result:
+                        insert_succress()
+                        return
+                elif len(prepare_data) == 7:
+                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4) VALUES (?,?,?,?,?,?,?)"
+                    result = self.db.add_visits(query,prepare_data)
+                    if result:
+                        insert_succress()
+                        return
+                elif len(prepare_data) == 6:
+                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3) VALUES (?,?,?,?,?,?)"
+                    result = self.db.add_visits(query,prepare_data)
+                    if result:
+                        insert_succress()
+                        return
+                elif len(prepare_data) == 5:
+                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2) VALUES (?,?,?,?,?)"
+                    result = self.db.add_visits(query,prepare_data)
+                    if result:
+                        insert_succress()
+                        return
+                elif len(prepare_data) == 4:
+                    query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1) VALUES (?,?,?,?)"
+                    result = self.db.add_visits(query,prepare_data)
+                    if result:
+                        insert_succress()
+                        return
+                
+            def insert_succress():
+                alert = ALERT(next_screen,['จองเยี่ยมสำเร็จ'],button=True)
+                result =alert.show()
+                if result:
+                    next_screen_on_close()
+            
+            select_round()
+            next_screen.protocol("WM_DELETE_WINDOW", next_screen_on_close)
+            return next_screen
+
+        popup_reserve_to_visit = ctk.CTkToplevel(self) 
+        popup_reserve_to_visit.title('จองเยี่ยม')
+        popup_reserve_to_visit.geometry('720x480+1+1')
+        popup_reserve_to_visit.grab_set()
+        popup_reserve_to_visit.focus()
+        popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
+        popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
+        insert_national_frame = ctk.CTkFrame(popup_reserve_to_visit)
+        insert_national_frame.grid_rowconfigure(0,weight=1,uniform='popup_reserve')
+        insert_national_frame.grid_columnconfigure((0,1,2),weight=1,uniform='popup_reserve')
+        
+        insert_label = ctk.CTkLabel(insert_national_frame,text='กรุณากรอกเลขบัตรประชาชน :',font=('TH SarabunPSK', 32, 'bold'))
+        insert_label.grid(row=0,column=0,pady=10,sticky='e',padx = 10)
+        btn_read_id = ctk.CTkButton(insert_national_frame,
+                                    text='อ่านข้อมูล',
+                                    font=('TH SarabunPSK', 32, 'bold'),
+                                    command=lambda : get_relative(True))
+        btn_read_id.grid(row=0,column=2,pady=10,sticky='w',padx = 10)
+        national_id_entry = ctk.CTkEntry(insert_national_frame,font=('TH SarabunPSK', 32, 'bold'),placeholder_text='เลขบัตรประชาชน 13 หลัก',width=300)
+        national_id_entry.grid(row=0,column=1,pady=10,sticky='ew',padx = 10)
+        national_id_entry.bind('<Return>',lambda e: get_relative())
+        national_id_entry.bind('<KP_Enter>',lambda e: get_relative())
+
+        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
+        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
+        relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
+        flag_status = False
+        nationnal_id = None
+        days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
+        months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
+                    "พฤษภาคม","มิถุนายน","กรกฎาคม", "สิงหาคม",
+                    "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+
+        current_time = t.localtime()
+        day = days[current_time.tm_wday]
+        month = months[current_time.tm_mon - 1]
+
         tree_container = ctk.CTkFrame(popup_reserve_to_visit)
         tree_container.grid_rowconfigure(1,weight=1)
         tree_container.grid_columnconfigure(0,weight=1)
@@ -2874,7 +3117,8 @@ class MainFrame(ctk.CTkFrame):
     # รายงานการเยี่ยม
 ##############################################################################################################################################################################
     def report_visits(self):
-        date_now = datetime.now().strftime("%d/%m/%Y")
+
+
         def resize_tree_column():
             tree_container.update_idletasks()
             total_width = tree_container.winfo_width()
@@ -2939,21 +3183,26 @@ class MainFrame(ctk.CTkFrame):
 
             except Exception as e:
                 messagebox.showerror('ข้อผิดพลาด',f'ไม่สามารถพิมพ์ได้ :\n{e}')
+
         def get_visits():
             tree.grid_forget()
             round_time = combo_round.get()
-            round_date = datetime.now().strftime("%Y-%m-%d")
-            data = [round_date,round_time]
-            result =  self.db.get_visits(data)
-            print(result)
+            year = year_var.get()
+            month = month_dict[month_var.get()]
+            day = day_var.get()
+            round_date = f"{year}-{month}-{day}"
+            print(f'round_date = {round_date}')
+            data = [round_date, round_time]
+            result = self.db.get_visits(data)
             for row in tree.get_children():
                 tree.delete(row)
             for row in result:
                 tree.insert('','end',values=row)
-            tree_container.grid(row = 2 ,column = 0 ,columnspan = 3)
+            tree_container.grid(row = 2 ,column = 0 ,columnspan = 6)
             tree.grid(row=0)
             button_print = ctk.CTkButton(self.popup_report_visits,text='พิมพ์',command=lambda:print_table())
             button_print.grid(row= 3,column = 0 ,columnspan = 3 ,pady = 20)
+
 
         def on_right_click(event):
             nonlocal popup_window_right_click
@@ -2961,10 +3210,11 @@ class MainFrame(ctk.CTkFrame):
             if not selected:
                 return
             values = tree.item(selected)['values']
-            for i in values:
-                print(i)
+            # for i in values:
+            #     print(i)
             # ฟังก์ชันสำหรับเมนูคลิกขวา
             def move_round():
+
                 def move_round():
                     round_selected = time_visit.get()
                     print(date_current)
@@ -2983,9 +3233,12 @@ class MainFrame(ctk.CTkFrame):
                                 move_round_pupup.destroy()
                                 get_visits()
 
-                
                 popup_window_right_click.destroy()
                 print('ย้ายรอบ')
+                print('fn move_round ********* ',type(values[3]),values[3])
+                if values[3] == '12:00:00':
+                    alert = ALERT(self,msg=['เรือนจำชั่วคราวไม่สามารถย้ายรอบได้'],button=True)
+                    return
                 move_round_pupup = ctk.CTkToplevel()
                 move_round_pupup.title('ย้ายรอบเยี่ยม')
                 move_round_pupup.geometry('500x200+400+50')
@@ -2994,7 +3247,7 @@ class MainFrame(ctk.CTkFrame):
 
                 move_round_pupup.grid_columnconfigure(0,weight=1,uniform='move_round')
                 move_round_pupup.grid_rowconfigure((0,1,2),weight=1,uniform='move_round')
-                label_content = ctk.CTkLabel(move_round_pupup,text=f'ย้ายรอบเยี่ยม\n{values[3]} น.  {values[4]}',font=('TH SarabunPSK',32,'bold'))
+                label_content = ctk.CTkLabel(move_round_pupup,text=f'ย้ายรอบเยี่ยม\n{values[4]}',font=('TH SarabunPSK',32,'bold'))
                 label_content.grid(row = 0 , column = 0 ,sticky = 'ns')
                 time_visit = ctk.CTkOptionMenu(move_round_pupup,
                                                 values=['09:30:00','10:00:00','10:30:00','11:00:00','13:15:00','13:45:00','14:15:00'],
@@ -3015,7 +3268,6 @@ class MainFrame(ctk.CTkFrame):
                 else:
                     alert = ALERT(self,['ไม่สามารถยกเลิกรอบเยี่ยมได้'],text_color='red',button=True)
                     
-
             def add_visit():
                 def read_card():
                     try:
@@ -3026,7 +3278,57 @@ class MainFrame(ctk.CTkFrame):
                         messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
                         return 
                     return info['cid']
+                
+                def check_label_visit(data_visit_label,btn):
+                    all_label = list()
+                    all_label.append(data_visit_no_1.cget('text'))
+                    all_label.append(data_visit_no_2.cget('text'))
+                    all_label.append(data_visit_no_3.cget('text'))
+                    all_label.append(data_visit_no_4.cget('text'))
+                    all_label.append(data_visit_no_5.cget('text'))
 
+                    relative_id = read_card()
+                    result_visit = self.db.prisoner_id_on_table_visits(values[0])
+                    result_count = self.db.count_relative(result_visit,relative_id)
+
+                    if result_count == 0:
+                        alert = ALERT(add_visit_popup,msg=['ไม่พบข้อมูลและความสัมพันธ์'],button=True)
+                        return
+                    for i in all_label:
+                        print(i,relative_id)
+                        if i == relative_id:
+                            alert = ALERT(add_visit_popup,msg=[f'หมายเลข {relative_id}\nมีการจองเยี่ยมแล้ว'],button=True)
+                            return
+                    
+                    data_visit_label.configure(text = relative_id)
+                    label = data_visit_label.cget('text')
+                    if label == '' or label == None:
+                        print('label == '' or none')
+                        return
+                    btn = btn
+                    btn.grid_forget()
+                    return
+                
+                def save_to_db():
+                    visit_id = values[0]
+                    data_relative = []
+                    data_relative.append(data_visit_no_1.cget('text'))
+                    data_relative.append(data_visit_no_2.cget('text'))   
+                    data_relative.append(data_visit_no_3.cget('text'))
+                    data_relative.append(data_visit_no_4.cget('text'))
+                    data_relative.append(data_visit_no_5.cget('text'))
+                    data_relative.append(visit_id)
+                    result_add_relatives =  self.db.add_relative_to_visits(data_relative)
+                    if result_add_relatives:
+                        alert = ALERT(add_visit_popup,[f'เพิ่มชื่อญาติเยี่ยมสำเร็จ'],text_color='black',button=True)
+                        if alert.show():
+                            add_visit_popup.destroy()
+                            get_visits()
+                    else:
+                        alert = ALERT(add_visit_popup,[f'ไม่สามารถเพิ่มชื่อญาติเยี่ยมได้'],text_color='red',button=True)
+                        
+
+                    
                 result_get_visits = self.db.get_visit_by_id(values[0])
                 relationship = self.db.get_join_prisoners_and_relatives(result_get_visits[4])
                 print(result_get_visits)
@@ -3037,6 +3339,7 @@ class MainFrame(ctk.CTkFrame):
                 add_visit_popup.geometry('480x720+400+50')  
                 add_visit_popup.grab_set()
                 add_visit_popup.focus()
+
                 add_visit_popup.grid_columnconfigure((0,1),weight=1,uniform='add_visit')
                 add_visit_popup.grid_rowconfigure((0,1,2,3,4,5,6,7,8),weight=1,uniform='add_visit')
                 label_content = ctk.CTkLabel(add_visit_popup,text=f'เพิ่มชื่อญาติเยี่ยม\n{values[3]} น.  {values[4]}',font=('TH SarabunPSK',32,'bold'))
@@ -3067,10 +3370,10 @@ class MainFrame(ctk.CTkFrame):
                 data_visit_no_5 = ctk.CTkLabel(add_visit_popup,text='',font=('TH SarabunPSK',24))
                 data_visit_no_5.grid(row = 7 , column = 1 , sticky = 'w',padx = 20,pady = 10)
 
-                button_add_visit = ctk.CTkButton(add_visit_popup,text='เพิ่ม',font=('TH SarabunPSK',24))
-                button_add_visit.grid(row = 8 , column = 0 , sticky = 'ns',padx = 20,pady = 10)
-                button_cancel = ctk.CTkButton(add_visit_popup,text='ยกเลิก',font=('TH SarabunPSK',24),command=lambda:add_visit_popup.destroy())
-                button_cancel.grid(row = 8 , column = 1 , sticky = 'ns',padx = 20,pady = 10)
+                button_add_visit = ctk.CTkButton(add_visit_popup,text='เพิ่ม',font=('TH SarabunPSK',24),command=save_to_db)
+                button_add_visit.grid(row = 8 , column = 0 ,padx = 20,pady = 10)
+                button_cancel = ctk.CTkButton(add_visit_popup,text='ยกเลิก',fg_color='red',font=('TH SarabunPSK',24),command=lambda:add_visit_popup.destroy())
+                button_cancel.grid(row = 8 , column = 1 ,padx = 20,pady = 10)
 
                 for index, data in enumerate(result_get_visits):
                     print(f'index = {index} data = {data}')
@@ -3084,48 +3387,22 @@ class MainFrame(ctk.CTkFrame):
                         data_visit_no_4.configure(text=f'{data}')
                     elif index == 9 and data != None:
                         data_visit_no_5.configure(text=f'{data}')
-
-                    # if index == 5 and data == None:
-                    #     btn = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
-                    #     btn.grid(row = 3 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    #     btn.configure(command=lambda:[data_visit_no_1.configure(text=read_card()),btn.grid_forget()])
-                    # if index == 6 and data == None:
-                    #     btn = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
-                    #     btn.grid(row = 4 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    #     btn.configure(command=lambda:[data_visit_no_2.configure(text=read_card()),btn.grid_forget()])
-                    # if index == 7 and data == None:
-                    #     btn = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
-                    #     btn.grid(row = 5 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    #     btn.configure(command=lambda:[data_visit_no_3.configure(text=read_card()),btn.grid_forget()])
-                    # if index == 8 and data == None:
-                    #     btn = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
-                    #     btn.grid(row = 6 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    #     btn.configure(command=lambda:[data_visit_no_4.configure(text=read_card()),btn.grid_forget()])
-                    # if index == 9 and data == None:
-                    #     btn = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
-                    #     btn.grid(row = 7 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    #     btn.configure(command=lambda:[data_visit_no_5.configure(text=read_card()),btn.grid_forget()])
             
                 if data_visit_no_1.cget('text') == '':
-                    btn1 = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
+                    btn1 = ctk.CTkButton(add_visit_popup,text='เพิ่มญาติ',font=('TH SarabunPSK',24),command=lambda:check_label_visit(data_visit_no_1,btn1))
                     btn1.grid(row = 3 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    btn1.configure(command=lambda:[data_visit_no_1.configure(text=read_card()),btn1.grid_forget()])
                 if data_visit_no_2.cget('text') == '':
-                    btn2 = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
+                    btn2 = ctk.CTkButton(add_visit_popup,text='เพิ่มญาติ',font=('TH SarabunPSK',24),command=lambda:check_label_visit(data_visit_no_2,btn2))
                     btn2.grid(row = 4 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    btn2.configure(command=lambda:[data_visit_no_2.configure(text=read_card()),btn2.grid_forget()])
                 if data_visit_no_3.cget('text') == '':
-                    btn3 = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
+                    btn3 = ctk.CTkButton(add_visit_popup,text='เพิ่มญาติ',font=('TH SarabunPSK',24),command=lambda:check_label_visit(data_visit_no_3,btn3))
                     btn3.grid(row = 5 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    btn3.configure(command=lambda:[data_visit_no_3.configure(text=read_card()),btn3.grid_forget()])
                 if data_visit_no_4.cget('text') == '':
-                    btn4 = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
+                    btn4 = ctk.CTkButton(add_visit_popup,text='เพิ่มญาติ',font=('TH SarabunPSK',24),command=lambda:check_label_visit(data_visit_no_4,btn4))
                     btn4.grid(row = 6 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    btn4.configure(command=lambda:[data_visit_no_4.configure(text=read_card()),btn4.grid_forget()])
                 if data_visit_no_5.cget('text') == '':
-                    btn5 = ctk.CTkButton(add_visit_popup,text='เพิ่มชื่อญาติเยี่ยม',font=('TH SarabunPSK',24),command=lambda:print(read_card()))
+                    btn5 = ctk.CTkButton(add_visit_popup,text='เพิ่มญาติ',font=('TH SarabunPSK',24),command=lambda:check_label_visit(data_visit_no_5,btn5))
                     btn5.grid(row = 7 , column = 1 , sticky = 'w',padx = 20,pady = 10)
-                    btn5.configure(command=lambda:[data_visit_no_5.configure(text=read_card()),btn5.grid_forget()])
 
             nonlocal popup_window_right_click
             try:
@@ -3152,20 +3429,44 @@ class MainFrame(ctk.CTkFrame):
             
             popup_window_right_click.after(100, lambda: popup_window_right_click.focus_force())
             popup_window_right_click.bind('<FocusOut>',lambda e:popup_window_right_click.destroy())
+        
+        self.popup_report_visits.grid_columnconfigure((0,5),weight=1,uniform='popup_report_visits')
+       
+
+        date_now = datetime.now().strftime("%d/%m/%Y")
+        # สร้างตัวเลือกปี เดือน วัน ด้วย ctk
+        current_year = datetime.now().year
+        years = [str(current_year - 1), str(current_year), str(current_year + 1)]
+        months_th = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+        month_numbers = [f"{i+1:02d}" for i in range(12)]
+        month_dict = dict(zip(months_th, month_numbers))
+        days_in_month = [f"{i:02d}" for i in range(1, 32)]
+
+        year_var = ctk.StringVar(value=str(current_year))
+        month_var = ctk.StringVar(value=months_th[datetime.now().month - 1])
+        day_var = ctk.StringVar(value=f"{datetime.now().day:02d}")
+
+        combo_year = ctk.CTkComboBox(self.popup_report_visits, values=years, variable=year_var, width=80, font=('TH SarabunPSK', 18),dropdown_font=('TH SarabunPSK', 18))
+        combo_month = ctk.CTkComboBox(self.popup_report_visits, values=months_th, variable=month_var, width=120, font=('TH SarabunPSK', 18),dropdown_font=('TH SarabunPSK', 18))
+        combo_day = ctk.CTkComboBox(self.popup_report_visits, values=days_in_month, variable=day_var, width=60, font=('TH SarabunPSK', 18),dropdown_font=('TH SarabunPSK', 18))
+
+        combo_year.grid(row=1, column=1, padx=5, pady=20)
+        combo_month.grid(row=1, column=2, padx=5, pady=20)
+        combo_day.grid(row=1, column=3, padx=5, pady=20)
 
         date_current = datetime.now().strftime("%Y-%m-%d")
-        self.popup_report_visits.grid_columnconfigure((0,1,2),weight=1,uniform='popup_report_visits')
         label_content = ctk.CTkLabel(self.popup_report_visits,text=f'รายงานการเยี่ยม ประจำวันที่ {date_now}',font=('TH SarabunPSK',32,'bold'))
-        label_content.grid(row = 0 , column = 0 , columnspan = 3 ,sticky = 'ns')
+        label_content.grid(row = 0 , column = 0 , columnspan = 6 ,sticky = 'ns')
 
         label_select_round = ctk.CTkLabel(self.popup_report_visits,text='เลือกรอบเยี่ยม',font=('TH SarabunPSK',32,'bold'))
         label_select_round.grid(row = 1,column = 0,sticky = 'e')
 
-        combo_round = ctk.CTkOptionMenu(self.popup_report_visits,values=['09:30:00','10:00:00','10:30:00','11:00:00','13:15:00','13:45:00','14:15:00'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-        combo_round.grid(row= 1,column = 1, sticky = 'ew',padx = 40,pady = 20)
+        combo_round = ctk.CTkOptionMenu(self.popup_report_visits,values=['09:30:00','10:00:00','10:30:00','11:00:00','12:00:00','13:15:00','13:45:00','14:15:00'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+        combo_round.grid(row= 1,column = 4, sticky = 'ew',padx = 40,pady = 20)
 
         button = ctk.CTkButton(self.popup_report_visits,text='ค้นหา',font=('TH SarabunPSK',18),command=lambda:get_visits())
-        button.grid(row = 1,column = 2 ,sticky = 'w')
+        button.grid(row = 1,column = 5 ,sticky = 'w')
 
         tree_container = ctk.CTkFrame(self.popup_report_visits)
         tree_container.grid_columnconfigure(0,weight=1)
