@@ -1592,7 +1592,7 @@ class MainFrame(ctk.CTkFrame):
             popup_show_list.protocol("WM_DELETE_WINDOW", on_close)
 
         # insert ข้อมูลให้อยู่ในตาราง treeview
-        def show_prisoners(data):
+        def show_relatives(data):
             for row in tree.get_children():
                 tree.delete(row)
             for row in data:
@@ -1600,10 +1600,11 @@ class MainFrame(ctk.CTkFrame):
 
         # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
         def search_one_var_prisoners():
+            nonlocal all_data
             keyword = search_all_var.get().lower()
             filtered = [row for row in all_data if keyword in row[2].lower()]
             print(filtered)
-            show_prisoners(filtered)
+            show_relatives(filtered)
 
         def resize_tree_columns():
             tree_container.update_idletasks()
@@ -1612,8 +1613,9 @@ class MainFrame(ctk.CTkFrame):
                 tree.column(col,width=int(total_width * ratio),anchor='w')
 
         def start_tree():
+            nonlocal all_data
             all_data = self.db.get_all_relatives()
-            show_prisoners(all_data)
+            show_relatives(all_data)
 
         self.show_all_relative_frame.grid_rowconfigure(2,weight=1)
         self.show_all_relative_frame.grid_columnconfigure(0,weight=1)
@@ -2163,7 +2165,7 @@ class MainFrame(ctk.CTkFrame):
                                 font=('TH SarabunPSK', 32, 'bold')
                             ).pack(pady=5)
 
-                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร'] and data[4] == 5):
+                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร','พุธ','พฤหัสบดี'] and data[4] == 5):
                     # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                     morning_rounds = [
                         ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
@@ -2756,7 +2758,7 @@ class MainFrame(ctk.CTkFrame):
                                 font=('TH SarabunPSK', 32, 'bold')
                             ).pack(pady=5)
 
-                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร'] and data[4] == 5):
+                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร','พุธ','พฤหัสบดี'] and data[4] == 5):
                     # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                     morning_rounds = [
                         ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
