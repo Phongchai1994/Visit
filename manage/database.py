@@ -112,7 +112,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
-    # ดึงข้อมูลผู้ต้องขังใสตาราง prisoners 
+    # ดึงข้อมูลผู้ต้องขังใส่ตาราง prisoners 
     def get_data_all(self):
         self.decode_db()
         self.connect()

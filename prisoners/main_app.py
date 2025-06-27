@@ -1249,7 +1249,10 @@ class MainFrame(ctk.CTkFrame):
         def search_one_var_prisoners():
             nonlocal all_data
             keyword = search_all_var.get().lower()
-            filtered = [row for row in all_data if keyword in row[2].lower()]
+            filtered = [
+                row for row in all_data 
+                if keyword in row[2].lower() or keyword in row[3].lower()
+            ]
             print(filtered)
             show_prisoners(filtered)
 
@@ -1602,7 +1605,10 @@ class MainFrame(ctk.CTkFrame):
         def search_one_var_prisoners():
             nonlocal all_data
             keyword = search_all_var.get().lower()
-            filtered = [row for row in all_data if keyword in row[2].lower()]
+            filtered = [
+                row for row in all_data 
+                if keyword in row[2].lower() or keyword in row[3].lower()
+            ]
             print(filtered)
             show_relatives(filtered)
 
@@ -1918,7 +1924,7 @@ class MainFrame(ctk.CTkFrame):
             progressbar.stop()
             label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
             date_label.grid(row=0,column=0,columnspan=2,sticky='n', pady=10)
-            label_content.configure(text = 'กรุณาวางนิ้วมือบนเครื่องสแกนเพื่อเริ่มการจองเยี่ยม',text_color = 'black')
+            label_content.configure(text = 'กรุณาวางนิ้วมือบนเครื่องสแกนเพื่อเริ่มทำรายการ',text_color = 'black')
             update_time_label()
             get_relative()
 
@@ -2457,9 +2463,10 @@ class MainFrame(ctk.CTkFrame):
             self.zkfp2.Init()
             self.zkfp2.OpenDevice(0)
         except Exception as e:
-            messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาตรวจสอบการเชื่อต่อเครื่องสแกนลายนิ้วมือ')
+            messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาตรวจสอบการเชื่อมต่อเครื่องสแกนลายนิ้วมือ')
             on_close()
             return
+
         popup_reserve_to_visit = ctk.CTkToplevel(self) 
         popup_reserve_to_visit.title('จองเยี่ยม')
         popup_reserve_to_visit.geometry('1920x1080+1+1')
@@ -2530,9 +2537,11 @@ class MainFrame(ctk.CTkFrame):
         def config_label():
             relative_label.grid_forget()
             tree_container.grid_forget()
-            label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
+            # label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
             date_label.grid(row=0,column=0,columnspan=2,sticky='n', pady=10)
             insert_national_frame.grid(row=1,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
+            button_frame.grid(row=2,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
+            
             update_time_label()
             # get_relative()
 
@@ -2558,7 +2567,48 @@ class MainFrame(ctk.CTkFrame):
                 return
             nonlocal nationnal_id
             nationnal_id = national_id_entry.get()
+            prisoners_data = self.db.get_join_relatives_and_prisoners(nationnal_id)
+            print(prisoners_data)
+            relative_data = self.db.get_data_for_ralative_id(nationnal_id)
+            print(relative_data)
+            label_content.configure(text = f'ยินดีต้อนรับ\n{relative_data[1]}{relative_data[2]} {relative_data[3]}')
+            
+            button_reserve_now = ctk.CTkButton(button_frame,
+                                                text='จองเยี่ยมทันที',
+                                                font=('TH SarabunPSK', 32, 'bold'),
+                                                command=lambda: reserve_now())
+            button_reserve_future = ctk.CTkButton(button_frame,
+                                                text='จองเยี่ยมล่วงหน้า',
+                                                font=('TH SarabunPSK', 32, 'bold'),
+                                                command=lambda: reserve_future())
+            button_reserve_now.grid(row=1,column=0,sticky='nsew',padx=20,pady=10)
+            button_reserve_future.grid(row=1,column=1,sticky='nsew',padx=20,pady=10)
+            now = datetime.now()
+            def reserve_now():
+                print('จองเยี่ยมวันนี้')
+                allowed_dan_by_dan = {
+                    "จันทร์" : ['6','รจช'],
+                    "อังคาร" : ['5','รจช'],
+                    "พุธ" : ['1','2','3','4','7','รจช'],
+                    "พฤหัสบดี" : ['5','6','รจช'],
+                    "ศุกร์" : ['1','2','3','4','7','รจช']        
+                }
+                allower_dan = allowed_dan_by_dan.get(day,[])
+                print(allower_dan)
 
+                if prisoners_data != []:
+                    print(prisoners_data)
+                else:
+                    alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {national_id_entry.get()}'],button=True)
+                    national_id_entry.delete(0, 'end')
+                    return
+
+
+            def reserve_future():
+                print('จองเยี่ยมล่วงหน้า')
+
+                pass
+            return
             # --- เพิ่มส่วนนี้ ---
             now = datetime.now()
             show_for_next_day = False
@@ -2586,7 +2636,6 @@ class MainFrame(ctk.CTkFrame):
                 allower_dan = allowed_dan_by_dan.get(day,[])
             # --- จบส่วนเพิ่ม ---
 
-            prisoners_data = self.db.get_join_relatives_and_prisoners(national_id_entry.get())
 
             if prisoners_data != []:
                 print(prisoners_data)
@@ -3048,7 +3097,7 @@ class MainFrame(ctk.CTkFrame):
 
         popup_reserve_to_visit = ctk.CTkToplevel(self) 
         popup_reserve_to_visit.title('จองเยี่ยม')
-        popup_reserve_to_visit.geometry('720x480+1+1')
+        popup_reserve_to_visit.geometry('980x520+1+1')
         popup_reserve_to_visit.grab_set()
         popup_reserve_to_visit.focus()
         popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
@@ -3057,6 +3106,10 @@ class MainFrame(ctk.CTkFrame):
         insert_national_frame.grid_rowconfigure(0,weight=1,uniform='popup_reserve')
         insert_national_frame.grid_columnconfigure((0,1,2),weight=1,uniform='popup_reserve')
         
+        button_frame = ctk.CTkFrame(popup_reserve_to_visit)
+        button_frame.grid_rowconfigure((0,1),weight=1,uniform='popup_reserve',minsize=150)
+        button_frame.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
+
         insert_label = ctk.CTkLabel(insert_national_frame,text='กรุณากรอกเลขบัตรประชาชน :',font=('TH SarabunPSK', 32, 'bold'))
         insert_label.grid(row=0,column=0,pady=10,sticky='e',padx = 10)
         btn_read_id = ctk.CTkButton(insert_national_frame,
@@ -3064,12 +3117,14 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold'),
                                     command=lambda : get_relative(True))
         btn_read_id.grid(row=0,column=2,pady=10,sticky='w',padx = 10)
+        label_content = ctk.CTkLabel(button_frame,text='ยินดีต้อนรับ',font=('TH SarabunPSK', 52, 'bold'))
+        label_content.grid(row = 0,column = 0,columnspan = 3 ,sticky = 'nsew',pady = 20)
         national_id_entry = ctk.CTkEntry(insert_national_frame,font=('TH SarabunPSK', 32, 'bold'),placeholder_text='เลขบัตรประชาชน 13 หลัก',width=300)
         national_id_entry.grid(row=0,column=1,pady=10,sticky='ew',padx = 10)
         national_id_entry.bind('<Return>',lambda e: get_relative())
         national_id_entry.bind('<KP_Enter>',lambda e: get_relative())
 
-        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
+        # label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
         date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
         relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
         flag_status = False
@@ -3119,7 +3174,6 @@ class MainFrame(ctk.CTkFrame):
     # รายงานการเยี่ยม
 ##############################################################################################################################################################################
     def report_visits(self):
-
 
         def resize_tree_column():
             tree_container.update_idletasks()
