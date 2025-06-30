@@ -19,6 +19,45 @@ import os
 import tempfile
 
 pdfmetrics.registerFont(TTFont("TH SarabunPSK", "THSarabun.ttf"))
+
+class MORING_ROUNDS:
+    """คลาสสำหรับจัดการข้อมูลรอบเช้า"""
+    def __init__(self):
+        self.rounds = [
+            ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
+            ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
+            ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:15:00'),
+            ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '10:15:00'),
+        ]
+
+    def get_available_rounds(self, now, late_time):
+        """คืนค่ารอบที่ยังสามารถเลือกได้ตามเวลาปัจจุบัน"""
+        from datetime import datetime
+        available = []
+        for text, start, close in self.rounds:
+            close_time = datetime.strptime(close, "%H:%M:%S").time()
+            if now < close_time or now > late_time:
+                available.append((text, start))
+        return available
+class AFTERNOON_ROUNDS:
+    """คลาสสำหรับจัดการข้อมูลรอบบ่าย"""
+    def __init__(self):
+        self.rounds = [
+            ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
+            ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
+            ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
+        ]
+
+    def get_available_rounds(self, now, late_time):
+        """คืนค่ารอบที่ยังสามารถเลือกได้ตามเวลาปัจจุบัน"""
+        from datetime import datetime
+        available = []
+        for text, start, close in self.rounds:
+            close_time = datetime.strptime(close, "%H:%M:%S").time()
+            if now < close_time or now > late_time:
+                available.append((text, start))
+        return available
+
 class ALERT(ctk.CTkToplevel):
     def __init__(self, parent, msg=None, text_color=None, button=True):
         super().__init__(parent)
@@ -2584,7 +2623,11 @@ class MainFrame(ctk.CTkFrame):
             button_reserve_now.grid(row=1,column=0,sticky='nsew',padx=20,pady=10)
             button_reserve_future.grid(row=1,column=1,sticky='nsew',padx=20,pady=10)
             now = datetime.now()
+
             def reserve_now():
+                button_frame.grid_forget()
+                tree_container.grid(row=2,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
+
                 print('จองเยี่ยมวันนี้')
                 allowed_dan_by_dan = {
                     "จันทร์" : ['6','รจช'],
@@ -2602,12 +2645,64 @@ class MainFrame(ctk.CTkFrame):
                     alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {national_id_entry.get()}'],button=True)
                     national_id_entry.delete(0, 'end')
                     return
+                for row in tree.get_children():
+                    tree.delete(row)
+                for index,row in enumerate(prisoners_data):
+                    if row[4] not in allower_dan:
+                        continue
+                    tree.insert('','end',values=row)
 
+                if len(tree.get_children()) == 0:
+                    alert = ALERT(popup_reserve_to_visit,['ไม่พบข้อมูลผู้ต้องขังที่เยี่ยมได้\nกรุณาตรวจสอบวันและเวลาเยี่ยม'],button=False)
+                    alert.after(3000,lambda: (alert.destroy(),config_label()))
+                else:
+                    relative_label.configure(text =f'กรุณากดเลือกเพื่อจองเยี่ยม' )
+                    relative_label.grid(row=1,column=0,columnspan=2,sticky='nsew' )
+                    tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
+                    tree_container.grid(row = 2,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
 
             def reserve_future():
-                print('จองเยี่ยมล่วงหน้า')
+                print('จองเยี่ยมล่วงหน้า')# สร้าง tree ใหม่สำหรับจองล่วงหน้า
+                future_tree_container = ctk.CTkFrame(popup_reserve_to_visit)
+                future_tree_container.grid_rowconfigure(0, weight=1)
+                future_tree_container.grid_columnconfigure(0, weight=1)
+                future_tree_container.grid(row=3, column=0, columnspan=2, padx=20, pady=10, sticky="nsew")
 
-                pass
+                # สร้าง treeview สำหรับจองล่วงหน้า
+                future_tree = ttk.Treeview(
+                    future_tree_container,
+                    columns=('prisoner_id','f_name','l_name','level','dan','relation'),
+                    show='headings',
+                    height=10
+                )
+
+                future_tree.heading('prisoner_id',text='รหัสประจำตัว')
+                future_tree.heading('f_name',text='ชื่อ')
+                future_tree.heading('l_name',text='นามสกุล')
+                future_tree.heading('level',text='ชั้น')
+                future_tree.heading('dan',text='แดน')
+                future_tree.heading('relation',text='ความสัมพันธ์')
+
+                future_tree.column('prisoner_id')
+                future_tree.column('f_name')
+                future_tree.column('l_name')
+                future_tree.column('level')
+                future_tree.column('dan')
+                future_tree.column('relation')
+
+                future_scrollbar = ttk.Scrollbar(future_tree_container, orient='vertical', command=future_tree.yview)
+                future_tree.configure(yscrollcommand=future_scrollbar.set)
+                future_tree.grid(row=0, column=0, sticky='nsew')
+                future_scrollbar.grid(row=0, column=1, sticky='ns')
+
+                # ดึงข้อมูลผู้ต้องขังที่สามารถจองล่วงหน้าได้ (ตัวอย่าง: ใช้ prisoners_data เดิม)
+                for row in future_tree.get_children():
+                    future_tree.delete(row)
+                for index, row in enumerate(prisoners_data):
+                    # สามารถเพิ่มเงื่อนไขเฉพาะสำหรับจองล่วงหน้าได้ที่นี่
+                    future_tree.insert('', 'end', values=row)
+
+                
             return
             # --- เพิ่มส่วนนี้ ---
             now = datetime.now()
@@ -2786,10 +2881,7 @@ class MainFrame(ctk.CTkFrame):
                 content.pack(pady=5)
 
                 now = datetime.now().time()
-                print(day)
-                print(data[4])
                 late_time = datetime.strptime('14:00:00', "%H:%M:%S").time()
-
 
                 if data[4] == 'รจช':
                     # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
@@ -2807,120 +2899,132 @@ class MainFrame(ctk.CTkFrame):
                                 font=('TH SarabunPSK', 32, 'bold')
                             ).pack(pady=5)
 
-                elif (day == 'จันทร์' and data[4] == 6) or (day in ['จันทร์','อังคาร','พุธ','พฤหัสบดี'] and data[4] == 5):
+                elif day == 'จันทร์' and str(data[4]) == '6':
                     # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
-                    morning_rounds = [
-                        ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
-                        ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
-                        ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:15:00'),
-                        ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '10:15:00'),
-                    ]
-
+                    morning = MORING_ROUNDS()
                     ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                    for text, start, close in morning_rounds:
-                        close_time = datetime.strptime(close, "%H:%M:%S").time()
-                        if now < close_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
-                        elif now > late_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
+                    for text, start in morning.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
 
                     # 🔹 รอบบ่าย
-                    afternoon_rounds = [
-                        ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
-                        ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
-                        ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
-                    ]
-
+                    afternoon = AFTERNOON_ROUNDS()
                     ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                    for text, start, close in afternoon_rounds:
-                        close_time = datetime.strptime(close, "%H:%M:%S").time()
-                        if now < close_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
-                        
-                        elif now > late_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
+                    for text, start in afternoon.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)                                                                                                          
 
-                elif (day in ['อังคาร','พุธ'] and data[4] == 1) or (day in ['พฤหัสบดี','ศุกร์'] and data[4] == 1):
+                elif day == 'อังคาร' and str(data[4]) == '5':
                     # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
-                    morning_rounds = [
-                        ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
-                        ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
-                        ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:15:00'),
-                        ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '10:15:00'),
-                    ]
-
+                    morning = MORING_ROUNDS()
                     ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                    for text, start, close in morning_rounds:
-                        close_time = datetime.strptime(close, "%H:%M:%S").time()
-                        if now < close_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
-                        elif now > late_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
-
-                elif (day in ['อังคาร','พุธ'] and data[4] in [2,3,4,7]) or (day in ['พฤหัสบดี','ศุกร์'] and data[4] in [2,3,4,7]):
+                    for text, start in morning.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
+                    
                     # 🔹 รอบบ่าย
-                    afternoon_rounds = [
-                        ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00', '13:00:00'),
-                        ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00', '13:15:00'),
-                        ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00', '13:15:00'),
-                    ]
-
+                    afternoon = AFTERNOON_ROUNDS()
                     ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                    for text, start, close in afternoon_rounds:
-                        close_time = datetime.strptime(close, "%H:%M:%S").time()
-                        if now < close_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
-                        elif now > late_time:
-                            ctk.CTkRadioButton(
-                                frame_select_round,
-                                text=text,
-                                variable=round_visit_var,
-                                value=start,
-                                font=('TH SarabunPSK', 32, 'bold')
-                            ).pack(pady=5)
-                            
+                    for text, start in afternoon.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5) 
+
+                elif day == 'พุธ' and str(data[4]) == '1':
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning = MORING_ROUNDS()
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start in morning.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
+
+                elif day == 'พุธ' and str(data[4]) in ['2','3','4','7']:                    
+                    # 🔹 รอบบ่าย
+                    afternoon = AFTERNOON_ROUNDS()
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start in afternoon.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5) 
+
+                elif day == 'พฤหัสบดี' and str(data[4]) == '5':
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning = MORING_ROUNDS()
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start in morning.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
+                elif day == 'พฤหัสบดี' and str(data[4]) == '6':
+                    # 🔹 รอบบ่าย
+                    afternoon = AFTERNOON_ROUNDS()
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start in afternoon.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
+                elif day == 'ศุกร์' and str(data[4]) == '1':
+                    # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                    morning = MORING_ROUNDS()
+                    ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start in morning.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
+
+                elif day == 'ศุกร์' and str(data[4]) in ['2','3','4','7']:                    
+                    # 🔹 รอบบ่าย
+                    afternoon = AFTERNOON_ROUNDS()
+                    ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
+                    for text, start in afternoon.get_available_rounds(now, late_time):
+                        ctk.CTkRadioButton(
+                            frame_select_round,
+                            text=text,
+                            variable=round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 32, 'bold')
+                        ).pack(pady=5)
+                
                 # 🔸 ปุ่ม
                 submit = ctk.CTkButton(
                     frame_select_round,
@@ -3165,6 +3269,18 @@ class MainFrame(ctk.CTkFrame):
 
         scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
+        tree.grid(row=0, column=0, sticky='nsew')
+        scrollbar.grid(row=0, column=1, sticky='ns')
+
+        # เพิ่มปุ่มด้านล่าง tree
+        btn_add = ctk.CTkButton(tree_container, text="เพิ่มข้อมูล", font=('TH SarabunPSK', 18, 'bold'), command=lambda: print("เพิ่มข้อมูล"))
+        btn_add.grid(row=1, column=0, pady=10, sticky='ew')
+
+        btn_edit = ctk.CTkButton(tree_container, text="แก้ไขข้อมูล", font=('TH SarabunPSK', 18, 'bold'), command=lambda: print("แก้ไขข้อมูล"))
+        btn_edit.grid(row=2, column=0, pady=10, sticky='ew')
+
+        btn_delete = ctk.CTkButton(tree_container, text="ลบข้อมูล", font=('TH SarabunPSK', 18, 'bold'), fg_color='red', command=lambda: print("ลบข้อมูล"))
+        btn_delete.grid(row=3, column=0, pady=10, sticky='ew')
 
         tree.bind('<<TreeviewSelect>>',item_select)
 
