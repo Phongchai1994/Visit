@@ -2516,7 +2516,7 @@ class MainFrame(ctk.CTkFrame):
         popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
         popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
         progressbar = ctk.CTkProgressBar(popup_reserve_to_visit,mode='indeterminate')
-        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
+        label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 48, 'bold'))
         date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
         relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
         flag_status = False
@@ -2575,7 +2575,8 @@ class MainFrame(ctk.CTkFrame):
     def reserve_visit_by_national_id(self):
         def config_label():
             relative_label.grid_forget()
-            tree_container.grid_forget()
+            
+            # tree_container.grid_forget()
             # label_content.grid(row = 3,column = 0,columnspan = 2 ,sticky = 'nsew',pady = 20)
             date_label.grid(row=0,column=0,columnspan=2,sticky='n', pady=10)
             insert_national_frame.grid(row=1,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
@@ -2615,18 +2616,73 @@ class MainFrame(ctk.CTkFrame):
             button_reserve_now = ctk.CTkButton(button_frame,
                                                 text='จองเยี่ยมทันที',
                                                 font=('TH SarabunPSK', 32, 'bold'),
-                                                command=lambda: reserve_now())
+                                                command=lambda: reserve_now(),
+                                                height=20)
             button_reserve_future = ctk.CTkButton(button_frame,
                                                 text='จองเยี่ยมล่วงหน้า',
                                                 font=('TH SarabunPSK', 32, 'bold'),
-                                                command=lambda: reserve_future())
-            button_reserve_now.grid(row=1,column=0,sticky='nsew',padx=20,pady=10)
-            button_reserve_future.grid(row=1,column=1,sticky='nsew',padx=20,pady=10)
+                                                command=lambda: reserve_future(),
+                                                height=20)
+            button_cancel = ctk.CTkButton(button_frame,
+                                          fg_color='red',
+                                            text='ยกเลิก',
+                                            font=('TH SarabunPSK', 32, 'bold'),
+                                            command=lambda: (config_label(),button_reserve_now.grid_forget(),button_reserve_future.grid_forget(),button_cancel.grid_forget(),national_id_entry.delete(0, 'end'),label_content.configure(text = f'ยินดีต้อนรับ'))
+                                            )
+            button_reserve_now.grid(row=1,column=0,sticky='nsew',padx=20,pady=5)
+            button_reserve_future.grid(row=1,column=1,sticky='nsew',padx=20,pady=5)
+            button_cancel.grid(row=2,column=0,columnspan=2,padx=20,pady=5)
             now = datetime.now()
 
             def reserve_now():
-                button_frame.grid_forget()
+                def item_select(_):
+                    try:
+                        for i in tree.selection():
+                            prisoner_data = tree.item(i)['values']
+                            break
+                        if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
+                            self.open_nextscreen_window = open_next_screen(prisoner_data)
+                        else:
+                            self.open_nextscreen_window.lift()
+                    except Exception as e:
+                        print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
+
+                tree_container = ctk.CTkFrame(popup_reserve_to_visit)
+                tree_container.grid_rowconfigure(1,weight=1)
+                tree_container.grid_columnconfigure(0,weight=1)
+                # กำหนด style สำหรับ treeview 
+                style = ttk.Style()
+                style.theme_use('default')
+                style.configure('Treeview',font =('TH SarabunPSK',18),rowheight = 35)
+                style.configure('Treeview.Heading',font = ('TH SarabunPSK',18,'bold'))
+
+                tree = ttk.Treeview(tree_container,columns=('prisoner_id','f_name','l_name','level','dan','relation'),show='headings',height=5)
+                tree.heading('prisoner_id',text='รหัสประจำตัว')
+                tree.heading('f_name',text='ชื่อ')
+                tree.heading('l_name',text='นามสกุล')
+                tree.heading('level',text='ชั้น')
+                tree.heading('dan',text='แดน')
+                tree.heading('relation',text='ความสัมพันธ์')
+
+                tree.column('prisoner_id')
+                tree.column('f_name')
+                tree.column('l_name')
+                tree.column('level')
+                tree.column('dan')
+                tree.column('relation')
+
+                scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
+                tree.configure(yscrollcommand=scrollbar.set)
+
+                tree.bind('<<TreeviewSelect>>',item_select)
                 tree_container.grid(row=2,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
+                button_frame.grid_forget()
+                btn_cancel = ctk.CTkButton(popup_reserve_to_visit,
+                                            text='ยกเลิก'
+                                            ,font=('TH SarabunPSK', 32, 'bold'),
+                                            command=lambda: (tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label
+                                            ()))
+                btn_cancel.grid(row=3,column=0,columnspan=2,sticky='nsew',padx=20,pady=10)
 
                 print('จองเยี่ยมวันนี้')
                 allowed_dan_by_dan = {
@@ -2762,17 +2818,7 @@ class MainFrame(ctk.CTkFrame):
                 tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
                 tree_container.grid(row = 2,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
 
-        def item_select(_):
-            try:
-                for i in tree.selection():
-                    prisoner_data = tree.item(i)['values']
-                    break
-                if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
-                    self.open_nextscreen_window = open_next_screen(prisoner_data)
-                else:
-                    self.open_nextscreen_window.lift()
-            except Exception as e:
-                print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
+
 
         def on_close(e = None):
             popup_reserve_to_visit.destroy()
@@ -2863,7 +2909,7 @@ class MainFrame(ctk.CTkFrame):
             def next_screen_on_close():
                 
                 self.open_nextscreen_window = None
-                tree_container.grid_forget()
+                # tree_container.grid_forget()
                 relative_label.grid_forget()
                 next_screen.destroy()
                 config_label()
@@ -3201,7 +3247,7 @@ class MainFrame(ctk.CTkFrame):
 
         popup_reserve_to_visit = ctk.CTkToplevel(self) 
         popup_reserve_to_visit.title('จองเยี่ยม')
-        popup_reserve_to_visit.geometry('980x520+1+1')
+        popup_reserve_to_visit.geometry('980x640+1+1')
         popup_reserve_to_visit.grab_set()
         popup_reserve_to_visit.focus()
         popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
@@ -3211,7 +3257,7 @@ class MainFrame(ctk.CTkFrame):
         insert_national_frame.grid_columnconfigure((0,1,2),weight=1,uniform='popup_reserve')
         
         button_frame = ctk.CTkFrame(popup_reserve_to_visit)
-        button_frame.grid_rowconfigure((0,1),weight=1,uniform='popup_reserve',minsize=150)
+        button_frame.grid_rowconfigure((0,1,2),weight=1,uniform='popup_reserve',minsize=150)
         button_frame.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
 
         insert_label = ctk.CTkLabel(insert_national_frame,text='กรุณากรอกเลขบัตรประชาชน :',font=('TH SarabunPSK', 32, 'bold'))
@@ -3221,8 +3267,8 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold'),
                                     command=lambda : get_relative(True))
         btn_read_id.grid(row=0,column=2,pady=10,sticky='w',padx = 10)
-        label_content = ctk.CTkLabel(button_frame,text='ยินดีต้อนรับ',font=('TH SarabunPSK', 52, 'bold'))
-        label_content.grid(row = 0,column = 0,columnspan = 3 ,sticky = 'nsew',pady = 20)
+        label_content = ctk.CTkLabel(button_frame,text='ยินดีต้อนรับ',font=('TH SarabunPSK', 48, 'bold'))
+        label_content.grid(row = 0,column = 0,columnspan = 3 ,sticky = 'nsew',pady = 10)
         national_id_entry = ctk.CTkEntry(insert_national_frame,font=('TH SarabunPSK', 32, 'bold'),placeholder_text='เลขบัตรประชาชน 13 หลัก',width=300)
         national_id_entry.grid(row=0,column=1,pady=10,sticky='ew',padx = 10)
         national_id_entry.bind('<Return>',lambda e: get_relative())
@@ -3242,47 +3288,7 @@ class MainFrame(ctk.CTkFrame):
         day = days[current_time.tm_wday]
         month = months[current_time.tm_mon - 1]
 
-        tree_container = ctk.CTkFrame(popup_reserve_to_visit)
-        tree_container.grid_rowconfigure(1,weight=1)
-        tree_container.grid_columnconfigure(0,weight=1)
         config_label()
-        # กำหนด style สำหรับ treeview 
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure('Treeview',font =('TH SarabunPSK',18),rowheight = 35)
-        style.configure('Treeview.Heading',font = ('TH SarabunPSK',18,'bold'))
-
-        tree = ttk.Treeview(tree_container,columns=('prisoner_id','f_name','l_name','level','dan','relation'),show='headings',height=10)
-        tree.heading('prisoner_id',text='รหัสประจำตัว')
-        tree.heading('f_name',text='ชื่อ')
-        tree.heading('l_name',text='นามสกุล')
-        tree.heading('level',text='ชั้น')
-        tree.heading('dan',text='แดน')
-        tree.heading('relation',text='ความสัมพันธ์')
-
-        tree.column('prisoner_id')
-        tree.column('f_name')
-        tree.column('l_name')
-        tree.column('level')
-        tree.column('dan')
-        tree.column('relation')
-
-        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
-        tree.grid(row=0, column=0, sticky='nsew')
-        scrollbar.grid(row=0, column=1, sticky='ns')
-
-        # เพิ่มปุ่มด้านล่าง tree
-        btn_add = ctk.CTkButton(tree_container, text="เพิ่มข้อมูล", font=('TH SarabunPSK', 18, 'bold'), command=lambda: print("เพิ่มข้อมูล"))
-        btn_add.grid(row=1, column=0, pady=10, sticky='ew')
-
-        btn_edit = ctk.CTkButton(tree_container, text="แก้ไขข้อมูล", font=('TH SarabunPSK', 18, 'bold'), command=lambda: print("แก้ไขข้อมูล"))
-        btn_edit.grid(row=2, column=0, pady=10, sticky='ew')
-
-        btn_delete = ctk.CTkButton(tree_container, text="ลบข้อมูล", font=('TH SarabunPSK', 18, 'bold'), fg_color='red', command=lambda: print("ลบข้อมูล"))
-        btn_delete.grid(row=3, column=0, pady=10, sticky='ew')
-
-        tree.bind('<<TreeviewSelect>>',item_select)
 
         popup_reserve_to_visit.protocol("WM_DELETE_WINDOW", on_close)
 
