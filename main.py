@@ -37,30 +37,36 @@ def save_config(file_path):
 class App_Prisoners(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry('1366x768+1+1')
+        # self.geometry('1366x768+1+1')
         self.title('โปรแกรมจองเยี่ยมญาติ')
-        # self.attributes('-fullscreen',True)
-        
-        self.grid_columnconfigure(1,weight=1)
-        self.grid_rowconfigure(0,weight=1)
+        self.configure(fg_color='#f4f7fa')
+        self.state('zoomed')  # เปิดหน้าต่างแบบ maximize
+        self.update()
 
+        # Modern shadowed sidebar
+        sidebar = ctk.CTkFrame(self, fg_color='#ffffff', corner_radius=0, border_width=0)
+        sidebar.grid(row=0, column=0, sticky='nswe')
+        sidebar.grid_propagate(False)
+        sidebar.configure(width=270)
+
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, minsize=270)
+
+        # Main content area
         self.main_frame = MainFrame(self)
-        self.menu_frame = MenuFrame(self,self.main_frame)
+        self.menu_frame = MenuFrame(sidebar, self.main_frame)
 
-        self.grid_columnconfigure(0,minsize=250)
-
-        # สร้างเมนูบาร์
-        menu_bar = tk.Menu(self)
-        # สร้างเมนู ไฟล์
-        file_menu = tk.Menu(menu_bar,tearoff=0)
-        file_menu.add_command(label='เลือกฐานข้อมูล',command=self.select_database)
+        # Modern menubar (still native, but styled)
+        menu_bar = tk.Menu(self, bg='#e3eefa', fg='#2d3a4b', activebackground='#b3d1ff', activeforeground='#2d3a4b')
+        file_menu = tk.Menu(menu_bar, tearoff=0, bg='#f8fbff', fg='#2d3a4b')
+        file_menu.add_command(label='เลือกฐานข้อมูล', command=self.select_database)
         file_menu.add_separator()
-        file_menu.add_command(label='ปิดโปรแกรม',command=self.quit)
-        menu_bar.add_cascade(label='ไฟล์',menu=file_menu)
-        # สร้างเมนู help
-        help_menu = tk.Menu(menu_bar,tearoff=0)
+        file_menu.add_command(label='ปิดโปรแกรม', command=self.quit)
+        menu_bar.add_cascade(label='ไฟล์', menu=file_menu)
+        help_menu = tk.Menu(menu_bar, tearoff=0, bg='#f8fbff', fg='#2d3a4b')
         help_menu.add_command(label='เกี่ยวกับ')
-        menu_bar.add_cascade(label='ช่วยเหลือ',menu = help_menu)
+        menu_bar.add_cascade(label='ช่วยเหลือ', menu=help_menu)
         self.config(menu=menu_bar)
 
     def select_database(self):
