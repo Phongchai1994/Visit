@@ -40,7 +40,7 @@ class SQLiteDB:
         except Exception as e:
             messagebox.showerror('เชื่อมต่อฐานข้อมูลไม่สำเร็จ',e)
 
-        print('เชื่อมต่อฐานข้อมูล')
+        # print('เชื่อมต่อฐานข้อมูล')
 
     def close(self):
         if self.conn:
@@ -48,7 +48,7 @@ class SQLiteDB:
             self.conn.close()
             self.conn = None
             self.cursor = None
-            print('ปิดฐานข้อมูล')
+            # print('ปิดฐานข้อมูล')
 
     # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners
     def add_data(self,data):
@@ -404,6 +404,18 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
+
+    # ดึงข้อมูลของญาติด้วย เลขบัตรประชาชน   
+    def get_relative_by_national_id(self,id):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT title,f_name,l_name FROM relatives WHERE relative_id = ?',(id,))
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
 
     # นับครั้งการเยี่ยม เงื่อนไขตามชั้น
     def get_count_visit(self,prisoner_id,today,month):

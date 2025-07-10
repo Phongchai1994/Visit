@@ -38,8 +38,7 @@ class MORING_ROUNDS:
             close_time = datetime.strptime(close, "%H:%M:%S").time()
             if now < close_time:
                 available.append((text, start))
-        return available
-    
+        return available   
 
 class AFTERNOON_ROUNDS:
     """คลาสสำหรับจัดการข้อมูลรอบบ่าย"""
@@ -147,68 +146,109 @@ class MainFrame(ctk.CTkFrame):
 #   ลงทะเบียนผู้ต้องขัง 
 ##############################################################################################################################################################################
     def register_prisoner(self):
-        self.register_frame.grid_columnconfigure((0,1),weight=1,uniform="register_frame")
-        self.register_frame.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9),weight=1,uniform="register_frame")
-        
-        # progressbar = ctk.CTkProgressBar(self.register_frame,mode='indeterminate')
+        # Modern card style
+        self.register_frame.configure(fg_color="#ffffff", corner_radius=24)
+        self.register_frame.grid_columnconfigure((0, 1), weight=1, uniform="register_frame")
+        self.register_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9), weight=1, uniform="register_frame")
+        for i in range(10):
+            self.register_frame.grid_rowconfigure(i, minsize=48)
 
-        regis_label_content = ctk.CTkLabel(self.register_frame,text='ลงทะเบียนผู้ต้องขัง',font=('TH SarabunPSK',40,'bold'))
-        regis_label_content.grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew' , pady = 10)
+        # Header
+        regis_label_content = ctk.CTkLabel(
+            self.register_frame,
+            text='ลงทะเบียนผู้ต้องขัง',
+            font=('TH SarabunPSK', 44, 'bold'),
+            text_color='#2d3a4b'
+        )
+        regis_label_content.grid(row=0, column=0, columnspan=2, sticky='nsew', pady=(24, 10))
 
-        regis_label_id = ctk.CTkLabel(self.register_frame,text='รหัสประจำตัว : ',font=('TH SarabunPSK',18,'bold'),width=200,anchor='e')
-        regis_label_id.grid(row = 1,column = 0,sticky = 'e',padx = 5)
-        regis_entry_id = ctk.CTkEntry(self.register_frame,font=('TH SarabunPSK',18),width=200,validate='key',validatecommand = (self.vcmd,'%P'))
-        regis_entry_id.grid(row = 1,column = 1,sticky = 'w',padx = 5)
+        # ID
+        regis_label_id = ctk.CTkLabel(self.register_frame, text='รหัสประจำตัว : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_id.grid(row=1, column=0, sticky='e', padx=12)
+        regis_entry_id = ctk.CTkEntry(self.register_frame, font=('TH SarabunPSK', 20),
+            width=220, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b',
+            validate='key', validatecommand=(self.vcmd, '%P'))
+        regis_entry_id.grid(row=1, column=1, sticky='w', padx=12)
 
-        regis_label_sex = ctk.CTkLabel(self.register_frame,text='เพศ : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_sex.grid(row = 2,column = 0,sticky = 'e',padx = 5)
-        regis_combo_sex = ctk.CTkOptionMenu(self.register_frame,values=['ชาย','หญิง'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-        regis_combo_sex.grid(row = 2,column = 1,sticky = 'w',padx = 5)
-        
-        regis_label_name = ctk.CTkLabel(self.register_frame,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_name.grid(row = 3 ,column = 0,sticky = 'e',padx = 5)
-        regis_entry_name = ctk.CTkEntry(self.register_frame,font=('TH SarabunPSK',18),width=200)
-        regis_entry_name.grid(row = 3,column = 1,sticky = 'w',padx = 5)
+        # Sex
+        regis_label_sex = ctk.CTkLabel(self.register_frame, text='เพศ : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_sex.grid(row=2, column=0, sticky='e', padx=12)
+        regis_combo_sex = ctk.CTkOptionMenu(self.register_frame, values=['ชาย', 'หญิง'],
+            font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
+            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+        regis_combo_sex.grid(row=2, column=1, sticky='w', padx=12)
 
-        regis_label_lname = ctk.CTkLabel(self.register_frame,text='นามสกุล : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_lname.grid(row = 4,column = 0,sticky = 'e',padx = 5)
-        regis_entry_lname = ctk.CTkEntry(self.register_frame,font=('TH SarabunPSK',18),width=200)
-        regis_entry_lname.grid(row = 4,column = 1,sticky = 'w',padx = 5)
+        # Name
+        regis_label_name = ctk.CTkLabel(self.register_frame, text='ชื่อ : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_name.grid(row=3, column=0, sticky='e', padx=12)
+        regis_entry_name = ctk.CTkEntry(self.register_frame, font=('TH SarabunPSK', 20),
+            width=220, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b')
+        regis_entry_name.grid(row=3, column=1, sticky='w', padx=12)
 
-        regis_label_lawsuit = ctk.CTkLabel(self.register_frame,text='คดี : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_lawsuit.grid(row = 5 ,column = 0,sticky = 'e',padx = 5)
-        regis_entry_lawsuit = ctk.CTkTextbox(self.register_frame,font=('TH SarabunPSK',18),width=200,height=60)
-        regis_entry_lawsuit.grid(row = 5,column = 1 ,sticky = 'w',padx = 5)
+        # Lastname
+        regis_label_lname = ctk.CTkLabel(self.register_frame, text='นามสกุล : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_lname.grid(row=4, column=0, sticky='e', padx=12)
+        regis_entry_lname = ctk.CTkEntry(self.register_frame, font=('TH SarabunPSK', 20),
+            width=220, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b')
+        regis_entry_lname.grid(row=4, column=1, sticky='w', padx=12)
 
-        regis_label_level = ctk.CTkLabel(self.register_frame,text='ชั้น : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_level.grid(row = 6 ,column = 0,sticky = 'e',padx = 5)
-        regis_combo_level = ctk.CTkOptionMenu(self.register_frame,values=['ระหว่างพิจารณาคดี','เยี่ยม','ดีมาก','ดี','กลาง','ปรับปรุง','ปรับปรุงมาก'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-        regis_combo_level.grid(row = 6 ,column = 1,sticky = 'w',padx = 5)
+        # Lawsuit
+        regis_label_lawsuit = ctk.CTkLabel(self.register_frame, text='คดี : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_lawsuit.grid(row=5, column=0, sticky='e', padx=12)
+        regis_entry_lawsuit = ctk.CTkTextbox(self.register_frame, font=('TH SarabunPSK', 20),
+            width=220, height=60, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b')
+        regis_entry_lawsuit.grid(row=5, column=1, sticky='w', padx=12)
 
-        regis_label_dan = ctk.CTkLabel(self.register_frame,text='แดน : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_dan.grid(row = 7,column = 0,sticky = 'e',padx = 5)
-        regis_combo_dan = ctk.CTkOptionMenu(self.register_frame,values=['1','2','3','4','5','6','7','รจช'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-        regis_combo_dan.grid(row = 7,column = 1,sticky = 'w',padx = 5)
+        # Level
+        regis_label_level = ctk.CTkLabel(self.register_frame, text='ชั้น : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_level.grid(row=6, column=0, sticky='e', padx=12)
+        regis_combo_level = ctk.CTkOptionMenu(self.register_frame,
+            values=['ระหว่างพิจารณาคดี', 'เยี่ยม', 'ดีมาก', 'ดี', 'กลาง', 'ปรับปรุง', 'ปรับปรุงมาก'],
+            font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
+            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+        regis_combo_level.grid(row=6, column=1, sticky='w', padx=12)
 
-        regis_label_type = ctk.CTkLabel(self.register_frame,text='สถานะ : ',font=('TH SarabunPSK',18,'bold'))
-        regis_label_type.grid(row = 8,column = 0,sticky = 'e',padx = 5)
-        regis_combo_type = ctk.CTkOptionMenu(self.register_frame,values=['ผู้ต้องขัง','ผู้ต้องกักขัง'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-        regis_combo_type.grid(row = 8,column = 1,sticky = 'w',padx = 5)
+        # Dan
+        regis_label_dan = ctk.CTkLabel(self.register_frame, text='แดน : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_dan.grid(row=7, column=0, sticky='e', padx=12)
+        regis_combo_dan = ctk.CTkOptionMenu(self.register_frame,
+            values=['1', '2', '3', '4', '5', '6', '7', 'รจช'],
+            font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
+            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+        regis_combo_dan.grid(row=7, column=1, sticky='w', padx=12)
 
-        regis_button_submit = ctk.CTkButton(self.register_frame,
-                                           text='บันทึกข้อมูล',
-                                           width=100,
-                                           font=('TH SarabunPSK',18,'bold'),
-                                           command=lambda:save_data_to_db())
-        regis_button_submit.grid(row = 9,column = 0,sticky = 'e',padx = 5)
-        regis_button_clear = ctk.CTkButton(self.register_frame,
-                                          text='ล้างข้อมูล',
-                                          width=100,
-                                          font=('TH SarabunPSK',18,'bold'),
-                                          command=lambda:clear_data())
-        regis_button_clear.grid(row = 9,column = 1,sticky = 'w',padx = 5)
+        # Type
+        regis_label_type = ctk.CTkLabel(self.register_frame, text='สถานะ : ',
+            font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
+        regis_label_type.grid(row=8, column=0, sticky='e', padx=12)
+        regis_combo_type = ctk.CTkOptionMenu(self.register_frame,
+            values=['ผู้ต้องขัง', 'ผู้ต้องกักขัง'],
+            font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
+            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+        regis_combo_type.grid(row=8, column=1, sticky='w', padx=12)
 
-        self.register_frame.grid_columnconfigure((0,1),minsize=300)
+        # Buttons
+        regis_button_submit = ctk.CTkButton(
+            self.register_frame, text='บันทึกข้อมูล', width=120,
+            font=('TH SarabunPSK', 20, 'bold'), fg_color='#4f8cff', hover_color='#2d3a4b',
+            text_color='#fff', corner_radius=16, command=lambda: save_data_to_db()
+        )
+        regis_button_submit.grid(row=9, column=0, sticky='e', padx=12, pady=16)
+        regis_button_clear = ctk.CTkButton(
+            self.register_frame, text='ล้างข้อมูล', width=120,
+            font=('TH SarabunPSK', 20, 'bold'), fg_color='#e3eefa', hover_color='#b3d1ff',
+            text_color='#2d3a4b', corner_radius=16, command=lambda: clear_data()
+        )
+        regis_button_clear.grid(row=9, column=1, sticky='w', padx=12, pady=16)
+
+        self.register_frame.grid_columnconfigure((0, 1), minsize=300)
 
         # ล้างข้อมูลในช่องกรอกข้อมูล
         def clear_data():
@@ -818,115 +858,151 @@ class MainFrame(ctk.CTkFrame):
     def search_all_prisoner(self):
 
         def add_relative(prisoner_id, f_name, l_name):
-            # ใช้ prisoner_id, f_name, l_name ที่ส่งมาจากการคลิกขวา
-            print(f"เพิ่มญาติสำหรับผู้ต้องขัง: {prisoner_id} {f_name} {l_name}")
-            # ที่นี่คุณสามารถใช้ข้อมูลนี้เพื่อแสดงหรือดำเนินการอื่น ๆ
 
+            # Modern card-style popup
             popup_register_relation = ctk.CTkToplevel(self)
             popup_register_relation.title('ลงทะเบียนญาติ')
-            popup_register_relation.geometry('480x720+1+1')
+            popup_register_relation.geometry('550x520+1+1')
             popup_register_relation.grab_set()
+            popup_register_relation.configure(fg_color="#ffffff", corner_radius=24, border_width=2, border_color="#e0e6ed")
 
             id_relative = ctk.StringVar()
             f_name_var = ctk.StringVar()
             l_name_var = ctk.StringVar()
             address_var = ctk.StringVar()
             tel_var = ctk.StringVar()
-            frame_data_relative = ctk.CTkFrame(popup_register_relation)
+
+            # Header
+            popup_label_content = ctk.CTkLabel(
+                popup_register_relation,
+                text='ลงทะเบียนญาติ',
+                font=('TH SarabunPSK', 32, 'bold'),
+                text_color='#2d3a4b'
+            )
+            popup_label_content.grid(row=0, column=0, columnspan=4, pady=(24, 10), sticky='n')
+
+            # Prisoner info row
+            ctk.CTkLabel(
+                popup_register_relation, text='รหัสประจำตัว :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=1, column=0, padx=8, sticky='e', pady=5)
+            ctk.CTkLabel(
+                popup_register_relation, text=prisoner_id, font=('TH SarabunPSK', 20), text_color='#2d3a4b'
+            ).grid(row=1, column=1, padx=8, sticky='w', pady=5)
+            ctk.CTkLabel(
+                popup_register_relation, text='ชื่อ :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=1, column=2, padx=8, sticky='e', pady=5)
+            ctk.CTkLabel(
+                popup_register_relation, text=f'{f_name} {l_name}', font=('TH SarabunPSK', 20), text_color='#2d3a4b'
+            ).grid(row=1, column=3, padx=8, sticky='w', pady=5)
+
+            # Card-style frame for form
+            frame_data_relative = ctk.CTkFrame(
+                popup_register_relation, fg_color="#f4f7fa", corner_radius=18, border_width=1, border_color="#e0e6ed"
+            )
             for i in range(7):
-                frame_data_relative.grid_rowconfigure(i,weight=1,uniform='popup')
-            # ตั้งค่า column
+                frame_data_relative.grid_rowconfigure(i, weight=1)
             for i in range(4):
-                popup_register_relation.grid_columnconfigure(i,weight=1,uniform='popup')
-                frame_data_relative.grid_columnconfigure(i,weight=1,uniform='popup')
-            popup_register_relation.grid_rowconfigure(3,weight=1,uniform='popup')
+                frame_data_relative.grid_columnconfigure(i, weight=1)
 
-            popup_label_content =ctk.CTkLabel(popup_register_relation,text='ลงทะเบียนญาติ',font=('TH SarabunPSK',28,'bold'))
-            popup_label_content.grid(row = 0,column =0,columnspan = 4,pady = 10)
-
-            popup_label_prisoner_id = ctk.CTkLabel(popup_register_relation,text='รหัสประจำตัว : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_prisoner_id.grid(row = 1,column = 0,padx= 5,sticky = 'e',pady = 5)
-            
-            popup_label_prisoner_id_form_search_one = ctk.CTkLabel(popup_register_relation,text=prisoner_id,font=('TH SarabunPSK',18,'bold'))
-            popup_label_prisoner_id_form_search_one.grid(row = 1,column = 1,padx= 5,sticky = 'w',pady = 5)
-
-            popup_label_prisoner_name = ctk.CTkLabel(popup_register_relation,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_prisoner_name.grid(row = 1,column = 2,padx= 5,sticky = 'e',pady = 5)
-
-            popup_label_prisoner_name_form_search_one = ctk.CTkLabel(popup_register_relation,text=f'{f_name} {l_name}',font=('TH SarabunPSK',18,'bold'))
-            popup_label_prisoner_name_form_search_one.grid(row = 1,column = 3,padx= 5,sticky = 'w',pady = 5)
-
-            popup_label_id_relative = ctk.CTkLabel(popup_register_relation,text='หมายเลขบัตรประชาชน',font=('TH SarabunPSK',18,'bold'))
-            popup_label_id_relative.grid(row = 2,column = 0,columnspan = 2,padx= 5,sticky = 'e',pady = 5)
-
-            popup_entry_id_relative = ctk.CTkEntry(popup_register_relation,font=('TH SarabunPSK',18),textvariable=id_relative,validate='key',validatecommand = (self.vcmd,'%P'))
-            popup_entry_id_relative.grid(row = 2,column = 2,padx= 5,sticky = 'w',pady = 5)
-
+            # National ID
+            ctk.CTkLabel(
+                popup_register_relation, text='หมายเลขบัตรประชาชน', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=2, column=0, columnspan=2, padx=8, sticky='e', pady=5)
+            popup_entry_id_relative = ctk.CTkEntry(
+                popup_register_relation, font=('TH SarabunPSK', 20), textvariable=id_relative,
+                validate='key', validatecommand=(self.vcmd, '%P'), width=220, height=36,
+                border_width=2, corner_radius=12, fg_color='#fff', text_color='#2d3a4b', border_color='#b3d1ff'
+            )
+            popup_entry_id_relative.grid(row=2, column=2, padx=8, sticky='w', pady=5)
             popup_entry_id_relative.bind('<Return>', lambda event: check_relative_id())
+            ctk.CTkButton(
+                popup_register_relation, text='ตรวจสอบ', width=100, height=36,
+                font=('TH SarabunPSK', 20, 'bold'), fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#fff',
+                corner_radius=12, command=lambda: check_relative_id()
+            ).grid(row=2, column=3, padx=8, sticky='w', pady=5)
 
-            popup_button_check_id = ctk.CTkButton(popup_register_relation,
-                                                    text='ตรวจสอบ',
-                                                    width=100,
-                                                    font=('TH SarabunPSK',18,'bold'),
-                                                    command=lambda:check_relative_id()
-                                                    )
-            popup_button_check_id.grid(row=2 ,column = 3,padx= 5,sticky = 'w',pady = 5)
+            # Title
+            ctk.CTkLabel(
+                frame_data_relative, text='คำนำหน้า :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=0, column=0, columnspan=2, sticky='e', padx=8, pady=6)
+            popup_combo_title_relative = ctk.CTkOptionMenu(
+                frame_data_relative,
+                values=['นาย','นาง','นางสาว','เด็กหญิง','เด็กชาย'],
+                font=('TH SarabunPSK',18),
+                dropdown_font=('TH SarabunPSK',18),
+                fg_color='#fff', 
+                button_color='#b3d1ff', 
+                text_color='#222'
+                )
+            popup_combo_title_relative.grid(row=0, column=2, columnspan=2, sticky='w', padx=8, pady=6)
 
-            popup_label_title_relative = ctk.CTkLabel(frame_data_relative,text='คำนำหน้า : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_title_relative.grid(row = 0,column = 0,columnspan = 2,sticky = 'e',padx = 5)
+            # First name
+            ctk.CTkLabel(
+                frame_data_relative, text='ชื่อ :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=1, column=0, columnspan=2, padx=8, sticky='e', pady=6)
+            popup_entry_fname_relative = ctk.CTkEntry(
+                frame_data_relative, font=('TH SarabunPSK', 20), textvariable=f_name_var,
+                width=220, height=36, border_width=2, corner_radius=12, fg_color='#fff', text_color='#2d3a4b', border_color='#b3d1ff'
+            )
+            popup_entry_fname_relative.grid(row=1, column=2, columnspan=2, padx=8, sticky='w', pady=6)
 
-            popup_combo_title_relative = ctk.CTkOptionMenu(frame_data_relative,values=['นาย','นาง','นางสาว','เด็กหญิง','เด็กชาย'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-            popup_combo_title_relative.grid(row = 0,column = 2,columnspan = 2,sticky = 'w',padx = 5)
+            # Last name
+            ctk.CTkLabel(
+                frame_data_relative, text='นามสกุล :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=2, column=0, columnspan=2, padx=8, sticky='e', pady=6)
+            popup_entry_lname_relative = ctk.CTkEntry(
+                frame_data_relative, font=('TH SarabunPSK', 20), textvariable=l_name_var,
+                width=220, height=36, border_width=2, corner_radius=12, fg_color='#fff', text_color='#2d3a4b', border_color='#b3d1ff'
+            )
+            popup_entry_lname_relative.grid(row=2, column=2, columnspan=2, padx=8, sticky='w', pady=6)
 
-            popup_label_fname_relative = ctk.CTkLabel(frame_data_relative,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_fname_relative.grid(row = 1,column = 0,columnspan = 2,padx= 5,sticky = 'e')
+            # Address
+            ctk.CTkLabel(
+                frame_data_relative, text='ที่อยู่ :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=3, column=0, columnspan=2, padx=8, sticky='e', pady=6)
+            popup_entry_address_relative = ctk.CTkEntry(
+                frame_data_relative, font=('TH SarabunPSK', 20), textvariable=address_var,
+                width=220, height=36, border_width=2, corner_radius=12, fg_color='#fff', text_color='#2d3a4b', border_color='#b3d1ff'
+            )
+            popup_entry_address_relative.grid(row=3, column=2, columnspan=2, padx=8, sticky='w', pady=6)
 
-            popup_entry_fname_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=f_name_var)
-            popup_entry_fname_relative.grid(row = 1,column = 2,columnspan = 2,padx= 5,sticky = 'w')
+            # Tel
+            ctk.CTkLabel(
+                frame_data_relative, text='เบอร์โทร :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=4, column=0, columnspan=2, padx=8, sticky='e', pady=6)
+            popup_entry_tel_relative = ctk.CTkEntry(
+                frame_data_relative, font=('TH SarabunPSK', 20), textvariable=tel_var,
+                validate='key', validatecommand=(self.vcmd, '%P'),
+                width=220, height=36, border_width=2, corner_radius=12, fg_color='#fff', text_color='#2d3a4b', border_color='#b3d1ff'
+            )
+            popup_entry_tel_relative.grid(row=4, column=2, columnspan=2, padx=8, sticky='w', pady=6)
 
-            popup_label_lname_relative = ctk.CTkLabel(frame_data_relative,text='นามสกุล : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_lname_relative.grid(row = 2,column = 0,columnspan = 2,padx= 2,sticky = 'e')
+            # Relation
+            ctk.CTkLabel(
+                frame_data_relative, text='ความสัมพันธ์ :', font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a'
+            ).grid(row=5, column=0, columnspan=2, padx=8, sticky='e', pady=6)
+            popup_combo_relation_relative = ctk.CTkOptionMenu(
+                frame_data_relative, values=['ปู่', 'ย่า', 'ตา', 'ยาย', 'ลุง', 'ป้า', 'พ่อ', 'แม่', 'น้า', 'พี่ชาย', 'พี่สาว', 'น้องชาย', 'น้องสาว', 'สามี', 'ภรรยา', 'ลูกสาว', 'ลูกชาย', 'อื่น ๆ'],
+                font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
+                fg_color='#fff', button_color='#b3d1ff', text_color='#222', width=120
+            )
+            popup_combo_relation_relative.grid(row=5, column=2, columnspan=2, padx=8, sticky='w', pady=6)
 
-            popup_entry_lname_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=l_name_var,)
-            popup_entry_lname_relative.grid(row = 2,column = 2,columnspan = 2,padx= 5,sticky = 'w')
-
-            popup_label_address_relative = ctk.CTkLabel(frame_data_relative,text='ที่อยู่ : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_address_relative.grid(row = 3,column = 0,columnspan = 2,padx= 5,sticky = 'e')
-
-            popup_entry_address_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=address_var)
-            popup_entry_address_relative.grid(row = 3,column = 2,columnspan = 2,padx= 5,sticky = 'w')
-
-            popup_label_tel_relative = ctk.CTkLabel(frame_data_relative,text='เบอร์โทร : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_tel_relative.grid(row = 4,column = 0,columnspan = 2,padx= 5,sticky = 'e')
-
-            popup_entry_tel_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=tel_var,validate='key',validatecommand = (self.vcmd,'%P'))
-            popup_entry_tel_relative.grid(row = 4,column = 2,columnspan = 2,padx= 5,sticky = 'w')
-
-            popup_label_relation_relative = ctk.CTkLabel(frame_data_relative,text='ความสัมพันธ์ : ',font=('TH SarabunPSK',18,'bold'))
-            popup_label_relation_relative.grid(row = 5,column = 0,columnspan = 2,padx= 5,sticky = 'e')
-            popup_combo_relation_relative = ctk.CTkOptionMenu(frame_data_relative,values=['ปู่','ย่า','ตา','ยาย','ลุง','ป้า','พ่อ','แม่','น้า','พี่ชาย','พี่สาว','น้องชาย','น้องสาว','สามี','ภรรยา','ลูกสาว','ลูกชาย','อื่น ๆ'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-            popup_combo_relation_relative.grid(row = 5,column = 2,columnspan = 2,padx= 5,sticky = 'w')
-
-            popup_button_submit = ctk.CTkButton(frame_data_relative,
-                                                text='บันทึกข้อมูล',
-                                                width=100,
-                                                font=('TH SarabunPSK',18,'bold'),
-                                                command=lambda:save_regis_relative_to_db()
-                                                )
-            popup_button_cancel = ctk.CTkButton(frame_data_relative,
-                                                text='ยกเลิก',
-                                                width=100,
-                                                font=('TH SarabunPSK',18,'bold'),
-                                                fg_color='red',
-                                                command=lambda:clear_popup_regis()
-                                                )
-            popup_button_submit.grid(row = 6,column = 0,padx = 5,columnspan = 2,sticky ='e' )
-            popup_button_cancel.grid(row = 6,column = 2,padx = 5,columnspan = 2,sticky ='w' )
-
-            
+            # Buttons
+            popup_button_submit = ctk.CTkButton(
+                frame_data_relative, text='บันทึกข้อมูล', width=120, height=38,
+                font=('TH SarabunPSK', 20, 'bold'), fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#fff',
+                corner_radius=14, command=lambda: save_regis_relative_to_db()
+            )
+            popup_button_cancel = ctk.CTkButton(
+                frame_data_relative, text='ยกเลิก', width=120, height=38,
+                font=('TH SarabunPSK', 20, 'bold'), fg_color='#e3eefa', hover_color='#b3d1ff', text_color='#2d3a4b',
+                corner_radius=14, command=lambda: clear_popup_regis()
+            )
+            popup_button_submit.grid(row=6, column=0, padx=8, columnspan=2, sticky='e', pady=(16, 12))
+            popup_button_cancel.grid(row=6, column=2, padx=8, columnspan=2, sticky='w', pady=(16, 12))
 
             def on_close():
-                print('popup register ถูกปิด')
                 popup_register_relation.destroy()
 
             def check_relative_id():
@@ -935,75 +1011,73 @@ class MainFrame(ctk.CTkFrame):
                     info = self.thai_id_reader.get_person_info()
                     id_relative.set(info['cid'])
                 except Exception as e:
-                    print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน: {e}')
                     messagebox.showerror('ข้อผิดพลาด', 'ไม่สามารถอ่านบัตรประชาชนได้ กรุณากรอกข้อมูลด้วยตนเอง')
                     pass
                 if not id_relative.get():
-                    messagebox.showerror('กรอกข้อมูล','ช่องค้นหาต้องไม่เป็นค่าว่าง')
+                    messagebox.showerror('กรอกข้อมูล', 'ช่องค้นหาต้องไม่เป็นค่าว่าง')
                     return
-                frame_data_relative.grid(row = 3,column = 0,columnspan = 4,sticky = 'nsew',padx = 5)
+                frame_data_relative.grid(row=3, column=0, columnspan=4, sticky='nsew', padx=18, pady=(10, 0))
                 result = self.db.get_data_for_ralative_id(popup_entry_id_relative.get().strip())
-                if result != None:
-                    popup_entry_id_relative.configure(state = 'disabled')
+                if result is not None:
+
+                    frame_data_relative.grid(row=3, column=0, columnspan=4, padx=18, pady=(10, 0), sticky='nsew')
+                    popup_entry_id_relative.configure(state='disabled')
                     popup_combo_title_relative.set(result[1])
-                    popup_combo_title_relative.configure(state = 'disabled')
+                    popup_combo_title_relative.configure(state='disabled')
                     f_name_var.set(result[2])
-                    popup_entry_fname_relative.configure(state = 'disabled')
+                    popup_entry_fname_relative.configure(state='disabled')
                     l_name_var.set(result[3])
-                    popup_entry_lname_relative.configure(state = 'disabled')
+                    popup_entry_lname_relative.configure(state='disabled')
                     address_var.set(result[4])
-                    popup_entry_address_relative.configure(state = 'disabled')
+                    popup_entry_address_relative.configure(state='disabled')
                     tel_var.set(result[5])
-                    popup_entry_tel_relative.configure(state = 'disabled')
+                    popup_entry_tel_relative.configure(state='disabled')
                 else:
-                    popup_entry_id_relative.configure(state = 'disabled')
-                    # messagebox.showwarning('แจ้งเตือน',f'ไม่พบข้อมูลหมายเลข {popup_entry_id_relative.get().strip()} กรุณากรอกข้อมูลเพื่อลงทะเบียน')
+                    popup_entry_id_relative.configure(state='disabled')
+                    frame_data_relative.grid(row=3, column=0, columnspan=4, padx=18, pady=(10, 0), sticky='nsew')
+
                     try:
                         popup_combo_title_relative.set(info['title'])
-                        popup_combo_title_relative.configure(state = 'normal')
+                        popup_combo_title_relative.configure(state='normal')
                         f_name_var.set(info['firstname'])
-                        popup_entry_fname_relative.configure(state = 'normal')
+                        popup_entry_fname_relative.configure(state='normal')
                         l_name_var.set(info['lastname'])
-                        popup_entry_lname_relative.configure(state = 'normal')
+                        popup_entry_lname_relative.configure(state='normal')
                         address_var.set(info['address'])
-                        popup_entry_address_relative.configure(state = 'normal')
+                        popup_entry_address_relative.configure(state='normal')
                         tel_var.set('')
-                        popup_entry_tel_relative.configure(state = 'normal')
+                        popup_entry_tel_relative.configure(state='normal')
                     except:
                         popup_combo_title_relative.set('')
-                        popup_combo_title_relative.configure(state = 'normal')
+                        popup_combo_title_relative.configure(state='normal')
                         f_name_var.set('')
-                        popup_entry_fname_relative.configure(state = 'normal')
+                        popup_entry_fname_relative.configure(state='normal')
                         l_name_var.set('')
-                        popup_entry_lname_relative.configure(state = 'normal')
+                        popup_entry_lname_relative.configure(state='normal')
                         address_var.set('')
-                        popup_entry_address_relative.configure(state = 'normal')
+                        popup_entry_address_relative.configure(state='normal')
                         tel_var.set('')
-                        popup_entry_tel_relative.configure(state = 'normal')
+                        popup_entry_tel_relative.configure(state='normal')
                         pass
- 
+
             def clear_popup_regis():
-                frame_data_relative.grid_forget()
-                popup_entry_id_relative.delete(0,ctk.END)
-                popup_combo_title_relative.set('นาย')
-                popup_entry_fname_relative.delete(0,ctk.END)
-                popup_entry_lname_relative.delete(0,ctk.END)
-                popup_entry_address_relative.delete(0,ctk.END)
-                popup_entry_tel_relative.delete(0,ctk.END)
-                popup_combo_relation_relative.set('')
+                popup_entry_id_relative.configure(state='normal')
+                popup_entry_id_relative.delete(0, ctk.END)
                 popup_combo_title_relative.set('')
-                popup_combo_title_relative.configure(state = 'normal')
+                popup_combo_title_relative.configure(state='normal')
                 f_name_var.set('')
-                popup_entry_fname_relative.configure(state = 'normal')
+                popup_entry_fname_relative.configure(state='normal')
                 l_name_var.set('')
-                popup_entry_lname_relative.configure(state = 'normal')
+                popup_entry_lname_relative.configure(state='normal')
                 address_var.set('')
-                popup_entry_address_relative.configure(state = 'normal')
+                popup_entry_address_relative.configure(state='normal')
                 tel_var.set('')
-                popup_entry_tel_relative.configure(state = 'normal')
-                popup_entry_id_relative.configure(state = 'normal')
+                popup_entry_tel_relative.configure(state='normal')
+                popup_combo_relation_relative.set('')
                 id_relative.set('')
-            
+                frame_data_relative.grid_forget()
+
+
             def save_regis_relative_to_db():
                 national_id_number = popup_entry_id_relative.get().strip()
                 title = popup_combo_title_relative.get().strip()
@@ -1018,46 +1092,36 @@ class MainFrame(ctk.CTkFrame):
                 if not all(data) or not relation:
                     messagebox.showerror('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบทุกช่อง')
                     return
-                # ดึง SELECT prisoner_id,relative_id FROM relations WHERE prisoner_id = ?',(id,)
-                print(prisoner_id,national_id_number)
                 result = self.db.get_data_relation(prisoner_id)
                 check_data = (prisoner_id, int(national_id_number))
-                print(f'ตรวจสอบข้อมูล result = {result}')
                 if not result:
-                    print(not result)
-                    # ส่งข้อมูลไปตารางญาติ 'INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel)
-                    result_db_relatives = self.db.add_data_ralative_to_relatives(prisoner_id,data,relation)
-                    result_db_relations = self.db.add_data_relation_to_ralations(prisoner_id,data,relation)
-                    continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล',f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
+                    result_db_relatives = self.db.add_data_ralative_to_relatives(prisoner_id, data, relation)
+                    result_db_relations = self.db.add_data_relation_to_ralations(prisoner_id, data, relation)
+                    continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล', f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
                     if continue_save:
                         clear_popup_regis()
                         return
                     else:
                         on_close()
                         return
-
-                # ตรวจสอบข้อมูลซ้ำ
                 if check_data in result:
-                    messagebox.showwarning('แจ้งข้อมูลซ้ำ',f'รหัสประจำตัวเลขที่ {national_id_number} มีการบันทึกข้อมูลแล้ว')
+                    messagebox.showwarning('แจ้งข้อมูลซ้ำ', f'รหัสประจำตัวเลขที่ {national_id_number} มีการบันทึกข้อมูลแล้ว')
                     clear_popup_regis()
                     return
-                
-                if len(result) >=10:
+                if len(result) >= 10:
                     messagebox.showwarning('ข้อมูลญาติ', 'ข้อมูลญาติเกิน 10 คน')
                     clear_popup_regis()
                     return
-                
-                # ถ้าไม่ซ้ำและยังไม่เกินจำนวน ให้บันทึกข้อมูล
                 result_db_relatives = self.db.add_data_ralative_to_relatives(prisoner_id, data, relation)
                 result_db_relations = self.db.add_data_relation_to_ralations(prisoner_id, data, relation)
                 try:
-                    continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล',f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
+                    continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล', f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
                 finally:
                     if continue_save:
                         clear_popup_regis()
-                        frame_data_relative.grid_forget()
                     else:
                         on_close()
+
             popup_register_relation.protocol("WM_DELETE_WINDOW", on_close)
 
         def show_relative(prisoner_id, f_name, l_name):
@@ -1309,67 +1373,125 @@ class MainFrame(ctk.CTkFrame):
             all_data = self.db.get_data_all()
             show_prisoners(all_data)
 
-        self.show_all_prisoner_frame.grid_rowconfigure(2,weight=1)
-        self.show_all_prisoner_frame.grid_columnconfigure(0,weight=1)
+
+        # Modernize the main frame
+        self.show_all_prisoner_frame.configure(fg_color="#ffffff", corner_radius=24)
+        self.show_all_prisoner_frame.grid_rowconfigure(2, weight=1)
+        self.show_all_prisoner_frame.grid_columnconfigure(0, weight=1)
 
         search_all_var = tk.StringVar()
-        
-        # หัวข้อ
-        ctk.CTkLabel(self.show_all_prisoner_frame,text='ผู้ต้องขังทั้งหมด',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,pady = 10,sticky = 'n')
 
-        # ช่องค้นหา
-        search_entry = ctk.CTkEntry(self.show_all_prisoner_frame,placeholder_text='พิมพ์ชื่อเพื่อค้นหา...',font=('TH SarabunPSK',18),width=200,textvariable=search_all_var)
-        search_entry.grid(row = 1,column = 0, pady = 10,sticky = 'n')
-        search_all_var.trace_add("write",lambda *args:search_one_var_prisoners())
+        # Header
+        ctk.CTkLabel(
+            self.show_all_prisoner_frame,
+            text='ผู้ต้องขังทั้งหมด',
+            font=('TH SarabunPSK', 44, 'bold'),
+            text_color='#2d3a4b'
+        ).grid(row=0, column=0, pady=(24, 10), sticky='n')
 
-        tree_container = ctk.CTkFrame(self.show_all_prisoner_frame)
-        tree_container.grid(row = 2,column=0,padx=20, pady=10, sticky="nsew")
+        # Search box
+        search_entry = ctk.CTkEntry(
+            self.show_all_prisoner_frame,
+            placeholder_text='พิมพ์ชื่อเพื่อค้นหา...',
+            font=('TH SarabunPSK', 20),
+            width=260,
+            border_width=2,
+            corner_radius=12,
+            fg_color='#f4f7fa',
+            text_color='#2d3a4b',
+            border_color='#b3d1ff',
+            height=36,
+            textvariable=search_all_var
+        )
+        search_entry.grid(row=1, column=0, pady=(0, 16), sticky='n')
+        search_all_var.trace_add("write", lambda *args: search_one_var_prisoners())
 
-        tree_container.grid_rowconfigure(0,weight=1)
-        tree_container.grid_columnconfigure(0,weight=1)
+        # Card-style container for table
+        tree_container = ctk.CTkFrame(
+            self.show_all_prisoner_frame,
+            fg_color="#f4f7fa",
+            corner_radius=18,
+            border_width=2,
+            border_color="#e0e6ed"
+        )
+        tree_container.grid(row=2, column=0, padx=24, pady=12, sticky="nsew")
+        tree_container.grid_rowconfigure(0, weight=1)
+        tree_container.grid_columnconfigure(0, weight=1)
 
-        # กำหนด style สำหรับ treeview 
+        # Modern Treeview style
         style = ttk.Style()
         style.theme_use('default')
-        style.configure('Treeview',font =('TH SarabunPSK',16),rowheight = 28)
-        style.configure('Treeview.Heading',font = ('TH SarabunPSK',16,'bold'))
+        style.configure('Treeview',
+            font=('TH SarabunPSK', 18),
+            rowheight=30,
+            background="#f4f7fa",
+            fieldbackground="#f4f7fa",
+            borderwidth=0,
+            relief="flat"
+        )
+        style.configure('Treeview.Heading',
+            font=('TH SarabunPSK', 20, 'bold'),
+            background="#e3eefa",
+            foreground="#2d3a4b",
+            borderwidth=0
+        )
+        style.map('Treeview', background=[('selected', '#b3d1ff')])
 
-        tree = ttk.Treeview(tree_container,columns=('prisoner_id','sex','f_name','l_name','lawsuit','level','dan','type','status'),show='headings',height=10)
-        tree.heading('prisoner_id',text='รหัสประจำตัว')
-        tree.heading('sex',text='เพศ')
-        tree.heading('f_name',text='ชื่อ')
-        tree.heading('l_name',text='นามสกุล')
-        tree.heading('lawsuit',text='คดี')
-        tree.heading('level',text='ชั้น')
-        tree.heading('dan',text='แดน')
-        tree.heading('type',text='ประเภท')
-        tree.heading('status',text='สถานะ')
+        # Modern Scrollbar style
+        style.configure('Vertical.TScrollbar',
+            gripcount=0,
+            background="#e3eefa",
+            darkcolor="#e3eefa",
+            lightcolor="#e3eefa",
+            troughcolor="#f4f7fa",
+            bordercolor="#e0e6ed",
+            arrowcolor="#4f8cff"
+        )
 
-        tree.column('prisoner_id')
-        tree.column('sex')
-        tree.column('f_name')
-        tree.column('l_name')
-        tree.column('lawsuit')
-        tree.column('level')
-        tree.column('dan')
-        tree.column('type')
-        tree.column('status')
+        tree = ttk.Treeview(
+            tree_container,
+            columns=('prisoner_id','sex','f_name','l_name','lawsuit','level','dan','type','status'),
+            show='headings',
+            height=12,
+            style='Treeview'
+        )
+        tree.heading('prisoner_id', text='รหัสประจำตัว')
+        tree.heading('sex', text='เพศ')
+        tree.heading('f_name', text='ชื่อ')
+        tree.heading('l_name', text='นามสกุล')
+        tree.heading('lawsuit', text='คดี')
+        tree.heading('level', text='ชั้น')
+        tree.heading('dan', text='แดน')
+        tree.heading('type', text='ประเภท')
+        tree.heading('status', text='สถานะ')
 
-        scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
+        # Set column width and alignment
+        tree.column('prisoner_id', anchor='center', width=100, minwidth=80, stretch=True)
+        tree.column('sex', anchor='center', width=60, minwidth=50, stretch=True)
+        tree.column('f_name', anchor='w', width=120, minwidth=80, stretch=True)
+        tree.column('l_name', anchor='w', width=120, minwidth=80, stretch=True)
+        tree.column('lawsuit', anchor='w', width=200, minwidth=120, stretch=True)
+        tree.column('level', anchor='center', width=80, minwidth=60, stretch=True)
+        tree.column('dan', anchor='center', width=60, minwidth=50, stretch=True)
+        tree.column('type', anchor='center', width=100, minwidth=80, stretch=True)
+        tree.column('status', anchor='center', width=100, minwidth=80, stretch=True)
+
+        # Modern vertical scrollbar
+        scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview, style='Vertical.TScrollbar')
         tree.configure(yscrollcommand=scrollbar.set)
-        tree.grid(row=0,column=0,sticky='nsew')
-        scrollbar.grid(row=0,column=1,sticky='ns')
+        tree.grid(row=0, column=0, sticky='nsew')
+        scrollbar.grid(row=0, column=1, sticky='ns', padx=(0, 4), pady=8)
 
         column_ratios = {
-            'prisoner_id' : 0.10,
-            'sex' : 0.06,
-            'f_name' : 0.13,
-            'l_name' : 0.13,
-            'lawsuit' : 0.18,
-            'level' : 0.12,
-            'dan' : 0.06,
-            'type' : 0.11,
-            'status' : 0.11
+            'prisoner_id': 0.10,
+            'sex': 0.06,
+            'f_name': 0.13,
+            'l_name': 0.13,
+            'lawsuit': 0.18,
+            'level': 0.12,
+            'dan': 0.06,
+            'type': 0.11,
+            'status': 0.11
         }
 
         # ฟังก์ชันสำหรับแสดงเมนูคลิกขวา
@@ -1394,20 +1516,36 @@ class MainFrame(ctk.CTkFrame):
             f_name = values[2]
             l_name = values[3]
 
-            # สร้าง popup window
+            # Modern card-style popup window
             popup_window = ctk.CTkToplevel()
-            popup_window.overrideredirect(True)  # ไม่มีกรอบ
+            popup_window.overrideredirect(True)
             popup_window.geometry(f"+{event.x_root}+{event.y_root}")
-            popup_window.configure(fg_color="#f0f0f0")
+            popup_window.configure(fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed")
+            popup_window.attributes("-topmost", True)
 
-            # เพิ่มปุ่มใน popup
+            # Header (optional, for clarity)
+            header = ctk.CTkLabel(
+                popup_window,
+                text=f"{f_name} {l_name}",
+                font=("TH SarabunPSK", 22, "bold"),
+                text_color="#2d3a4b"
+            )
+            header.pack(padx=16, pady=(14, 6))
+
+            # Button style
+            btn_kwargs = dict(
+                font=("TH SarabunPSK", 20, "bold"),
+                width=180,
+                height=38,
+                corner_radius=12
+            )
+
             def add_rel():
                 popup_window.destroy()
                 add_relative(prisoner_id, f_name, l_name)
 
             def show_rel():
                 popup_window.destroy()
-                print('show relative')
                 show_relative(prisoner_id, f_name, l_name)
 
             def move_dan():
@@ -1416,23 +1554,37 @@ class MainFrame(ctk.CTkFrame):
 
             def delete_rel():
                 popup_window.destroy()
-                confirm_delete = messagebox.askyesno('ยืนยันลบข้อมูล',f'ลบข้อมูลของ {f_name} {l_name}')
-                # print(type(prisoner_id))
+                confirm_delete = messagebox.askyesno('ยืนยันลบข้อมูล', f'ลบข้อมูลของ {f_name} {l_name}')
                 if confirm_delete:
                     result_delete = self.db.delete_prisoner(prisoner_id)
                     if result_delete:
-                        messagebox.showinfo('ลบข้อมูล','ลบข้อมูลเสร็จสิ้น')
+                        messagebox.showinfo('ลบข้อมูล', 'ลบข้อมูลเสร็จสิ้น')
                         load_data_on_db()
                     else:
-                        messagebox.showerror('ลบข้อมูล','ลบข้อมูลไม่สำเร็จ')
+                        messagebox.showerror('ลบข้อมูล', 'ลบข้อมูลไม่สำเร็จ')
 
-            # สร้างปุ่มใน popup
-            ctk.CTkButton(popup_window, text="➕ เพิ่มญาติ",font =('TH SarabunPSK',18,'bold'), command=add_rel, width=160).pack(padx=10, pady=(10, 5))
-            ctk.CTkButton(popup_window, text="👥 ดูรายชื่อญาติ",font =('TH SarabunPSK',18,'bold'), command=show_rel, width=160).pack(padx=10, pady=5)
-            ctk.CTkButton(popup_window, text="➡️ แก้ไขข้อมูลผู้ต้องขัง",font =('TH SarabunPSK',18,'bold'), command=move_dan, width=160).pack(padx=10, pady=5)
-            ctk.CTkButton(popup_window, text="🗑️ ลบชื่อญาติ",font =('TH SarabunPSK',18,'bold'), command=delete_rel, width=160, fg_color="red").pack(padx=10, pady=(5, 10))
+            # Modern buttons
+            ctk.CTkButton(
+                popup_window, text="➕ เพิ่มญาติ", fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff",
+                command=add_rel, **btn_kwargs
+            ).pack(padx=18, pady=(8, 4))
+            ctk.CTkButton(
+                popup_window, text="👥 ดูรายชื่อญาติ", fg_color="#e3eefa", hover_color="#b3d1ff", text_color="#2d3a4b",
+                command=show_rel, **btn_kwargs
+            ).pack(padx=18, pady=4)
+            ctk.CTkButton(
+                popup_window, text="➡️ แก้ไขข้อมูลผู้ต้องขัง", fg_color="#e3eefa", hover_color="#b3d1ff", text_color="#2d3a4b",
+                command=move_dan, **btn_kwargs
+            ).pack(padx=18, pady=4)
+            ctk.CTkButton(
+                popup_window, text="🗑️ ลบชื่อญาติ", fg_color="#ff4f4f", hover_color="#b30000", text_color="#fff",
+                command=delete_rel, **btn_kwargs
+            ).pack(padx=18, pady=(4, 14))
 
-            # เมื่อคลิกข้างนอก popup ให้ปิด
+            # Shadow effect (optional, for modern look)
+            # popup_window.attributes('-alpha', 0.98)
+
+            # ปิด popup เมื่อ focus หลุด
             popup_window.bind("<FocusOut>", lambda e: popup_window.destroy())
             popup_window.focus_set()
 
@@ -2612,9 +2764,10 @@ class MainFrame(ctk.CTkFrame):
             prisoners_data = self.db.get_join_relatives_and_prisoners(nationnal_id)
             # print(prisoners_data)
             relative_data = self.db.get_data_for_ralative_id(nationnal_id)
+            relative_name = f'{relative_data[1]}{relative_data[2]} {relative_data[3]}'
             # print(relative_data)
-            label_content.configure(text = f'ยินดีต้อนรับ\n{relative_data[1]}{relative_data[2]} {relative_data[3]}')
-            
+            label_content.configure(text = f'ยินดีต้อนรับ\n{relative_name}')
+
             button_reserve_now = ctk.CTkButton(button_frame,
                                                 text='จองเยี่ยมทันที',
                                                 font=('TH SarabunPSK', 32, 'bold'),
@@ -2923,6 +3076,8 @@ class MainFrame(ctk.CTkFrame):
                         if followers:
                             for follower in followers:
                                 rid,title,fname,lname = follower
+                                if str(rid) == nationnal_id:
+                                    break
                                 var = ctk.BooleanVar()
                                 chk = ctk.CTkCheckBox(frame_follower_visit,
                                                     text=f'{title}{fname} {lname}',
@@ -3182,48 +3337,50 @@ class MainFrame(ctk.CTkFrame):
 
             def reserve_future():
                 def open_next_screen(data):
-                    print(data)
+                    print(f'data on open next screen {data}')
                     # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
                     psn_id = data[0]
                     psn_level = data[3]
                     next_day = datetime.today() + timedelta(days=1)
                     next_day_str = next_day.date().isoformat()
                     today_month = datetime.today().strftime('%Y-%m')
+                    # next_day_ = (days[current_time.tm_wday])+1
+                    # print(f'next_day_ = {next_day_}')
 
                     print(f'psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
                     check_visit = self.db.get_count_visit(psn_id,next_day_str,today_month)
 
                     if check_visit[0] > 0 :
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nมีการจองเยี่ยมผู้ต้องขังแล้ว'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     if psn_level == 'เยี่ยม' and check_visit[1] >= 8 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 8 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return  
                     if psn_level == 'ดีมาก' and check_visit[1] >= 6 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 6 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     if psn_level == 'ดี' and check_visit[1] >= 4 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 4 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     if psn_level == 'กลาง' and check_visit[1] >= 3 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     if psn_level == 'ระหว่างพิจารณาคดี' and check_visit[1] >= 3 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 3 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     if psn_level == 'ปรับปรุง' and check_visit[1] >= 2 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 2 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     if psn_level == 'ปรับปรุงมาก' and check_visit[1] >= 1 :
                         alert = ALERT(popup_reserve_to_visit,[f'กรุณาตรวจสอบข้อมูล\nชั้น {psn_level}\nเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อเดือน'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
                         return
                     
                     relative_dict = {}
@@ -3276,27 +3433,38 @@ class MainFrame(ctk.CTkFrame):
                         label.pack(pady=5)
                         content = ctk.CTkLabel(frame_select_round, text=f'{data[1]} {data[2]}', font=('TH SarabunPSK', 30))
                         content.pack(pady=5)
+                        
+                        morning_rounds = [
+                            ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00'),
+                            ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00'),
+                            ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00'),
+                            ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00'),
+                            ]
+
+                        afternoon_rounds = [
+                            ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00'),
+                            ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00'),
+                            ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00'),
+                            ]
 
                         if data[4] == 'รจช':
-                            # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                            # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง)
                             rounds = [
-                                ('เวลา 12.00 - 13.00', '12:00:00', '12:50:00')
+                                ('เวลา 12.00 - 13.00', '12:00:00')
                             ]
-                            for text, start, close in rounds:
-                                close_time = datetime.strptime(close, "%H:%M:%S").time()
-                                if now < close_time:
-                                    ctk.CTkRadioButton(
-                                        frame_select_round,
-                                        text=text,
-                                        variable=round_visit_var,
-                                        value=start,
-                                        font=('TH SarabunPSK', 32, 'bold')
-                                    ).pack(pady=5)
+                            for text, start in rounds:
+                                ctk.CTkRadioButton(
+                                    frame_select_round,
+                                    text=text,
+                                    variable=round_visit_var,
+                                    value=start,
+                                    font=('TH SarabunPSK', 32, 'bold')
+                                ).pack(pady=5)
 
                         elif day == 'จันทร์' and str(data[4]) == '6':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in morning.get_available_rounds(now):
+                            for text, start in morning_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3307,7 +3475,7 @@ class MainFrame(ctk.CTkFrame):
 
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in afternoon.get_available_rounds(now):
+                            for text, start in afternoon_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3318,7 +3486,7 @@ class MainFrame(ctk.CTkFrame):
                         elif day == 'อังคาร' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in morning.get_available_rounds(now):
+                            for text, start in morning_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3329,7 +3497,7 @@ class MainFrame(ctk.CTkFrame):
 
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in afternoon.get_available_rounds(now):
+                            for text, start in afternoon_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3340,7 +3508,7 @@ class MainFrame(ctk.CTkFrame):
                         elif day == 'พุธ' and str(data[4]) == '1':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in morning.get_available_rounds(now):
+                            for text, start in morning_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3351,7 +3519,7 @@ class MainFrame(ctk.CTkFrame):
                         elif day == 'พุธ' and str(data[4]) in ['2','3','4','7']:
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in afternoon.get_available_rounds(now):
+                            for text, start in afternoon_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3362,7 +3530,7 @@ class MainFrame(ctk.CTkFrame):
                         elif day == 'พฤหัสบดี' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in morning.get_available_rounds(now):
+                            for text, start in morning_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3373,7 +3541,7 @@ class MainFrame(ctk.CTkFrame):
                         elif day == 'พฤหัสบดี' and str(data[4]) == '6':
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in afternoon.get_available_rounds(now):
+                            for text, start in afternoon_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3381,10 +3549,11 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'ศุกร์' and str(data[4]) == '1':
+                        elif str(data[4]) == '1':
+
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in morning.get_available_rounds(now):
+                            for text, start in morning_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3392,10 +3561,10 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'ศุกร์' and str(data[4]) in ['2','3','4','7']:
+                        elif str(data[4]) in ['2','3','4','7']:
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
-                            for text, start in afternoon.get_available_rounds(now):
+                            for text, start in afternoon_rounds:
                                 ctk.CTkRadioButton(
                                     frame_select_round,
                                     text=text,
@@ -3442,7 +3611,7 @@ class MainFrame(ctk.CTkFrame):
                             return
                                                 
                         frame_follower_visit.pack(fill='both', expand=True)
-                        text_from_round = f'จองเยี่ยม\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
+                        text_from_round = f'จองเยี่ยม (จองเยี่ยมล่วงหน้า)\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
                         ctk.CTkLabel(frame_follower_visit, text=text_from_round, font=('TH SarabunPSK', 28)).pack(pady=10)
 
                         followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id, data[5])
@@ -3451,6 +3620,8 @@ class MainFrame(ctk.CTkFrame):
                         if followers:
                             for follower in followers:
                                 rid, title, fname, lname = follower
+                                if str(rid) == nationnal_id:
+                                    break
                                 var = ctk.BooleanVar()
                                 chk = ctk.CTkCheckBox(frame_follower_visit,
                                                     text=f'{title}{fname} {lname}',
@@ -3484,9 +3655,12 @@ class MainFrame(ctk.CTkFrame):
                         frame_confirm_visit.pack(fill='both', expand=True)
                         ctk.CTkLabel(frame_confirm_visit, text='กรุณาตรวจสอบข้อมูลให้ถูกต้อง', font=('TH SarabunPSK', 24, 'bold')).pack(pady=20)
                         select_fl_id = [rid for rid, var in follower_vars if var.get()]
-                        prepare_data = [reserve_date, round_time_strtime, prisoner_id, data[5]]
+                        prepare_data = [reserve_date, round_time_strtime, prisoner_id, nationnal_id]
+                        print(select_fl_id,prepare_data)
 
-                        ctk.CTkLabel(frame_confirm_visit, text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nโดย {relative_dict.get(int(data[5]))}\nผู้ติดตาม', font=('TH SarabunPSK', 28)).pack(pady=5)
+                        ctk.CTkLabel(
+                            frame_confirm_visit,
+                            text=f'จองเยี่ยม (จองเยี่ยมล่วงหน้า)\n{data[1]} {data[2]}\nวันที่ {next_day_str} เวลา {round_visit_var.get()} น.\nโดย {relative_name}\nผู้ติดตาม', font=('TH SarabunPSK', 28)).pack(pady=5)
                         for index, row in enumerate(select_fl_id):
                             prepare_data.append(row)
                             ctk.CTkLabel(frame_confirm_visit, text=f'คนที่ {index + 1} {relative_dict.get(row)}', font=('TH SarabunPSK', 28)).pack(pady=5)
