@@ -27,7 +27,7 @@ class MORING_ROUNDS:
             ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00', '09:15:00'),
             ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00', '09:45:00'),
             ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00', '10:15:00'),
-            ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '10:15:00'),
+            ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00', '10:45:00'),
         ]
 
     def get_available_rounds(self, now):
@@ -2877,6 +2877,7 @@ class MainFrame(ctk.CTkFrame):
                         national_id_entry.delete(0, 'end')
                         label_content.configure(text = f'ยินดีต้อนรับ')
                         config_label()
+                        
 
 
 
@@ -3038,7 +3039,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel = ctk.CTkButton(
                             frame_select_round,
                             text='ยกเลิก',
-                            command=next_screen_on_close,
+                            command=lambda:(next_screen.destroy(),tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
                             font=('TH SarabunPSK', 24, 'bold'),
                             height=40,
                             fg_color='red'
@@ -3145,7 +3146,7 @@ class MainFrame(ctk.CTkFrame):
                                             )
                         cancel = ctk.CTkButton(frame_confirm_visit,
                                             text='ยกเลิกการจอง',
-                                            command=lambda:next_screen_on_close(),
+                                            command=lambda:(next_screen.destroy(),tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
                                             font=('TH SarabunPSK',24,'bold'),
                                             height=40,
                                             fg_color='red'
@@ -3584,7 +3585,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel = ctk.CTkButton(
                             frame_select_round,
                             text='ยกเลิก',
-                            command=next_screen_on_close,
+                            command=lambda:(next_screen.destroy(),future_tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
                             font=('TH SarabunPSK', 24, 'bold'),
                             height=40,
                             fg_color='red'
@@ -3690,7 +3691,7 @@ class MainFrame(ctk.CTkFrame):
                                             )
                         cancel = ctk.CTkButton(frame_confirm_visit,
                                             text='ยกเลิกการจอง',
-                                            command=lambda: next_screen_on_close(),
+                                            command=lambda:(next_screen.destroy(),future_tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
                                             font=('TH SarabunPSK', 24, 'bold'),
                                             height=40,
                                             fg_color='red'
@@ -3901,7 +3902,7 @@ class MainFrame(ctk.CTkFrame):
                     future_tree.insert('', 'end', values=row)
 
                 if len(future_tree.get_children()) == 0:
-                    alert = ALERT(popup_reserve_to_visit, ['ไม่มีข้อมูลผู้ต้องขังที่สามารถจองล่วงหน้าได้'], button=True)
+                    alert = ALERT(popup_reserve_to_visit, ['ไม่มีข้อมูลผู้ต้องขัง\nที่สามารถจองล่วงหน้าได้'], button=True)
                     national_id_entry.delete(0, 'end')
                 else:
                     relative_label.configure(text=f'กรุณากดเลือกเพื่อจองเยี่ยม')
