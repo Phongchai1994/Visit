@@ -36,8 +36,8 @@ class MenuFrame(ctk.CTkFrame):
             )
 
         modern_button('ลงทะเบียนผู้ต้องขัง', lambda: self.main_frame.show_page('ลงทะเบียนผู้ต้องขัง')).pack(pady=8, fill='x', padx=32)
-        modern_button('ค้นหาผู้ต้องขัง', lambda: self.main_frame.show_page('ค้นหาผู้ต้องขัง')).pack(pady=8, fill='x', padx=32)
-        modern_button('ย้ายแดน,ปรับชั้น', lambda: self.main_frame.show_page('ย้ายแดน,ปรับชั้น')).pack(pady=8, fill='x', padx=32)
+        # modern_button('ค้นหาผู้ต้องขัง', lambda: self.main_frame.show_page('ค้นหาผู้ต้องขัง')).pack(pady=8, fill='x', padx=32)
+        # modern_button('ย้ายแดน,ปรับชั้น', lambda: self.main_frame.show_page('ย้ายแดน,ปรับชั้น')).pack(pady=8, fill='x', padx=32)
         modern_button('ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=8, fill='x', padx=32)
 
         ctk.CTkLabel(card,
@@ -47,6 +47,8 @@ class MenuFrame(ctk.CTkFrame):
         ).pack(pady=(32, 12))
 
         modern_button('ญาติทั้งหมด', lambda: self.main_frame.show_page('ญาติทั้งหมด')).pack(pady=8, fill='x', padx=32)
+        modern_button('ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=8, fill='x', padx=32)
+
 
         ctk.CTkLabel(card,
             text='การเยี่ยมญาติ',
@@ -56,8 +58,9 @@ class MenuFrame(ctk.CTkFrame):
 
         modern_button('จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=8, fill='x', padx=32)
         modern_button('จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=8, fill='x', padx=32)
-        modern_button('รายงาน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=8, fill='x', padx=32)
-        modern_button('ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=8, fill='x', padx=32)
+        modern_button('รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=8, fill='x', padx=32)
+        modern_button('รายงานประจำเดือน', lambda: self.main_frame.show_page('')).pack(pady=8, fill='x', padx=32)
+
 
         ctk.CTkLabel(card,
             text='Developer by Mr.Phongchai',
