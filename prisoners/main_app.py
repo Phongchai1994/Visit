@@ -4913,6 +4913,7 @@ class MainFrame(ctk.CTkFrame):
                         return 
                     return info['cid']
                 
+                # เช็คข้อมูล
                 def check_label_visit(data_visit_label,btn):
                     all_label = list()
                     all_label.append(data_visit_no_1.cget('text'))
@@ -5078,11 +5079,17 @@ class MainFrame(ctk.CTkFrame):
                             placeholder_text='กรอกเลขญาติ'
                         )
                         entry.grid(row=row, column=1, sticky='w', padx=(8, 2), pady=8)
-                        
+
                         def on_add():
+# 
+# 
+#  มาแก้ไขตรงนี้ก่อน
+# 
+# 
                             value = entry.get().strip()
                             if not value:
-                                alert = ALERT(add_visit_popup, msg=['กรุณากรอกเลขญาติ'], button=True)
+                                id_number = read_card()
+                                print(id_number)
                                 return
                             data_label.configure(text=value)
                             entry.grid_forget()
