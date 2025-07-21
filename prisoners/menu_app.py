@@ -5,64 +5,96 @@ class MenuFrame(ctk.CTkFrame):
         super().__init__(parent, fg_color='#f4f7fa')
         self.grid(row=0, column=0, sticky='nsew')
         self.main_frame = main_frame
+        
+        # Configure grid weight for responsive design
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-        # Modern card container (โครงสร้างเดิม)
-        card = ctk.CTkFrame(self, fg_color='#ffffff', corner_radius=24, border_width=0)
-        card.pack(padx=40, pady=40, fill='y', expand=True)
+        # Create scrollable frame for content
+        self.scrollable_frame = ctk.CTkScrollableFrame(
+            self, 
+            fg_color='#f4f7fa',
+            scrollbar_fg_color='#e3eefa',
+            scrollbar_button_color='#b3d1ff',
+            scrollbar_button_hover_color='#2d3a4b'
+        )
+        self.scrollable_frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
+        self.scrollable_frame.grid_columnconfigure(0, weight=1)
 
-        # เพิ่ม scrollbar ด้านขวา (ตกแต่งโมเดิร์น) ซ้อนด้วย place
-        scrollbar = ctk.CTkScrollbar(self, orientation='vertical', fg_color='#e3eefa', button_color='#b3d1ff', button_hover_color='#2d3a4b', width=12, corner_radius=8)
-        scrollbar.place(relx=1.0, rely=0, relheight=1.0, anchor='ne', x=-10, y=40)
-        # หมายเหตุ: Scrollbar นี้เป็น UI เท่านั้น ถ้าอยากให้ scroll ได้จริง ต้องเปลี่ยน card เป็น canvas+frame
+        # Modern card container
+        card = ctk.CTkFrame(self.scrollable_frame, fg_color='#ffffff', corner_radius=24, border_width=0)
+        card.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
+        card.grid_columnconfigure(0, weight=1)
+        card.grid_rowconfigure(1, weight=1)  # Make the button container expandable
 
-        ctk.CTkLabel(card,
+        # Title and content setup
+        title_frame = ctk.CTkFrame(card, fg_color='transparent')
+        title_frame.grid(row=0, column=0, sticky='ew', padx=32, pady=(24, 12))
+        title_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(title_frame,
             text='เมนูจัดการข้อมูลผู้ต้องขัง',
-            font=('TH SarabunPSK', 32, 'bold'),
+            font=('TH SarabunPSK', 24, 'bold'),
             text_color='#2d3a4b'
-        ).pack(pady=(24, 12))
+        ).pack()
 
-        def modern_button(text, command, icon=None):
+        def modern_button(parent, text, command, icon=None):
             return ctk.CTkButton(
-                card,
+                parent,
                 text=text,
-                font=('TH SarabunPSK', 22, 'bold'),
+                font=('TH SarabunPSK', 20, 'bold'),  # เพิ่มขนาดฟอนต์จาก 22 เป็น 24
                 text_color='#2d3a4b',
                 fg_color='#e3eefa',
                 hover_color='#b3d1ff',
                 corner_radius=16,
-                height=48,
+                height=48,  # เพิ่มความสูงจาก 48 เป็น 52
                 border_width=0,
                 command=command
             )
 
-        modern_button('ลงทะเบียนผู้ต้องขัง', lambda: self.main_frame.show_page('ลงทะเบียนผู้ต้องขัง')).pack(pady=8, fill='x', padx=32)
-        # modern_button('ค้นหาผู้ต้องขัง', lambda: self.main_frame.show_page('ค้นหาผู้ต้องขัง')).pack(pady=8, fill='x', padx=32)
-        # modern_button('ย้ายแดน,ปรับชั้น', lambda: self.main_frame.show_page('ย้ายแดน,ปรับชั้น')).pack(pady=8, fill='x', padx=32)
-        modern_button('ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=8, fill='x', padx=32)
+        # Create button container with proper padding
+        button_container = ctk.CTkFrame(card, fg_color='transparent')
+        button_container.grid(row=1, column=0, sticky='nsew', padx=32, pady=20)
+        button_container.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(card,
+        # Prisoner management section
+        prisoner_section = ctk.CTkFrame(button_container, fg_color='transparent')
+        prisoner_section.pack(fill='x', pady=(0, 20))
+        
+        modern_button(prisoner_section, 'ลงทะเบียนผู้ต้องขัง', lambda: self.main_frame.show_page('ลงทะเบียนผู้ต้องขัง')).pack(pady=4, fill='x')
+        # modern_button('ค้นหาผู้ต้องขัง', lambda: self.main_frame.show_page('ค้นหาผู้ต้องขัง')).pack(pady=4, fill='x')
+        # modern_button('ย้ายแดน,ปรับชั้น', lambda: self.main_frame.show_page('ย้ายแดน,ปรับชั้น')).pack(pady=4, fill='x')
+        modern_button(prisoner_section, 'ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=4, fill='x')
+
+        ctk.CTkLabel(button_container,
             text='เมนูจัดการข้อมูลญาติ',
-            font=('TH SarabunPSK', 32, 'bold'),
+            font=('TH SarabunPSK', 24, 'bold'),
             text_color='#2d3a4b'
-        ).pack(pady=(32, 12))
+        ).pack(pady=(12, 12))
 
-        modern_button('ญาติทั้งหมด', lambda: self.main_frame.show_page('ญาติทั้งหมด')).pack(pady=8, fill='x', padx=32)
-        modern_button('ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=8, fill='x', padx=32)
+        # Relative management section
+        relative_section = ctk.CTkFrame(button_container, fg_color='transparent')
+        relative_section.pack(fill='x', pady=(0, 20))
+        
+        modern_button(relative_section, 'ญาติทั้งหมด', lambda: self.main_frame.show_page('ญาติทั้งหมด')).pack(pady=4, fill='x')
+        modern_button(relative_section, 'ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=4, fill='x')
 
-
-        ctk.CTkLabel(card,
+        ctk.CTkLabel(button_container,
             text='การเยี่ยมญาติ',
-            font=('TH SarabunPSK', 32, 'bold'),
+            font=('TH SarabunPSK', 24, 'bold'),
             text_color='#2d3a4b'
-        ).pack(pady=(32, 12))
+        ).pack(pady=(12, 12))
 
-        modern_button('จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=8, fill='x', padx=32)
-        modern_button('จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=8, fill='x', padx=32)
-        modern_button('รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=8, fill='x', padx=32)
-        modern_button('รายงานประจำเดือน', lambda: self.main_frame.show_page('')).pack(pady=8, fill='x', padx=32)
-
-
-        ctk.CTkLabel(card,
+        # Visit management section
+        visit_section = ctk.CTkFrame(button_container, fg_color='transparent')
+        visit_section.pack(fill='x', pady=(0, 20))
+        
+        modern_button(visit_section, 'จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=4, fill='x')
+        modern_button(visit_section, 'จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=4, fill='x')
+        modern_button(visit_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
+        modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('')).pack(pady=4, fill='x')
+        
+        ctk.CTkLabel(button_container,
             text='Developer by Mr.Phongchai',
             font=('TH SarabunPSK', 14),
             text_color='#a0a0a0'

@@ -39,19 +39,21 @@ class App_Prisoners(ctk.CTk):
         super().__init__()
         # self.geometry('1366x768+1+1')
         self.title('โปรแกรมจองเยี่ยมญาติ')
-        self.configure(fg_color='#f4f7fa')
+        self.configure(fg_color='#ffffff')  # เปลี่ยนจาก '#f4f7fa' เป็น '#ffffff' เหมือน sidebar
         self.state('zoomed')  # เปิดหน้าต่างแบบ maximize
         self.update()
 
         # Modern shadowed sidebar
         sidebar = ctk.CTkFrame(self, fg_color='#ffffff', corner_radius=0, border_width=0)
-        sidebar.grid(row=0, column=0, sticky='nswe')
+        sidebar.grid(row=0, column=0, sticky='nsew')
         sidebar.grid_propagate(False)
-        sidebar.configure(width=270)
+        sidebar.configure(width=350)  # เพิ่มความกว้างจาก 270 เป็น 350
+        sidebar.grid_rowconfigure(0, weight=1)  # ให้ sidebar สูงเต็มจอ
+        sidebar.grid_columnconfigure(0, weight=1)  # ให้เนื้อหาใน sidebar กว้างเต็ม
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, minsize=270)
+        self.grid_columnconfigure(0, minsize=350)  # เพิ่ม minsize จาก 270 เป็น 350
 
         # Main content area
         self.main_frame = MainFrame(self)

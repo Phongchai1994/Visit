@@ -70,9 +70,10 @@ class ALERT(ctk.CTkToplevel):
         self.attributes('-topmost', True)
         self.title('แจ้งเตือน')
         self.overrideredirect(True)
-        frame_border = ctk.CTkFrame(self, corner_radius=5, fg_color='black')
+        self.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
+        frame_border = ctk.CTkFrame(self, corner_radius=5, fg_color='#2d3a4b')  # เปลี่ยนจาก black เป็นสีธีม
         frame_border.pack(fill='both', expand=True, padx=2, pady=2)
-        frame_inner = ctk.CTkFrame(frame_border, corner_radius=3)
+        frame_inner = ctk.CTkFrame(frame_border, corner_radius=3, fg_color='#ffffff')  # เพิ่มสีพื้นหลังสีขาว
         frame_inner.pack(fill='both', expand=True, padx=3, pady=3)
         if text_color is None:
             text_color = 'red'
@@ -103,10 +104,9 @@ class ALERT(ctk.CTkToplevel):
         self.wait_window()
         return self.result
             
-
 class MainFrame(ctk.CTkFrame):
     def __init__(self,parent):
-        super().__init__(parent,bg_color='#D7F197')
+        super().__init__(parent,fg_color='#f4f7fa')  # เปลี่ยนจาก bg_color='#D7F197' เป็น fg_color='#f4f7fa'
 
         self.grid(row=0,column=1,sticky='nsew')
         self.db = SQLiteDB()
@@ -114,24 +114,24 @@ class MainFrame(ctk.CTkFrame):
         self.thai_id_reader = ThaiIDReader()
 
         # สร้าง Frame ลงทะเบียนผู้ต้องขัง #
-        self.register_frame = ctk.CTkFrame(self)
+        self.register_frame = ctk.CTkFrame(self, fg_color='#f8fbff', corner_radius=20, border_width=2, border_color='#e3eefa')
 
         # สร้าง Frame เมนูค้นหาผู้ต้องขังเพือจัดการญาติ #
-        self.showdata_frame = ctk.CTkFrame(self)
+        self.showdata_frame = ctk.CTkFrame(self, fg_color='#f0f8f0', corner_radius=20, border_width=2, border_color='#d4e6d4')
 
         # สร้าง Frame เมนู ย้ายแดน และปรับชั้น #
-        self.move_dan_and_adjust_level_frame = ctk.CTkFrame(self)
+        self.move_dan_and_adjust_level_frame = ctk.CTkFrame(self, fg_color='#fff8f0', corner_radius=20, border_width=2, border_color='#f4e6d4')
 
         # สร้าง Frame แสดงข้อมูลผู้ต้องขังทั้งหมดเป็นตาราง #
-        self.show_all_prisoner_frame = ctk.CTkFrame(self)
+        self.show_all_prisoner_frame = ctk.CTkFrame(self, fg_color='#f8f0ff', corner_radius=20, border_width=2, border_color='#e6d4f4')
 
         # สร้าง Frame แสดงข้อมูลญาติทั้งหมดเป็นตาราง 
-        self.show_all_relative_frame = ctk.CTkFrame(self)
+        self.show_all_relative_frame = ctk.CTkFrame(self, fg_color='#f0fff0', corner_radius=20, border_width=2, border_color='#d4f4d4')
 
         # สร้าง Frame สำหรับรายงานประวัติการเยี่ยมญาติ
-        self.popup_report_visits = ctk.CTkFrame(self) 
+        self.popup_report_visits = ctk.CTkFrame(self, fg_color='#fff0f8', corner_radius=20, border_width=2, border_color='#f4d4e6')
 
-        self.reserve_visit_by_national_id_frame = ctk.CTkFrame(self)  # สำหรับจองเยี่ยมญาติด้วยหมายเลขบัตรประชาชน
+        self.reserve_visit_by_national_id_frame = ctk.CTkFrame(self, fg_color='#f0f8ff', corner_radius=20, border_width=2, border_color='#d4e6f4')  # สำหรับจองเยี่ยมญาติด้วยหมายเลขบัตรประชาชน
 
         # ใช้ตรวจสอบการป้อนตัวเลขใน regis_entry_id
         self.vcmd = self.register(self.validate_number_input)
@@ -147,14 +147,14 @@ class MainFrame(ctk.CTkFrame):
 #   ลงทะเบียนผู้ต้องขัง 
 ##############################################################################################################################################################################
     def register_prisoner(self):
-        # Modern card style
-        self.register_frame.configure(fg_color="#ffffff", corner_radius=24)
+        # Modern card style with matching theme colors
+        self.register_frame.configure(fg_color="#f8fbff", corner_radius=24, border_width=2, border_color='#e3eefa')
         self.register_frame.grid_columnconfigure((0, 1), weight=1, uniform="register_frame")
         self.register_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8, 9), weight=1, uniform="register_frame")
         for i in range(10):
             self.register_frame.grid_rowconfigure(i, minsize=48)
 
-        # Header
+        # Header with enhanced styling
         regis_label_content = ctk.CTkLabel(
             self.register_frame,
             text='ลงทะเบียนผู้ต้องขัง',
@@ -168,7 +168,7 @@ class MainFrame(ctk.CTkFrame):
             font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
         regis_label_id.grid(row=1, column=0, sticky='e', padx=12)
         regis_entry_id = ctk.CTkEntry(self.register_frame, font=('TH SarabunPSK', 20),
-            width=220, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b',
+            width=220, border_width=2, corner_radius=12, fg_color='#ffffff', text_color='#2d3a4b', border_color='#b3d1ff',
             validate='key', validatecommand=(self.vcmd, '%P'))
         regis_entry_id.grid(row=1, column=1, sticky='w', padx=12)
 
@@ -178,7 +178,7 @@ class MainFrame(ctk.CTkFrame):
         regis_label_sex.grid(row=2, column=0, sticky='e', padx=12)
         regis_combo_sex = ctk.CTkOptionMenu(self.register_frame, values=['ชาย', 'หญิง'],
             font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
-            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+            fg_color='#ffffff', button_color='#b3d1ff', text_color='#222')
         regis_combo_sex.grid(row=2, column=1, sticky='w', padx=12)
 
         # Name
@@ -186,7 +186,7 @@ class MainFrame(ctk.CTkFrame):
             font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
         regis_label_name.grid(row=3, column=0, sticky='e', padx=12)
         regis_entry_name = ctk.CTkEntry(self.register_frame, font=('TH SarabunPSK', 20),
-            width=220, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b')
+            width=220, border_width=2, corner_radius=12, fg_color='#ffffff', text_color='#2d3a4b', border_color='#b3d1ff')
         regis_entry_name.grid(row=3, column=1, sticky='w', padx=12)
 
         # Lastname
@@ -194,7 +194,7 @@ class MainFrame(ctk.CTkFrame):
             font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
         regis_label_lname.grid(row=4, column=0, sticky='e', padx=12)
         regis_entry_lname = ctk.CTkEntry(self.register_frame, font=('TH SarabunPSK', 20),
-            width=220, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b')
+            width=220, border_width=2, corner_radius=12, fg_color='#ffffff', text_color='#2d3a4b', border_color='#b3d1ff')
         regis_entry_lname.grid(row=4, column=1, sticky='w', padx=12)
 
         # Lawsuit
@@ -202,7 +202,7 @@ class MainFrame(ctk.CTkFrame):
             font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
         regis_label_lawsuit.grid(row=5, column=0, sticky='e', padx=12)
         regis_entry_lawsuit = ctk.CTkTextbox(self.register_frame, font=('TH SarabunPSK', 20),
-            width=220, height=60, border_width=2, corner_radius=12, fg_color='#f4f7fa', text_color='#2d3a4b')
+            width=220, height=60, border_width=2, corner_radius=12, fg_color='#ffffff', text_color='#2d3a4b', border_color='#b3d1ff')
         regis_entry_lawsuit.grid(row=5, column=1, sticky='w', padx=12)
 
         # Level
@@ -212,7 +212,7 @@ class MainFrame(ctk.CTkFrame):
         regis_combo_level = ctk.CTkOptionMenu(self.register_frame,
             values=['ระหว่างพิจารณาคดี', 'เยี่ยม', 'ดีมาก', 'ดี', 'กลาง', 'ปรับปรุง', 'ปรับปรุงมาก'],
             font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
-            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+            fg_color='#ffffff', button_color='#b3d1ff', text_color='#222')
         regis_combo_level.grid(row=6, column=1, sticky='w', padx=12)
 
         # Dan
@@ -222,7 +222,7 @@ class MainFrame(ctk.CTkFrame):
         regis_combo_dan = ctk.CTkOptionMenu(self.register_frame,
             values=['1', '2', '3', '4', '5', '6', '7', 'รจช'],
             font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
-            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+            fg_color='#ffffff', button_color='#b3d1ff', text_color='#222')
         regis_combo_dan.grid(row=7, column=1, sticky='w', padx=12)
 
         # Type
@@ -232,7 +232,7 @@ class MainFrame(ctk.CTkFrame):
         regis_combo_type = ctk.CTkOptionMenu(self.register_frame,
             values=['ผู้ต้องขัง', 'ผู้ต้องกักขัง'],
             font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
-            fg_color='#f4f7fa', button_color='#b3d1ff', text_color='#222')
+            fg_color='#ffffff', button_color='#b3d1ff', text_color='#222')
         regis_combo_type.grid(row=8, column=1, sticky='w', padx=12)
 
         # Buttons
@@ -363,13 +363,14 @@ class MainFrame(ctk.CTkFrame):
                 popup_register_relation.title('ลงทะเบียนญาติ')
                 popup_register_relation.geometry('480x720+1+1')
                 popup_register_relation.grab_set()
+                popup_register_relation.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
 
                 id_relative = ctk.StringVar()
                 f_name_var = ctk.StringVar()
                 l_name_var = ctk.StringVar()
                 address_var = ctk.StringVar()
                 tel_var = ctk.StringVar()
-                frame_data_relative = ctk.CTkFrame(popup_register_relation)
+                frame_data_relative = ctk.CTkFrame(popup_register_relation, fg_color='#ffffff', corner_radius=16)  # เพิ่มสีและมุมมน
                 for i in range(7):
                     frame_data_relative.grid_rowconfigure(i,weight=1,uniform='popup')
                 # ตั้งค่า column
@@ -378,80 +379,89 @@ class MainFrame(ctk.CTkFrame):
                     frame_data_relative.grid_columnconfigure(i,weight=1,uniform='popup')
                 popup_register_relation.grid_rowconfigure(3,weight=1,uniform='popup')
 
-                popup_label_content =ctk.CTkLabel(popup_register_relation,text='ลงทะเบียนญาติ',font=('TH SarabunPSK',28,'bold'))
+                popup_label_content =ctk.CTkLabel(popup_register_relation,text='ลงทะเบียนญาติ',font=('TH SarabunPSK',28,'bold'),text_color='#2d3a4b')
                 popup_label_content.grid(row = 0,column =0,columnspan = 4,pady = 10)
 
-                popup_label_prisoner_id = ctk.CTkLabel(popup_register_relation,text='รหัสประจำตัว : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_prisoner_id = ctk.CTkLabel(popup_register_relation,text='รหัสประจำตัว : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_prisoner_id.grid(row = 1,column = 0,padx= 5,sticky = 'e',pady = 5)
                 
-                popup_label_prisoner_id_form_search_one = ctk.CTkLabel(popup_register_relation,text=prisoner_id_in_search_one,font=('TH SarabunPSK',18,'bold'))
+                popup_label_prisoner_id_form_search_one = ctk.CTkLabel(popup_register_relation,text=prisoner_id_in_search_one,font=('TH SarabunPSK',18,'bold'),text_color='#2d3a4b')
                 popup_label_prisoner_id_form_search_one.grid(row = 1,column = 1,padx= 5,sticky = 'w',pady = 5)
 
-                popup_label_prisoner_name = ctk.CTkLabel(popup_register_relation,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_prisoner_name = ctk.CTkLabel(popup_register_relation,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_prisoner_name.grid(row = 1,column = 2,padx= 5,sticky = 'e',pady = 5)
 
-                popup_label_prisoner_name_form_search_one = ctk.CTkLabel(popup_register_relation,text=prisoner_name_in_search_one,font=('TH SarabunPSK',18,'bold'))
+                popup_label_prisoner_name_form_search_one = ctk.CTkLabel(popup_register_relation,text=prisoner_name_in_search_one,font=('TH SarabunPSK',18,'bold'),text_color='#2d3a4b')
                 popup_label_prisoner_name_form_search_one.grid(row = 1,column = 3,padx= 5,sticky = 'w',pady = 5)
 
-                popup_label_id_relative = ctk.CTkLabel(popup_register_relation,text='หมายเลขบัตรประชาชน',font=('TH SarabunPSK',18,'bold'))
+                popup_label_id_relative = ctk.CTkLabel(popup_register_relation,text='หมายเลขบัตรประชาชน',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_id_relative.grid(row = 2,column = 0,columnspan = 2,padx= 5,sticky = 'e',pady = 5)
 
-                popup_entry_id_relative = ctk.CTkEntry(popup_register_relation,font=('TH SarabunPSK',18),textvariable=id_relative,validate='key',validatecommand = (self.vcmd,'%P'))
+                popup_entry_id_relative = ctk.CTkEntry(popup_register_relation,font=('TH SarabunPSK',18),textvariable=id_relative,validate='key',validatecommand = (self.vcmd,'%P'),
+                    fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
                 popup_entry_id_relative.grid(row = 2,column = 2,padx= 5,sticky = 'w',pady = 5)
 
                 popup_button_check_id = ctk.CTkButton(popup_register_relation,
                                                       text='ตรวจสอบ',
                                                       width=100,
                                                       font=('TH SarabunPSK',18,'bold'),
+                                                      fg_color='#60bedb', hover_color='#3a7ca5', text_color='#ffffff',
                                                       command=lambda:check_relative_id())
                 popup_button_check_id.grid(row=2 ,column = 3,padx= 5,sticky = 'w',pady = 5)
 
-                popup_label_title_relative = ctk.CTkLabel(frame_data_relative,text='คำนำหน้า : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_title_relative = ctk.CTkLabel(frame_data_relative,text='คำนำหน้า : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_title_relative.grid(row = 0,column = 0,columnspan = 2,sticky = 'e',padx = 5)
 
-                popup_combo_title_relative = ctk.CTkOptionMenu(frame_data_relative,values=['นาย','นาง','นางสาว','เด็กหญิง','เด็กชาย'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+                popup_combo_title_relative = ctk.CTkOptionMenu(frame_data_relative,values=['นาย','นาง','นางสาว','เด็กหญิง','เด็กชาย'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18),
+                    fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
                 popup_combo_title_relative.grid(row = 0,column = 2,columnspan = 2,sticky = 'w',padx = 5)
 
-                popup_label_fname_relative = ctk.CTkLabel(frame_data_relative,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_fname_relative = ctk.CTkLabel(frame_data_relative,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_fname_relative.grid(row = 1,column = 0,columnspan = 2,padx= 5,sticky = 'e')
 
-                popup_entry_fname_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=f_name_var)
+                popup_entry_fname_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=f_name_var,
+                    fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
                 popup_entry_fname_relative.grid(row = 1,column = 2,columnspan = 2,padx= 5,sticky = 'w')
 
-                popup_label_lname_relative = ctk.CTkLabel(frame_data_relative,text='นามสกุล : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_lname_relative = ctk.CTkLabel(frame_data_relative,text='นามสกุล : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_lname_relative.grid(row = 2,column = 0,columnspan = 2,padx= 2,sticky = 'e')
 
-                popup_entry_lname_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=l_name_var,)
+                popup_entry_lname_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=l_name_var,
+                    fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
                 popup_entry_lname_relative.grid(row = 2,column = 2,columnspan = 2,padx= 5,sticky = 'w')
 
-                popup_label_address_relative = ctk.CTkLabel(frame_data_relative,text='ที่อยู่ : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_address_relative = ctk.CTkLabel(frame_data_relative,text='ที่อยู่ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_address_relative.grid(row = 3,column = 0,columnspan = 2,padx= 5,sticky = 'e')
 
-                popup_entry_address_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=address_var)
+                popup_entry_address_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=address_var,
+                    fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
                 popup_entry_address_relative.grid(row = 3,column = 2,columnspan = 2,padx= 5,sticky = 'w')
 
-                popup_label_tel_relative = ctk.CTkLabel(frame_data_relative,text='เบอร์โทร : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_tel_relative = ctk.CTkLabel(frame_data_relative,text='เบอร์โทร : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_tel_relative.grid(row = 4,column = 0,columnspan = 2,padx= 5,sticky = 'e')
 
-                popup_entry_tel_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=tel_var,validate='key',validatecommand = (self.vcmd,'%P'))
+                popup_entry_tel_relative = ctk.CTkEntry(frame_data_relative,font=('TH SarabunPSK',18),textvariable=tel_var,validate='key',validatecommand = (self.vcmd,'%P'),
+                    fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
                 popup_entry_tel_relative.grid(row = 4,column = 2,columnspan = 2,padx= 5,sticky = 'w')
 
-                popup_label_relation_relative = ctk.CTkLabel(frame_data_relative,text='ความสัมพันธ์ : ',font=('TH SarabunPSK',18,'bold'))
+                popup_label_relation_relative = ctk.CTkLabel(frame_data_relative,text='ความสัมพันธ์ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
                 popup_label_relation_relative.grid(row = 5,column = 0,columnspan = 2,padx= 5,sticky = 'e')
-                popup_combo_relation_relative = ctk.CTkOptionMenu(frame_data_relative,values=['ปู่','ย่า','ตา','ยาย','ลุง','ป้า','พ่อ','แม่','น้า','พี่ชาย','พี่สาว','น้องชาย','น้องสาว','สามี','ภรรยา','ลูกสาว','ลูกชาย','อื่น ๆ'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+                popup_combo_relation_relative = ctk.CTkOptionMenu(frame_data_relative,values=['ปู่','ย่า','ตา','ยาย','ลุง','ป้า','พ่อ','แม่','น้า','พี่ชาย','พี่สาว','น้องชาย','น้องสาว','สามี','ภรรยา','ลูกสาว','ลูกชาย','อื่น ๆ'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18),
+                    fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
                 popup_combo_relation_relative.grid(row = 5,column = 2,columnspan = 2,padx= 5,sticky = 'w')
 
                 popup_button_submit = ctk.CTkButton(frame_data_relative,
                                                     text='บันทึกข้อมูล',
                                                     width=100,
                                                     font=('TH SarabunPSK',18,'bold'),
+                                                    fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
                                                     command=lambda:save_regis_relative_to_db()
                                                     )
                 popup_button_cancel = ctk.CTkButton(frame_data_relative,
                                                     text='ยกเลิก',
                                                     width=100,
                                                     font=('TH SarabunPSK',18,'bold'),
-                                                    fg_color='red',
+                                                    fg_color='#ff4f4f', hover_color='#b30000', text_color='#ffffff',
                                                     command=lambda:clear_popup_regis()
                                                     )
                 popup_button_submit.grid(row = 6,column = 0,padx = 5,columnspan = 2,sticky ='e' )
@@ -594,9 +604,10 @@ class MainFrame(ctk.CTkFrame):
             popup_show_list.title('รายชื่อญาติ')
             popup_show_list.geometry('720x480+1+1')
             popup_show_list.grab_set()
+            popup_show_list.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
             ctk.CTkLabel(popup_show_list,text=f'ข้อมูลญาติของ {prisoner_name_in_search_one}',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,sticky = 'nsew')
 
-            tree_container = ctk.CTkFrame(popup_show_list)
+            tree_container = ctk.CTkFrame(popup_show_list, fg_color='#ffffff', corner_radius=16)
             tree_container.grid(row = 2,column=0,padx=20, pady=10, sticky="nsew")
 
             tree_container.grid_rowconfigure(1,weight=1)
@@ -664,22 +675,24 @@ class MainFrame(ctk.CTkFrame):
         
         progressbar = ctk.CTkProgressBar(self.register_frame,mode='indeterminate')
 
-        showdata_label_content = ctk.CTkLabel(self.showdata_frame,text='ค้นหาผู้ต้องขัง',font=('TH SarabunPSK',40,'bold'))
+        showdata_label_content = ctk.CTkLabel(self.showdata_frame,text='ค้นหาผู้ต้องขัง',font=('TH SarabunPSK',40,'bold'), text_color='#2d3a4b')
         showdata_label_content.grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew' , pady = 10)
 
-        showdata_label_search = ctk.CTkLabel(self.showdata_frame,text='ระบุรหัสประจำตัวผู้ต้องขัง : ',font=('TH SarabunPSK',18,'bold'))
+        showdata_label_search = ctk.CTkLabel(self.showdata_frame,text='ระบุรหัสประจำตัวผู้ต้องขัง : ',font=('TH SarabunPSK',18,'bold'), text_color='#4a4a4a')
         showdata_label_search.grid(row = 1,column = 0,sticky = 'e',padx = 5)
 
-        showdata_entry_search = ctk.CTkEntry(self.showdata_frame,textvariable=search_one_var,font=('TH SarabunPSK',18,'bold'),validate='key',validatecommand = (self.vcmd,'%P'))
+        showdata_entry_search = ctk.CTkEntry(self.showdata_frame,textvariable=search_one_var,font=('TH SarabunPSK',18,'bold'),validate='key',validatecommand = (self.vcmd,'%P'),
+            fg_color='#ffffff', text_color='#2d3a4b', border_color='#d4e6d4', border_width=2, corner_radius=12)
         showdata_entry_search.grid(row = 1,column = 1,sticky = 'w',padx = 5)
 
         button_search = ctk.CTkButton(self.showdata_frame,
                                       text='ค้นหาข้อมูลผู้ต้องขัง',
                                       font=('TH SarabunPSK',18,'bold'),
+                                      fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
                                       command=lambda:show_one_prisoner())
         button_search.grid(row = 2,column = 0,columnspan = 2)
 
-        showdata_search_frame = ctk.CTkFrame(self.showdata_frame)
+        showdata_search_frame = ctk.CTkFrame(self.showdata_frame, fg_color='#ffffff', corner_radius=16, border_width=1, border_color='#d4e6d4')
         showdata_search_frame.grid_columnconfigure((1),weight=1)
         showdata_search_frame.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9),weight=1)
 
@@ -782,20 +795,22 @@ class MainFrame(ctk.CTkFrame):
         self.move_dan_and_adjust_level_frame.grid_rowconfigure((3),weight=1,uniform='move_adjust')
  
 
-        search_frame = ctk.CTkFrame(self.move_dan_and_adjust_level_frame)
+        search_frame = ctk.CTkFrame(self.move_dan_and_adjust_level_frame, fg_color='#ffffff', corner_radius=16, border_width=1, border_color='#f4e6d4')
 
-        label_content = ctk.CTkLabel(self.move_dan_and_adjust_level_frame,text='ย้ายแดน และ ปรับชั้น',font=('TH SarabunPSK',40,'bold'))
+        label_content = ctk.CTkLabel(self.move_dan_and_adjust_level_frame,text='ย้ายแดน และ ปรับชั้น',font=('TH SarabunPSK',40,'bold'), text_color='#2d3a4b')
         label_content.grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew' , pady = 10)
 
-        label_search = ctk.CTkLabel(self.move_dan_and_adjust_level_frame,text='ระบุรหัสประจำตัวผู้ต้องขัง : ',font=('TH SarabunPSK',18,'bold'))
+        label_search = ctk.CTkLabel(self.move_dan_and_adjust_level_frame,text='ระบุรหัสประจำตัวผู้ต้องขัง : ',font=('TH SarabunPSK',18,'bold'), text_color='#4a4a4a')
         label_search.grid(row = 1,column = 0,sticky = 'e',padx = 5,pady = 20)
 
-        entry_search = ctk.CTkEntry(self.move_dan_and_adjust_level_frame,textvariable=search_one_var,font=('TH SarabunPSK',18,'bold'),validate='key',validatecommand = (self.vcmd,'%P'))
+        entry_search = ctk.CTkEntry(self.move_dan_and_adjust_level_frame,textvariable=search_one_var,font=('TH SarabunPSK',18,'bold'),validate='key',validatecommand = (self.vcmd,'%P'),
+            fg_color='#ffffff', text_color='#2d3a4b', border_color='#f4e6d4', border_width=2, corner_radius=12)
         entry_search.grid(row = 1,column = 1,sticky = 'w',padx = 5,pady = 20)
 
         button_search = ctk.CTkButton(self.move_dan_and_adjust_level_frame,
                                       text='ค้นหาข้อมูลผู้ต้องขัง',
                                       font=('TH SarabunPSK',18,'bold'),
+                                      fg_color='#ff8c4f', hover_color='#e67e22', text_color='#ffffff',
                                       command = lambda : get_data_on_data_one()
                                       )
         button_search.grid(row = 2,column = 0,columnspan = 2,pady = 20)
@@ -847,6 +862,7 @@ class MainFrame(ctk.CTkFrame):
                                                     text='บันทึกข้อมูล',
                                                     width=100,
                                                     font=('TH SarabunPSK',18,'bold'),
+                                                    fg_color='#ff8c4f', hover_color='#e67e22', text_color='#ffffff',
                                                     command=lambda:update_level_and_dan()
                                                     )
         button_submit.grid(row = 9,column = 0,columnspan = 2,sticky = 'n',padx = 5)
@@ -1281,9 +1297,10 @@ class MainFrame(ctk.CTkFrame):
             popup_move_dan.title('ย้ายแดน')
             popup_move_dan.geometry('480x720+1+1')
             popup_move_dan.grab_set()
+            popup_move_dan.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
 
-            search_frame = ctk.CTkFrame(popup_move_dan)
-            search_frame.pack(fill='both',expand = True)
+            search_frame = ctk.CTkFrame(popup_move_dan, fg_color='#ffffff', corner_radius=16)  # เพิ่มสีและมุมมน
+            search_frame.pack(fill='both',expand = True, padx=20, pady=20)  # เพิ่ม padding
 
             search_frame.grid_columnconfigure((0,1),weight=1,uniform='move_adjust',minsize=100)
             search_frame.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9,10),weight=1,uniform='move_adjust')
@@ -1625,7 +1642,7 @@ class MainFrame(ctk.CTkFrame):
             popup_window_all_relative = ctk.CTkToplevel()
             popup_window_all_relative.overrideredirect(True)
             popup_window_all_relative.geometry(f'+{event.x_root}+{event.y_root}')
-            popup_window_all_relative.configure(fg_color = '#f0f0f0')
+            popup_window_all_relative.configure(fg_color='#f8fbff', corner_radius=10, border_width=2, border_color='#4f8cff')
 
             def show_rel():
                 popup_window_all_relative.destroy()
@@ -1636,8 +1653,10 @@ class MainFrame(ctk.CTkFrame):
                 popup_window_all_relative.destroy()
                 edit_relative(relative_id)
 
-            ctk.CTkButton(popup_window_all_relative,text='ดูรายชื่อผุ้ต้องขัง',font =('TH SarabunPSK',18,'bold'),command=show_rel,width=160).pack(padx = 10,pady = (10,5))
-            ctk.CTkButton(popup_window_all_relative,text='แก้ไขข้อมูล',font =('TH SarabunPSK',18,'bold'),command=edit_rel,width=160).pack(padx = 10,pady = (10,5))
+            ctk.CTkButton(popup_window_all_relative,text='ดูรายชื่อผุ้ต้องขัง',font =('TH SarabunPSK',18,'bold'),command=show_rel,width=160,
+                fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff').pack(padx = 10,pady = (10,5))
+            ctk.CTkButton(popup_window_all_relative,text='แก้ไขข้อมูล',font =('TH SarabunPSK',18,'bold'),command=edit_rel,width=160,
+                fg_color='#60bedb', hover_color='#3a7ca5', text_color='#ffffff').pack(padx = 10,pady = (10,5))
 
             popup_window_all_relative.after(100, lambda: popup_window_all_relative.focus_force())
             popup_window_all_relative.bind("<FocusOut>", lambda e: popup_window_all_relative.destroy())
@@ -1679,9 +1698,10 @@ class MainFrame(ctk.CTkFrame):
             popup_edit_relative.title('แก้ไขข้อมูลญาติ')
             popup_edit_relative.geometry('480x720+1+1')
             popup_edit_relative.grab_set()
+            popup_edit_relative.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
 
-            relative_frame = ctk.CTkFrame(popup_edit_relative)
-            relative_frame.pack(fill='both',expand = True)
+            relative_frame = ctk.CTkFrame(popup_edit_relative, fg_color='#ffffff', corner_radius=16)  # เพิ่มสีและมุมมน
+            relative_frame.pack(fill='both',expand = True, padx=20, pady=20)  # เพิ่ม padding
 
             relative_frame.grid_columnconfigure((0,1),weight=1,uniform='move_adjust',minsize=100)
             relative_frame.grid_rowconfigure((0,1,2,3,4,5,6),weight=1,uniform='move_adjust')
@@ -1890,43 +1910,49 @@ class MainFrame(ctk.CTkFrame):
             for i in range(7):
                 show_regis_data_search.grid_rowconfigure(i,weight=1,uniform='show_regis')
 
-            label_national_id = ctk.CTkLabel(show_regis_data_search,text='รหัสประจำตัว : ',font=('TH SarabunPSK',18,'bold'))
+            label_national_id = ctk.CTkLabel(show_regis_data_search,text='รหัสประจำตัว : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_national_id.grid(row = 0,column = 0,padx = 5,sticky = 'e')
 
-            entry_national_id = ctk.CTkEntry(show_regis_data_search,textvariable=show_regis_id_var,state = 'disabled',font=('TH SarabunPSK',18))
+            entry_national_id = ctk.CTkEntry(show_regis_data_search,textvariable=show_regis_id_var,state = 'disabled',font=('TH SarabunPSK',18),
+                fg_color='#f8f9fa', text_color='#2d3a4b', border_color='#e3eefa', border_width=2)
             entry_national_id.grid(row = 0,column = 1,padx = 5,sticky = 'w')
 
-            label_title = ctk.CTkLabel(show_regis_data_search,text='คำนำหน้า : ',font=('TH SarabunPSK',18,'bold'))
+            label_title = ctk.CTkLabel(show_regis_data_search,text='คำนำหน้า : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_title.grid(row = 1,column = 0,sticky = 'e',padx = 5)
 
-            combo_title = ctk.CTkOptionMenu(show_regis_data_search,values=['นาย','นาง','นางสาว','เด็กหญิง','เด็กชาย'],variable=show_regis_title,font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+            combo_title = ctk.CTkOptionMenu(show_regis_data_search,values=['นาย','นาง','นางสาว','เด็กหญิง','เด็กชาย'],variable=show_regis_title,font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18),
+                fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
             combo_title.grid(row = 1,column = 1,sticky = 'w',padx = 5)
 
-            label_f_name = ctk.CTkLabel(show_regis_data_search,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'))
+            label_f_name = ctk.CTkLabel(show_regis_data_search,text='ชื่อ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_f_name.grid(row = 2,column = 0,padx= 5,sticky = 'e')
 
-            entry_f_name = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_fname_var)
+            entry_f_name = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_fname_var,
+                fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
             entry_f_name.grid(row = 2,column = 1,padx= 5,sticky = 'w')
 
-            label_l_name = ctk.CTkLabel(show_regis_data_search,text='นามสกุล : ',font=('TH SarabunPSK',18,'bold'))
+            label_l_name = ctk.CTkLabel(show_regis_data_search,text='นามสกุล : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_l_name.grid(row = 3,column = 0,padx= 5,sticky = 'e')
 
-            entry_l_name = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_lname_var)
+            entry_l_name = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_lname_var,
+                fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
             entry_l_name.grid(row = 3,column = 1,padx= 5,sticky = 'w')
 
-            label_address = ctk.CTkLabel(show_regis_data_search,text='ที่อยู่ : ',font=('TH SarabunPSK',18,'bold'))
+            label_address = ctk.CTkLabel(show_regis_data_search,text='ที่อยู่ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_address.grid(row = 4,column = 0,padx= 5,sticky = 'e')
 
-            entry_address = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_address_var)
+            entry_address = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_address_var,
+                fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
             entry_address.grid(row = 4,column = 1,padx= 5,sticky = 'w')
 
-            label_tel = ctk.CTkLabel(show_regis_data_search,text='เบอร์โทร : ',font=('TH SarabunPSK',18,'bold'))
+            label_tel = ctk.CTkLabel(show_regis_data_search,text='เบอร์โทร : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_tel.grid(row = 5,column = 0,padx= 5,sticky = 'e')
 
-            entry_tel = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_tel_var)
+            entry_tel = ctk.CTkEntry(show_regis_data_search,font=('TH SarabunPSK',18),textvariable=show_regis_entry_tel_var,
+                fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
             entry_tel.grid(row = 5,column = 1,padx= 5,sticky = 'w')
 
-            label_fingerprint = ctk.CTkLabel(show_regis_data_search,text='ลายนิ้วมือ : ',font=('TH SarabunPSK',18,'bold'))
+            label_fingerprint = ctk.CTkLabel(show_regis_data_search,text='ลายนิ้วมือ : ',font=('TH SarabunPSK',18,'bold'),text_color='#4a4a4a')
             label_fingerprint.grid(row = 6 ,column = 0,padx = 5,sticky = 'e')
 
             label_fingerprint_state.grid(row = 6 ,column = 1,padx = 5,sticky = 'w')
@@ -1989,6 +2015,7 @@ class MainFrame(ctk.CTkFrame):
             popup_fingerprint.geometry('300x300+450+200')
             popup_fingerprint.grab_set()
             popup_fingerprint.focus_set()
+            popup_fingerprint.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
                         # เพิ่มการตรวจสอบว่าเธรดกำลังทำงานหรือไม่
             is_thread_running = False
 
@@ -2079,6 +2106,7 @@ class MainFrame(ctk.CTkFrame):
         popup_register_fingerprint.title('ลงทะเบียนลายนิ้วมือ')
         popup_register_fingerprint.geometry('480x720+1+1')
         popup_register_fingerprint.grab_set()
+        popup_register_fingerprint.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
 
         popup_register_fingerprint.grid_rowconfigure(2,weight=1,uniform='regis_fg')
         popup_register_fingerprint.grid_columnconfigure((0,1),weight=1,uniform='regis_fg')
@@ -2091,19 +2119,21 @@ class MainFrame(ctk.CTkFrame):
         show_regis_entry_address_var = ctk.StringVar()
         show_regis_entry_tel_var = ctk.StringVar()
 
-        ctk.CTkLabel(popup_register_fingerprint,text='ลงทะเบียนลายนิ้วมือ',font=('TH SarabunPSK',28,'bold')).grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew',pady = 30)
+        ctk.CTkLabel(popup_register_fingerprint,text='ลงทะเบียนลายนิ้วมือ',font=('TH SarabunPSK',28,'bold'),text_color='#2d3a4b').grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew',pady = 30)
 
-        regis_fp_entry = ctk.CTkEntry(popup_register_fingerprint,width=150,font=('TH SarabunPSK',18),validate='key',validatecommand = (self.vcmd,'%P'))
+        regis_fp_entry = ctk.CTkEntry(popup_register_fingerprint,width=150,font=('TH SarabunPSK',18),validate='key',validatecommand = (self.vcmd,'%P'),
+            fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
         regis_fp_entry.grid(row = 1,column = 0,sticky = 'e',padx = 5,pady = 10)
 
         regis_fp_search_bt = ctk.CTkButton(popup_register_fingerprint,
                                                 text='ค้นหาข้อมูล',
                                                 width=150,
                                                 font=('TH SarabunPSK',18,'bold'),
+                                                fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
                                                 command=lambda:get_data_relative())
         regis_fp_search_bt.grid(row=1,column = 1,sticky = 'w',padx = 5,pady = 10)
-        show_regis_data_search = ctk.CTkFrame(popup_register_fingerprint)
-        label_fingerprint_state = ctk.CTkLabel(show_regis_data_search,font=('TH SarabunPSK',18,'bold'),text='')
+        show_regis_data_search = ctk.CTkFrame(popup_register_fingerprint, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
+        label_fingerprint_state = ctk.CTkLabel(show_regis_data_search,font=('TH SarabunPSK',18,'bold'),text='',text_color='#2d3a4b')
 
         days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
         months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
@@ -2251,7 +2281,15 @@ class MainFrame(ctk.CTkFrame):
                         relative_dict[rel_id] = full_name
 
                     next_screen_reserve_now = ctk.CTkToplevel(popup_reserve_to_visit)
-                    next_screen_reserve_now.geometry('400x750')
+                    next_screen_reserve_now.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
+                    
+                    # จัดตำแหน่งให้อยู่กลางจอ
+                    screen_width = next_screen_reserve_now.winfo_screenwidth()
+                    screen_height = next_screen_reserve_now.winfo_screenheight()
+                    x = (screen_width - 400) // 2
+                    y = (screen_height - 750) // 2
+                    next_screen_reserve_now.geometry(f'400x750+{x}+{y}')
+                    
                     next_screen_reserve_now.title('เลือกรอบเยี่ยม (จองเยี่ยมปกติ)')
                     next_screen_reserve_now.grab_set()
                     next_screen_reserve_now.attributes('-topmost',True)
@@ -2259,11 +2297,11 @@ class MainFrame(ctk.CTkFrame):
                     next_screen_reserve_now.maxsize(400,750)
                     prisoner_id = data[0]
                     # frame เลือกรอบ
-                    frame_select_round = ctk.CTkFrame(next_screen_reserve_now)
+                    frame_select_round = ctk.CTkFrame(next_screen_reserve_now, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame เลือกผู้ติดตาม
-                    frame_follower_visit = ctk.CTkFrame(next_screen_reserve_now)
+                    frame_follower_visit = ctk.CTkFrame(next_screen_reserve_now, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame ยืนยันการจอง
-                    frame_confirm_visit = ctk.CTkFrame(next_screen_reserve_now)
+                    frame_confirm_visit = ctk.CTkFrame(next_screen_reserve_now, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
 
                     round_visit_var = ctk.StringVar()
                     follower_vars = []
@@ -2798,7 +2836,15 @@ class MainFrame(ctk.CTkFrame):
                         relative_dict[rel_id] = full_name
                     
                     reserve_future_next_screen = ctk.CTkToplevel(popup_reserve_to_visit)
-                    reserve_future_next_screen.geometry('400x750')
+                    reserve_future_next_screen.configure(fg_color='#f4f7fa')
+                    
+                    # จัดตำแหน่งให้อยู่กลางจอ
+                    screen_width = reserve_future_next_screen.winfo_screenwidth()
+                    screen_height = reserve_future_next_screen.winfo_screenheight()
+                    x = (screen_width - 400) // 2
+                    y = (screen_height - 750) // 2
+                    reserve_future_next_screen.geometry(f'400x750+{x}+{y}')
+                    
                     reserve_future_next_screen.title('เลือกรอบเยี่ยม (จองเยี่ยมล่วงหน้า)')
                     reserve_future_next_screen.grab_set()
                     reserve_future_next_screen.attributes('-topmost',True)
@@ -2806,11 +2852,11 @@ class MainFrame(ctk.CTkFrame):
                     reserve_future_next_screen.maxsize(400,750)
                     prisoner_id = data[0]
                     # frame เลือกรอบ
-                    frame_select_round = ctk.CTkFrame(reserve_future_next_screen)
+                    frame_select_round = ctk.CTkFrame(reserve_future_next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame เลือกผู้ติดตาม
-                    frame_follower_visit = ctk.CTkFrame(reserve_future_next_screen)
+                    frame_follower_visit = ctk.CTkFrame(reserve_future_next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame ยืนยันการจอง
-                    frame_confirm_visit = ctk.CTkFrame(reserve_future_next_screen)
+                    frame_confirm_visit = ctk.CTkFrame(reserve_future_next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     round_visit_var = ctk.StringVar()
                     follower_vars = []
 
@@ -3630,7 +3676,15 @@ class MainFrame(ctk.CTkFrame):
                         relative_dict[rel_id] = full_name
 
                     next_screen = ctk.CTkToplevel(popup_reserve_to_visit)
-                    next_screen.geometry('400x750')
+                    next_screen.configure(fg_color='#f4f7fa')
+                    
+                    # จัดตำแหน่งให้อยู่กลางจอ
+                    screen_width = next_screen.winfo_screenwidth()
+                    screen_height = next_screen.winfo_screenheight()
+                    x = (screen_width - 400) // 2
+                    y = (screen_height - 750) // 2
+                    next_screen.geometry(f'400x750+{x}+{y}')
+                    
                     next_screen.title('เลือกรอบเยี่ยม (จองเยี่ยมปกติ)')
                     next_screen.grab_set()
                     next_screen.attributes('-topmost',True)
@@ -3638,11 +3692,11 @@ class MainFrame(ctk.CTkFrame):
                     next_screen.maxsize(400,750)
                     prisoner_id = data[0]
                     # frame เลือกรอบ
-                    frame_select_round = ctk.CTkFrame(next_screen)
+                    frame_select_round = ctk.CTkFrame(next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame เลือกผู้ติดตาม
-                    frame_follower_visit = ctk.CTkFrame(next_screen)
+                    frame_follower_visit = ctk.CTkFrame(next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame ยืนยันการจอง
-                    frame_confirm_visit = ctk.CTkFrame(next_screen)
+                    frame_confirm_visit = ctk.CTkFrame(next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
 
                     round_visit_var = ctk.StringVar()
                     follower_vars = []
@@ -3821,7 +3875,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel = ctk.CTkButton(
                             frame_select_round,
                             text='ยกเลิก',
-                            command=lambda:(next_screen.destroy(),tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
+                            command=lambda:(next_screen_on_close()),
                             font=('TH SarabunPSK', 24, 'bold'),
                             height=40,
                             fg_color='red'
@@ -3928,7 +3982,7 @@ class MainFrame(ctk.CTkFrame):
                                             )
                         cancel = ctk.CTkButton(frame_confirm_visit,
                                             text='ยกเลิกการจอง',
-                                            command=lambda:(next_screen.destroy(),tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
+                                            command=lambda:(next_screen_on_close()),
                                             font=('TH SarabunPSK',24,'bold'),
                                             height=40,
                                             fg_color='red'
@@ -4173,7 +4227,15 @@ class MainFrame(ctk.CTkFrame):
                         relative_dict[rel_id] = full_name
                     
                     next_screen = ctk.CTkToplevel(popup_reserve_to_visit)
-                    next_screen.geometry('400x750')
+                    next_screen.configure(fg_color='#f4f7fa')
+                    
+                    # จัดตำแหน่งให้อยู่กลางจอ
+                    screen_width = next_screen.winfo_screenwidth()
+                    screen_height = next_screen.winfo_screenheight()
+                    x = (screen_width - 400) // 2
+                    y = (screen_height - 750) // 2
+                    next_screen.geometry(f'400x750+{x}+{y}')
+                    
                     next_screen.title('เลือกรอบเยี่ยม (จองเยี่ยมล่วงหน้า)')
                     next_screen.grab_set()
                     next_screen.attributes('-topmost',True)
@@ -4181,11 +4243,11 @@ class MainFrame(ctk.CTkFrame):
                     next_screen.maxsize(400,750)
                     prisoner_id = data[0]
                     # frame เลือกรอบ
-                    frame_select_round = ctk.CTkFrame(next_screen)
+                    frame_select_round = ctk.CTkFrame(next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame เลือกผู้ติดตาม
-                    frame_follower_visit = ctk.CTkFrame(next_screen)
+                    frame_follower_visit = ctk.CTkFrame(next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     # frame ยืนยันการจอง
-                    frame_confirm_visit = ctk.CTkFrame(next_screen)
+                    frame_confirm_visit = ctk.CTkFrame(next_screen, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')
                     round_visit_var = ctk.StringVar()
                     follower_vars = []
 
@@ -4367,7 +4429,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel = ctk.CTkButton(
                             frame_select_round,
                             text='ยกเลิก',
-                            command=lambda:(next_screen.destroy(),future_tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
+                            command=lambda:(next_screen_on_close()),
                             font=('TH SarabunPSK', 24, 'bold'),
                             height=40,
                             fg_color='red'
@@ -4473,7 +4535,7 @@ class MainFrame(ctk.CTkFrame):
                                             )
                         cancel = ctk.CTkButton(frame_confirm_visit,
                                             text='ยกเลิกการจอง',
-                                            command=lambda:(next_screen.destroy(),future_tree_container.grid_forget(),relative_label.grid_forget(),btn_cancel.grid_forget(),config_label()),
+                                            command=lambda:(next_screen_on_close()),
                                             font=('TH SarabunPSK', 24, 'bold'),
                                             height=40,
                                             fg_color='red'
@@ -4712,33 +4774,36 @@ class MainFrame(ctk.CTkFrame):
         popup_reserve_to_visit.geometry('980x640+1+1')
         popup_reserve_to_visit.grab_set()
         popup_reserve_to_visit.focus()
+        popup_reserve_to_visit.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
         popup_reserve_to_visit.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
         popup_reserve_to_visit.grid_rowconfigure(1,weight=0,uniform='popup_reserve')
-        insert_national_frame = ctk.CTkFrame(popup_reserve_to_visit)
+        insert_national_frame = ctk.CTkFrame(popup_reserve_to_visit, fg_color='#ffffff', corner_radius=16, border_width=2, border_color='#e3eefa')  # เพิ่มสีและมุมมน
         insert_national_frame.grid_rowconfigure(0,weight=1,uniform='popup_reserve')
         insert_national_frame.grid_columnconfigure((0,1,2),weight=1,uniform='popup_reserve')
         
-        button_frame = ctk.CTkFrame(popup_reserve_to_visit)
+        button_frame = ctk.CTkFrame(popup_reserve_to_visit, fg_color='#f8fbff', corner_radius=16, border_width=2, border_color='#b3d1ff')
         button_frame.grid_rowconfigure((0,1,2),weight=1,uniform='popup_reserve',minsize=150)
         button_frame.grid_columnconfigure((0,1),weight=1,uniform='popup_reserve')
 
-        insert_label = ctk.CTkLabel(insert_national_frame,text='กรุณากรอกเลขบัตรประชาชน :',font=('TH SarabunPSK', 32, 'bold'))
+        insert_label = ctk.CTkLabel(insert_national_frame,text='กรุณากรอกเลขบัตรประชาชน :',font=('TH SarabunPSK', 32, 'bold'),text_color='#2d3a4b')
         insert_label.grid(row=0,column=0,pady=10,sticky='e',padx = 10)
         btn_read_id = ctk.CTkButton(insert_national_frame,
                                     text='อ่านข้อมูล',
                                     font=('TH SarabunPSK', 32, 'bold'),
+                                    fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
                                     command=lambda : get_relative(True))
         btn_read_id.grid(row=0,column=2,pady=10,sticky='w',padx = 10)
-        label_content = ctk.CTkLabel(button_frame,text='ยินดีต้อนรับ',font=('TH SarabunPSK', 48, 'bold'))
-        label_content.grid(row = 0,column = 0,columnspan = 3 ,sticky = 'nsew',pady = 10)
-        national_id_entry = ctk.CTkEntry(insert_national_frame,font=('TH SarabunPSK', 32, 'bold'),placeholder_text='เลขบัตรประชาชน 13 หลัก',width=300)
+        label_content = ctk.CTkLabel(button_frame,text='ยินดีต้อนรับ',font=('TH SarabunPSK', 48, 'bold'),text_color='#2d3a4b')
+        label_content.grid(row = 0,column = 0,columnspan = 3 ,sticky = 'nsew',pady = 10,padx = 10)
+        national_id_entry = ctk.CTkEntry(insert_national_frame,font=('TH SarabunPSK', 32, 'bold'),placeholder_text='เลขบัตรประชาชน 13 หลัก',width=300,
+            fg_color='#ffffff', text_color='#2d3a4b', border_color='#4f8cff', border_width=2)
         national_id_entry.grid(row=0,column=1,pady=10,sticky='ew',padx = 10)
         national_id_entry.bind('<Return>',lambda e: get_relative())
         national_id_entry.bind('<KP_Enter>',lambda e: get_relative())
 
         # label_content = ctk.CTkLabel(popup_reserve_to_visit,text='',font=('TH SarabunPSK', 52, 'bold'))
-        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'))
-        relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'))
+        date_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 52, 'bold'),text_color='#2d3a4b')
+        relative_label = ctk.CTkLabel(popup_reserve_to_visit,font=('TH SarabunPSK', 46, 'bold'),text_color='#2d3a4b')
 
         nationnal_id = None
         days = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์","อาทิตย์"]
@@ -4874,6 +4939,7 @@ class MainFrame(ctk.CTkFrame):
                     alert = ALERT(self,msg=['เรือนจำชั่วคราวไม่สามารถย้ายรอบได้'],button=True)
                     return
                 move_round_pupup = ctk.CTkToplevel()
+                move_round_pupup.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
                 move_round_pupup.title('ย้ายรอบเยี่ยม')
                 move_round_pupup.geometry('500x200+400+50')
                 move_round_pupup.grab_set()
@@ -4881,14 +4947,17 @@ class MainFrame(ctk.CTkFrame):
 
                 move_round_pupup.grid_columnconfigure(0,weight=1,uniform='move_round')
                 move_round_pupup.grid_rowconfigure((0,1,2),weight=1,uniform='move_round')
-                label_content = ctk.CTkLabel(move_round_pupup,text=f'ย้ายรอบเยี่ยม\n{values[4]}',font=('TH SarabunPSK',32,'bold'))
+                label_content = ctk.CTkLabel(move_round_pupup,text=f'ย้ายรอบเยี่ยม\n{values[4]}',font=('TH SarabunPSK',32,'bold'),text_color='#2d3a4b')
                 label_content.grid(row = 0 , column = 0 ,sticky = 'ns')
                 time_visit = ctk.CTkOptionMenu(move_round_pupup,
                                                 values=['09:30:00','10:00:00','10:30:00','11:00:00','13:15:00','13:45:00','14:15:00'],
                                                 font=('TH SarabunPSK',18),
-                                                dropdown_font=('TH SarabunPSK',18))
+                                                dropdown_font=('TH SarabunPSK',18),
+                                                fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
                 time_visit.grid(row=1,column=0,sticky='ns',padx = 40,pady = 20)
-                button = ctk.CTkButton(move_round_pupup,text='ยืนยัน',width=140,font=('TH SarabunPSK',18),command=lambda: move_round())
+                button = ctk.CTkButton(move_round_pupup,text='ยืนยัน',width=140,font=('TH SarabunPSK',18),
+                    fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
+                    command=lambda: move_round())
                 button.grid(row = 2,column = 0 ,sticky = 'ns',padx = 20,pady = 20)
 
             def remove_round():
@@ -4913,36 +4982,7 @@ class MainFrame(ctk.CTkFrame):
                         return 
                     return info['cid']
                 
-                # เช็คข้อมูล
-                def check_label_visit(data_visit_label,btn):
-                    all_label = list()
-                    all_label.append(data_visit_no_1.cget('text'))
-                    all_label.append(data_visit_no_2.cget('text'))
-                    all_label.append(data_visit_no_3.cget('text'))
-                    all_label.append(data_visit_no_4.cget('text'))
-                    all_label.append(data_visit_no_5.cget('text'))
-
-                    relative_id = read_card()
-                    result_visit = self.db.prisoner_id_on_table_visits(values[0])
-                    result_count = self.db.count_relative(result_visit,relative_id)
-
-                    if result_count == 0:
-                        alert = ALERT(add_visit_popup,msg=['ไม่พบข้อมูลและความสัมพันธ์'],button=True)
-                        return
-                    for i in all_label:
-                        print(i,relative_id)
-                        if i == relative_id:
-                            alert = ALERT(add_visit_popup,msg=[f'หมายเลข {relative_id}\nมีการจองเยี่ยมแล้ว'],button=True)
-                            return
-                    
-                    data_visit_label.configure(text = relative_id)
-                    label = data_visit_label.cget('text')
-                    if label == '' or label == None:
-                        print('label == '' or none')
-                        return
-                    btn = btn
-                    btn.grid_forget()
-                    return
+                
                 
                 def save_to_db():
                     visit_id = values[0]
@@ -4968,6 +5008,7 @@ class MainFrame(ctk.CTkFrame):
                 print(relationship)
                 popup_window_right_click.destroy()
                 add_visit_popup = ctk.CTkToplevel()
+                add_visit_popup.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
                 add_visit_popup.title('เพิ่มชื่อญาติเยี่ยม')
                 add_visit_popup.geometry('520x760+400+50')  
                 add_visit_popup.grab_set()
@@ -5069,6 +5110,8 @@ class MainFrame(ctk.CTkFrame):
                     elif index == 9 and data != None:
                         data_visit_no_5.configure(text=f'{data}')
 
+                
+
                 # Add entry and "เพิ่มญาติ" button if empty
                 def add_entry_and_btn_if_empty(data_label, row):
                     if data_label.cget('text') == '':
@@ -5080,20 +5123,41 @@ class MainFrame(ctk.CTkFrame):
                         )
                         entry.grid(row=row, column=1, sticky='w', padx=(8, 2), pady=8)
 
+                        # เช็คข้อมูล
+                        def check_label_visit(relative_id):
+                            all_label = list()
+                            all_label.append(data_visit_no_1.cget('text'))
+                            all_label.append(data_visit_no_2.cget('text'))
+                            all_label.append(data_visit_no_3.cget('text'))
+                            all_label.append(data_visit_no_4.cget('text'))
+                            all_label.append(data_visit_no_5.cget('text'))
+
+                            result_visit = self.db.prisoner_id_on_table_visits(values[0])
+                            result_count = self.db.count_relative(result_visit,relative_id)
+
+                            if result_count == 0:
+                                alert = ALERT(add_visit_popup,msg=['ไม่พบข้อมูลและความสัมพันธ์'],button=True)
+                                return False
+                            for i in all_label:
+                                print(i,relative_id)
+                                if i == relative_id:
+                                    alert = ALERT(add_visit_popup,msg=[f'หมายเลข {relative_id}\nมีการจองเยี่ยมแล้ว'],button=True)
+                                    return False
+                            return True
+
                         def on_add():
-# 
-# 
-#  มาแก้ไขตรงนี้ก่อน
-# 
-# 
-                            value = entry.get().strip()
-                            if not value:
-                                id_number = read_card()
-                                print(id_number)
+                            relative_id = entry.get().strip()
+                            if not relative_id:
+                                relative_id = read_card()
+                                entry.insert(0, relative_id)
+                                print(relative_id)
+                            result_check_data = check_label_visit(relative_id)
+                            if not result_check_data:
+                                entry.delete(0, 'end')
                                 return
-                            data_label.configure(text=value)
                             entry.grid_forget()
                             btn.grid_forget()
+                            data_label.configure(text=relative_id)
 
                         btn = ctk.CTkButton(
                             card_frame,
@@ -5128,6 +5192,7 @@ class MainFrame(ctk.CTkFrame):
             values = tree.item(selected)['values']
             
             popup_window_right_click = ctk.CTkToplevel()
+            popup_window_right_click.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
             popup_window_right_click.overrideredirect(True)
             popup_window_right_click.geometry(f'+{event.x_root}+{event.y_root}')
             popup_window_right_click.configure(fg_color = '#f8fbff', border_width=2, border_color='#4f8cff')
@@ -5182,13 +5247,17 @@ class MainFrame(ctk.CTkFrame):
         # Place widgets in columns 1-6 for centering
         label_select_round = ctk.CTkLabel(filter_frame, text='เลือกรอบเยี่ยม', font=('TH SarabunPSK', 28, 'bold'), text_color="#2d3a4b")
         label_select_round.grid(row=0, column=1, sticky='e', padx=(10, 5), pady=20)
-        combo_year = ctk.CTkComboBox(filter_frame, values=years, variable=year_var, width=80, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18))
-        combo_month = ctk.CTkComboBox(filter_frame, values=months_th, variable=month_var, width=120, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18))
-        combo_day = ctk.CTkComboBox(filter_frame, values=days_in_month, variable=day_var, width=60, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18))
+        combo_year = ctk.CTkComboBox(filter_frame, values=years, variable=year_var, width=80, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18),
+            fg_color='#ffffff', button_color='#4f8cff', text_color='#222', border_color='#b3d1ff')
+        combo_month = ctk.CTkComboBox(filter_frame, values=months_th, variable=month_var, width=120, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18),
+            fg_color='#ffffff', button_color='#4f8cff', text_color='#222', border_color='#b3d1ff')
+        combo_day = ctk.CTkComboBox(filter_frame, values=days_in_month, variable=day_var, width=60, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18),
+            fg_color='#ffffff', button_color='#4f8cff', text_color='#222', border_color='#b3d1ff')
         combo_year.grid(row=0, column=2, padx=5, pady=20)
         combo_month.grid(row=0, column=3, padx=5, pady=20)
         combo_day.grid(row=0, column=4, padx=5, pady=20)
-        combo_round = ctk.CTkOptionMenu(filter_frame, values=['09:30:00','10:00:00','10:30:00','11:00:00','12:00:00','13:15:00','13:45:00','14:15:00'], font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18))
+        combo_round = ctk.CTkOptionMenu(filter_frame, values=['09:30:00','10:00:00','10:30:00','11:00:00','12:00:00','13:15:00','13:45:00','14:15:00'], font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18),
+            fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
         combo_round.grid(row=0, column=5, sticky='ew', padx=20, pady=20)
         button = ctk.CTkButton(filter_frame, text='ค้นหา', font=('TH SarabunPSK', 18), command=lambda:get_visits(), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12)
         button.grid(row=0, column=6, sticky='w', padx=(10, 10), pady=20)
