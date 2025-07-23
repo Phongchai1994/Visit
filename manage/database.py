@@ -117,9 +117,9 @@ class SQLiteDB:
         self.decode_db()
         self.connect()
         try:
-            self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status FROM prisoners')
+            self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status,disciplinary FROM prisoners')
             self.all_data = self.cursor.fetchall()
-            return self.all_data
+            return [[value if value is not None else "" for value in row] for row in self.all_data]
         except Exception as e:
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด {e}')
@@ -295,7 +295,6 @@ class SQLiteDB:
         data = self.cursor.fetchall()
         self.close()
         self.encode_db()
-
         return data
     
     # ดึงตารางข้อมูลผู้ต้องขัง อ้างอิงด้วย เลขบัตรประชาชนญาติ
@@ -310,7 +309,8 @@ class SQLiteDB:
                                     prisoners.l_name,
                                     prisoners.level,
                                     prisoners.dan,
-                                    relations.relation
+                                    relations.relation,
+                                    prisoners.status
                                 FROM prisoners 
                                 JOIN relations ON prisoners.prisoner_id = relations.prisoner_id
                                 WHERE relations.relative_id = ?
@@ -453,10 +453,11 @@ class SQLiteDB:
             self.encode_db()
 
     # แก้ไขชั้นและแดน
-    def update_level_and_dan(self,id,sex,f_name,l_name,lawsuit,level,dan,type_data,status):
+    def update_level_and_dan(self,id,sex,f_name,l_name,lawsuit,level,dan,type_data,status,disciplinary):
         self.connect()
         try:
-            print(id,level,dan,type_data,status)
+            disciplinary_values = None if disciplinary == 'ไม่มี' else disciplinary
+            print(id,level,dan,type_data,status,disciplinary)
             self.cursor.execute('''UPDATE 
                                     prisoners 
                                 SET 
@@ -467,9 +468,10 @@ class SQLiteDB:
                                     level = ? ,
                                     dan = ?,
                                     type = ?,
-                                    status = ? 
+                                    status = ?,
+                                    disciplinary = ?
                                 WHERE 
-                                    prisoner_id = ?''',(sex,f_name,l_name,lawsuit,level,dan,type_data,status,id))
+                                    prisoner_id = ?''',(sex,f_name,l_name,lawsuit,level,dan,type_data,status,disciplinary_values,id))
             return True
         except Exception as e:
             self.msgbox(e)
@@ -637,6 +639,19 @@ class SQLiteDB:
         except Exception as e:
             print(e)
             self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+# ฟังก์ชันแก้ไขความสัมพันธ์ของญาติและผู้ต้องขัง
+    def edit_relation(self,prisoner_id,relative_id,relation):
+        self.connect()
+        try:
+            self.cursor.execute('UPDATE relations SET relation = ? WHERE prisoner_id = ? AND relative_id = ?',(relation,prisoner_id,relative_id))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
             self.close()

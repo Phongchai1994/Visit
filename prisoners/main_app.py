@@ -882,6 +882,8 @@ class MainFrame(ctk.CTkFrame):
             popup_register_relation.geometry('550x520+1+1')
             popup_register_relation.grab_set()
             popup_register_relation.configure(fg_color="#ffffff", corner_radius=24, border_width=2, border_color="#e0e6ed")
+            popup_register_relation.attributes("-topmost", True)
+            popup_register_relation.transient(self)
 
             id_relative = ctk.StringVar()
             f_name_var = ctk.StringVar()
@@ -1126,7 +1128,7 @@ class MainFrame(ctk.CTkFrame):
                     clear_popup_regis()
                     return
                 if len(result) >= 10:
-                    messagebox.showwarning('ข้อมูลญาติ', 'ข้อมูลญาติเกิน 10 คน')
+                    messagebox.showwarning('ข้อมูลญาติ','ข้อมูลญาติเกิน 10 คน')
                     clear_popup_regis()
                     return
                 result_db_relatives = self.db.add_data_ralative_to_relatives(prisoner_id, data, relation)
@@ -1142,7 +1144,7 @@ class MainFrame(ctk.CTkFrame):
             popup_register_relation.protocol("WM_DELETE_WINDOW", on_close)
 
         def show_relative(prisoner_id, f_name, l_name):
-            print('show_relative fn')
+            # print('show_relative fn')
             def resize_tree_columns():
                 tree_container_relative.update_idletasks()
                 total_width = tree_container_relative.winfo_width()
@@ -1157,7 +1159,7 @@ class MainFrame(ctk.CTkFrame):
                 selected = tree_relative.identify_row(event.y)
                 if not selected:
                     return
-
+            
                 tree_relative.selection_set(selected)
                 relative = tree_relative.item(selected)['values']
                 relative_id = relative[0]
@@ -1169,22 +1171,87 @@ class MainFrame(ctk.CTkFrame):
                 popup_window_delete_relative.attributes("-topmost", True)
                 popup_window_delete_relative.transient(popup_show_list)
                 popup_window_delete_relative.lift()
-
+            
                 def delete_rel():
                     popup_window_delete_relative.destroy()
                     print("ลบ:", prisoner_id, relative_id)
-                    confirm_delete = messagebox.askyesno('การลบข้อมูล',f'ต้องการลบข้อมูลของ {relative_name} หรือไม่')
+                    confirm_delete = messagebox.askyesno('การลบข้อมูล', f'ต้องการลบข้อมูลของ {relative_name} หรือไม่')
                     if confirm_delete:
-                        result_delete = self.db.delete_relation_from_prisoner_and_relative(prisoner_id,relative_id)
+                        result_delete = self.db.delete_relation_from_prisoner_and_relative(prisoner_id, relative_id)
                         if result_delete:
-                            messagebox.showinfo('ลบข้อมูล','ลบข้อมูลของเสร็จสิ้น')
+                            messagebox.showinfo('ลบข้อมูล', 'ลบข้อมูลของเสร็จสิ้น')
                             result = self.db.get_join_prisoners_and_relatives_alldata(prisoner_id)
                             print(result)
                             for row in tree_relative.get_children():
                                 tree_relative.delete(row)
                             for row in result:
-                                tree_relative.insert('','end',values=row)
+                                tree_relative.insert('', 'end', values=row)
+            
+                def edit_rel():
+                    popup_window_delete_relative.destroy()
+                    print("แก้ไข:", prisoner_id, relative_id)
+                    print(f'{result[0][1]}{result[0][2]} {result[0][3]}')
+                    edit_relative_window = ctk.CTkToplevel(popup_show_list)
+                    edit_relative_window.title('แก้ไขควาสมสัมพันธ์')
+                    edit_relative_window.geometry('550x520+1+1')
+                    edit_relative_window.grab_set()
+                    edit_relative_window.configure(fg_color="#ffffff", corner_radius=24, border_width=2, border_color="#e0e6ed")
+                    edit_relative_window.attributes("-topmost", True)
+                    edit_relative_window.transient(popup_show_list)
 
+                    frame_edit_relative = ctk.CTkFrame(
+                        edit_relative_window, fg_color="#f4f7fa", corner_radius=18, border_width=1, border_color="#e0e6ed"
+                    )
+                    frame_edit_relative.pack(padx=10, pady=10, fill='both', expand=True)
+
+                    frame_edit_relative.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
+                    frame_edit_relative.grid_columnconfigure((0, 1), weight=1)
+
+                    ctk.CTkLabel(
+                        frame_edit_relative, text='แก้ไขข้อมูลความสัมพันธ์', font=('TH SarabunPSK', 32, 'bold'), text_color='#2d3a4b'
+                    ).grid(row=0, column=0, columnspan=2, pady=(24, 10), sticky='n')
+
+                    ctk.CTkLabel(
+                        frame_edit_relative, text='ชื่อญาติ :', font=('TH SarabunPSK', 24, 'bold'), text_color='#4a4a4a'
+                    ).grid(row=1, column=0, padx=8, sticky='e', pady=5)
+                    ctk.CTkLabel(
+                        frame_edit_relative, text=f'{result[0][1]}{result[0][2]} {result[0][3]}', font=('TH SarabunPSK', 24), text_color='#2d3a4b'
+                    ).grid(row=1, column=1, padx=8, sticky='w', pady=5)
+                    ctk.CTkLabel(
+                        frame_edit_relative, text='ความสัมพันธ์เป็น :', font=('TH SarabunPSK', 24, 'bold'), text_color='#4a4a4a'
+                    ).grid(row=2, column=0, padx=8, sticky='e', pady=5)
+                    relation_edit = ctk.CTkOptionMenu(
+                        frame_edit_relative, values=['ปู่','ย่า','ตา','ยาย','ลุง','ป้า','พ่อ','แม่','น้า','พี่ชาย','พี่สาว','น้องชาย','น้องสาว','สามี','ภรรยา','ลูกสาว','ลูกชาย','อื่น ๆ'],
+                        font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 24),
+                        fg_color='#fff', button_color='#b3d1ff', text_color='#222'
+                    )
+                    relation_edit.grid(row=2, column=1, padx=8, sticky='w', pady=5)
+                    ctk.CTkLabel(
+                        frame_edit_relative, text='ของ', font=('TH SarabunPSK', 24, 'bold'), text_color='#4a4a4a'
+                    ).grid(row=3, column=0,columnspan = 2, padx=8, sticky='ew', pady=5)
+                    ctk.CTkLabel(
+                        frame_edit_relative, text='ชื่อผู้ต้องขัง :', font=('TH SarabunPSK', 24, 'bold'), text_color='#4a4a4a'
+                    ).grid(row=4, column=0, padx=8, sticky='e', pady=5)
+                    ctk.CTkLabel(
+                        frame_edit_relative, text=f'{f_name} {l_name}', font=('TH SarabunPSK', 24), text_color='#2d3a4b'
+                    ).grid(row=4, column=1, padx=8, sticky='w', pady=5)
+
+                    
+                    ctk.CTkButton(
+                        frame_edit_relative, text='บันทึกการแก้ไข', width=120, height=38,
+                        font=('TH SarabunPSK', 20, 'bold'), fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#fff',
+                        corner_radius=14, command=lambda: print(f'บันทึกการแก้ไขข้อมูลความสัมพันธ์ {relative_id} และ {prisoner_id} ความสัมพันธ์ {relation_edit.get()}')
+                    ).grid(row=5, column=0, padx=8, columnspan=2, sticky='n', pady=(16, 12))
+                    
+                    edit_relative_window.protocol("WM_DELETE_WINDOW", lambda: edit_relative_window.destroy())
+
+                ctk.CTkButton(
+                    popup_window_delete_relative,
+                    text='แก้ไขความสัมพันธ์',
+                    font=('TH SarabunPSK', 18, 'bold'),
+                    width=120,
+                    command=edit_rel
+                ).pack(padx=10, pady=(5, 10))
 
                 ctk.CTkButton(
                     popup_window_delete_relative,
@@ -1193,7 +1260,9 @@ class MainFrame(ctk.CTkFrame):
                     width=120,
                     command=delete_rel
                 ).pack(padx=10, pady=(10, 5))
+            
 
+            
                 # ✅ ให้โฟกัสหลังจากเปิด (ป้องกัน focus ไม่ติด)
                 popup_window_delete_relative.after(100, lambda: popup_window_delete_relative.focus_force())
                 popup_window_delete_relative.bind("<FocusOut>", lambda e: popup_window_delete_relative.destroy())
@@ -1202,6 +1271,10 @@ class MainFrame(ctk.CTkFrame):
             popup_show_list.title('รายชื่อญาติ')
             popup_show_list.geometry('720x480+1+1')
             popup_show_list.grab_set()
+            popup_show_list.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
+            popup_show_list.attributes("-topmost", True)
+            popup_show_list.transient(self)
+
             ctk.CTkLabel(popup_show_list,text=f'ข้อมูลญาติของ {f_name} {l_name}',font=('TH SarabunPSK',40,'bold')).grid(row = 0,column = 0,sticky = 'nsew')
 
             tree_container_relative = ctk.CTkFrame(popup_show_list)
@@ -1270,6 +1343,8 @@ class MainFrame(ctk.CTkFrame):
                 dan_data.set(result[6])
                 type_data.set(result[7])
                 status_data.set(result[8])
+                disciplinary_data.set(result[9])
+                
 
             def update_level_and_dan():
                 id = id_data.cget('text')
@@ -1279,7 +1354,7 @@ class MainFrame(ctk.CTkFrame):
                 lawsuit = lawsuit_data.get("1.0", ctk.END).strip()
                 level = level_data.get()
                 dan = dan_data.get()
-                result =  self.db.update_level_and_dan(id,sex,f_name,l_name,lawsuit,level,dan,type_data.get(),status_data.get())
+                result =  self.db.update_level_and_dan(id,sex,f_name,l_name,lawsuit,level,dan,type_data.get(),status_data.get(),disciplinary_data.get())
                 if result:
                     messagebox.showinfo('แจ้งอัพเดทข้อมูล',f'อัพเดทข้อมูลของ {f_name} {l_name} สำเร็จ')
                     load_data_on_db()
@@ -1303,7 +1378,7 @@ class MainFrame(ctk.CTkFrame):
             search_frame.pack(fill='both',expand = True, padx=20, pady=20)  # เพิ่ม padding
 
             search_frame.grid_columnconfigure((0,1),weight=1,uniform='move_adjust',minsize=100)
-            search_frame.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9,10),weight=1,uniform='move_adjust')
+            search_frame.grid_rowconfigure((0,1,2,3,4,5,6,7,8,9,10,11),weight=1,uniform='move_adjust')
 
             label_content = ctk.CTkLabel(search_frame,text='ย้ายแดน และ ปรับชั้น',font=('TH SarabunPSK',40,'bold'))
             label_content.grid(row = 0,column = 0,columnspan = 2,sticky = 'nsew' , pady = 10)
@@ -1326,6 +1401,8 @@ class MainFrame(ctk.CTkFrame):
             label_type.grid(row = 8,column = 0,sticky = 'e',padx = 5)
             label_status = ctk.CTkLabel(search_frame,text='สถานะ : ',font=('TH SarabunPSK',18,'bold'))
             label_status.grid(row = 9,column = 0,sticky = 'e',padx = 5)
+            label_disciplinary = ctk.CTkLabel(search_frame,text='วินัย : ',font=('TH SarabunPSK',18,'bold'))
+            label_disciplinary.grid(row = 10,column = 0,sticky = 'e',padx = 5)
         
             id_data = ctk.CTkLabel(search_frame,text='',font=('TH SarabunPSK',18))
             sex_data = ctk.CTkOptionMenu(search_frame,values=['ชาย','หญิง'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
@@ -1336,6 +1413,7 @@ class MainFrame(ctk.CTkFrame):
             dan_data = ctk.CTkOptionMenu(search_frame,values=['1','2','3','4','5','6','7','รจช'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
             type_data = ctk.CTkOptionMenu(search_frame,values=['ผู้ต้องขัง','ผู้ต้องกักขัง'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
             status_data = ctk.CTkOptionMenu(search_frame,values=['อยู่','ไม่อยู่'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+            disciplinary_data = ctk.CTkOptionMenu(search_frame,values=['ไม่มี','ผิดวินัย'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
 
             id_data.grid(row = 1,column = 1,sticky = 'w',padx = 5)
             sex_data.grid(row = 2,column = 1,sticky = 'w',padx = 5)
@@ -1346,14 +1424,17 @@ class MainFrame(ctk.CTkFrame):
             dan_data.grid(row = 7,column = 1,sticky = 'w',padx = 5)
             type_data.grid(row = 8,column = 1,sticky = 'w',padx = 5)
             status_data.grid(row = 9,column = 1,sticky = 'w',padx = 5)
+            disciplinary_data.grid(row = 10,column = 1,sticky = 'w',padx = 5)
 
-            button_submit = ctk.CTkButton(search_frame,
-                                                        text='บันทึกข้อมูล',
-                                                        width=100,
-                                                        font=('TH SarabunPSK',18,'bold'),
-                                                        command=lambda:update_level_and_dan()
-                                                        )
-            button_submit.grid(row = 10,column = 0,columnspan = 2,sticky = 'n',padx = 5)
+            button_submit = ctk.CTkButton(
+                search_frame,
+                text='บันทึกข้อมูล',
+                width=100,
+                font=('TH SarabunPSK',18,'bold'),
+                command=lambda:update_level_and_dan()
+                )
+            
+            button_submit.grid(row = 11,column = 0,columnspan = 2,sticky = 'n',padx = 5)
 
             popup_move_dan.grid_columnconfigure((0,1),minsize=200)
             get_data_on_data_one()
@@ -1376,7 +1457,7 @@ class MainFrame(ctk.CTkFrame):
                 row for row in all_data 
                 if keyword in row[2].lower() or keyword in row[3].lower()
             ]
-            print(filtered)
+            # print(filtered)
             show_prisoners(filtered)
 
         def resize_tree_columns():
@@ -1468,7 +1549,7 @@ class MainFrame(ctk.CTkFrame):
 
         tree = ttk.Treeview(
             tree_container,
-            columns=('prisoner_id','sex','f_name','l_name','lawsuit','level','dan','type','status'),
+            columns=('prisoner_id','sex','f_name','l_name','lawsuit','level','dan','type','status','disciplinary'),
             show='headings',
             height=12,
             style='Treeview'
@@ -1482,6 +1563,7 @@ class MainFrame(ctk.CTkFrame):
         tree.heading('dan', text='แดน')
         tree.heading('type', text='ประเภท')
         tree.heading('status', text='สถานะ')
+        tree.heading('disciplinary', text='ผิดวินัย')
 
         # Set column width and alignment
         tree.column('prisoner_id', anchor='center', width=100, minwidth=80, stretch=True)
@@ -1493,6 +1575,7 @@ class MainFrame(ctk.CTkFrame):
         tree.column('dan', anchor='center', width=60, minwidth=50, stretch=True)
         tree.column('type', anchor='center', width=100, minwidth=80, stretch=True)
         tree.column('status', anchor='center', width=100, minwidth=80, stretch=True)
+        tree.column('disciplinary', anchor='center', width=100, minwidth=80, stretch=True)
 
         # Modern vertical scrollbar
         scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview, style='Vertical.TScrollbar')
@@ -1502,14 +1585,15 @@ class MainFrame(ctk.CTkFrame):
 
         column_ratios = {
             'prisoner_id': 0.10,
-            'sex': 0.06,
-            'f_name': 0.13,
-            'l_name': 0.13,
+            'sex': 0.04,
+            'f_name': 0.11,
+            'l_name': 0.11,
             'lawsuit': 0.18,
-            'level': 0.12,
+            'level': 0.09,
             'dan': 0.06,
             'type': 0.11,
-            'status': 0.11
+            'status': 0.10,
+            'disciplinary': 0.1
         }
 
         # ฟังก์ชันสำหรับแสดงเมนูคลิกขวา
@@ -2240,6 +2324,12 @@ class MainFrame(ctk.CTkFrame):
 
                     reserve_date = datetime.now().strftime("%Y-%m-%d")
 
+                    check_disciplinary = self.db.get_data_one(psn_id)
+                    # print(f'ผิดวินัย = {check_disciplinary[9]}')
+                    if check_disciplinary[9] == 'ผิดวินัย':
+                        alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังผิดวินัยไม่สามารถจองเยี่ยมได้'],button=False)
+                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        return
                     if check_visit[0] > 0 :
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
                         alert.after(3000,lambda: (alert.destroy()))
@@ -2761,7 +2851,7 @@ class MainFrame(ctk.CTkFrame):
                 for row in tree.get_children():
                     tree.delete(row)
                 for index,row in enumerate(prisoners_data):
-                    if row[4] not in allower_dan:
+                    if row[4] not in allower_dan or row[6] != 'อยู่':
                         continue
                     tree.insert('','end',values=row)
 
@@ -2796,6 +2886,13 @@ class MainFrame(ctk.CTkFrame):
                     print(f'psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
                     check_visit = self.db.get_count_visit(psn_id,next_day_str,today_month)
 
+
+                    check_disciplinary = self.db.get_data_one(psn_id)
+                    # print(f'ผิดวินัย = {check_disciplinary[9]}')
+                    if check_disciplinary[9] == 'ผิดวินัย':
+                        alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังผิดวินัยไม่สามารถจองเยี่ยมได้'],button=False)
+                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        return
                     if check_visit[0] > 0 :
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nมีการจองเยี่ยมผู้ต้องขังแล้ว'],button=False)
                         alert.after(3000,lambda: (alert.destroy()))
@@ -3064,7 +3161,7 @@ class MainFrame(ctk.CTkFrame):
                         text_from_round = f'จองเยี่ยม (จองเยี่ยมล่วงหน้า)\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
                         ctk.CTkLabel(frame_follower_visit, text=text_from_round, font=('TH SarabunPSK', 28)).pack(pady=10)
 
-                        followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id, data[5])
+                        followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id, nationnal_id)
                         ctk.CTkLabel(frame_follower_visit, text='กรุณาเลือกผู้ติดตาม', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                         ctk.CTkLabel(frame_follower_visit, text='(เลือกผู้ติดตามได้สูงสุด 4 คน)', text_color='red', font=('TH SarabunPSK', 24, 'bold')).pack(pady=10)
                         if followers:
@@ -3355,7 +3452,7 @@ class MainFrame(ctk.CTkFrame):
                     future_tree.delete(row)
 
                 for index, row in enumerate(prisoners_data):
-                    if row[4] not in allowed_dan:
+                    if row[4] not in allowed_dan or row[6] != 'อยู่':
                         continue
                     future_tree.insert('', 'end', values=row)
 
@@ -3593,8 +3690,9 @@ class MainFrame(ctk.CTkFrame):
             nonlocal nationnal_id
             nationnal_id = national_id_entry.get()
             prisoners_data = self.db.get_join_relatives_and_prisoners(nationnal_id)
-            # print(prisoners_data)
+            print(f'prisoners_data = {prisoners_data}')
             relative_data = self.db.get_data_for_ralative_id(nationnal_id)
+            # print(f'relative_data = {relative_data}')
             relative_name = f'{relative_data[1]}{relative_data[2]} {relative_data[3]}'
             # print(relative_data)
             label_content.configure(text = f'ยินดีต้อนรับ\n{relative_name}')
@@ -3623,18 +3721,25 @@ class MainFrame(ctk.CTkFrame):
             def reserve_now():
                 def open_next_screen(data):                        
 
-                    print(data)
-                    print(nationnal_id)
+                    # print(f'ข้อมูลใจ open nest screen = {data}')
+                    # print(nationnal_id)
                     # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
                     psn_id = data[0]
                     psn_level = data[3]
                     today = datetime.today().date().isoformat()
                     today_month = datetime.today().strftime('%Y-%m')
                     check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
-                    print(type(check_visit[1]))
+                    # print(type(check_visit[1]))
 
                     reserve_date = datetime.now().strftime("%Y-%m-%d")
 
+                    check_disciplinary = self.db.get_data_one(psn_id)
+                    # print(f'ผิดวินัย = {check_disciplinary[9]}')
+                    if check_disciplinary[9] == 'ผิดวินัย':
+                        alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังผิดวินัยไม่สามารถจองเยี่ยมได้'],button=False)
+                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        return
+                    
                     if check_visit[0] > 0 :
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังเยี่ยมได้ไม่เกิน 1 ครั้ง ต่อวัน'],button=False)
                         alert.after(3000,lambda: (alert.destroy(),config_label()))
@@ -3702,14 +3807,12 @@ class MainFrame(ctk.CTkFrame):
                     follower_vars = []
 
                     def next_screen_on_close():
-                        
                         self.open_nextscreen_window = None
-                        # tree_container.grid_forget()
                         next_screen.destroy()
                         tree_container.grid_forget()
-                        relative_label.grid_forget()
+                        relative_label.grid_forget()           
+                        # reserve_header_frame.grid_forget()
                         btn_cancel.grid_forget()
-
                         button_reserve_now.grid_forget()
                         button_reserve_future.grid_forget()
                         button_cancel.grid_forget()
@@ -3908,6 +4011,9 @@ class MainFrame(ctk.CTkFrame):
 
 
                         followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id,nationnal_id)
+                        print(f'prisoner_id = {prisoner_id}')
+                        print(f'nationnal_id = {nationnal_id}')
+                        print(f'followers = {followers}')
                         ctk.CTkLabel(frame_follower_visit,text='กรุณาเลือกผู้ติดตาม',font=('TH SarabunPSK',32,'bold')).pack(pady = 10)
                         ctk.CTkLabel(frame_follower_visit,text='(เลือกผู้ติดตามได้สูงสุด 4 คน)',text_color='red',font=('TH SarabunPSK',24,'bold')).pack(pady = 10)
                         if followers:
@@ -4136,7 +4242,7 @@ class MainFrame(ctk.CTkFrame):
                     'relation': 0.17,
                 }
 
-                print('จองเยี่ยมวันนี้')
+                # print('จองเยี่ยมวันนี้')
                 allowed_dan_by_dan = {
                     "จันทร์" : ['6','รจช'],
                     "อังคาร" : ['5','รจช'],
@@ -4145,7 +4251,7 @@ class MainFrame(ctk.CTkFrame):
                     "ศุกร์" : ['1','2','3','4','7','รจช']        
                 }
                 allower_dan = allowed_dan_by_dan.get(day,[])
-                print(allower_dan)
+                # print(allower_dan)
 
                 if prisoners_data != []:
                     print(prisoners_data)
@@ -4153,10 +4259,12 @@ class MainFrame(ctk.CTkFrame):
                     alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {national_id_entry.get()}'],button=True)
                     national_id_entry.delete(0, 'end')
                     return
+                
                 for row in tree.get_children():
                     tree.delete(row)
+
                 for index,row in enumerate(prisoners_data):
-                    if row[4] not in allower_dan:
+                    if row[4] not in allower_dan or row[6] != 'อยู่':
                         continue
                     tree.insert('','end',values=row)
 
@@ -4187,6 +4295,13 @@ class MainFrame(ctk.CTkFrame):
                     print(f'psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
                     check_visit = self.db.get_count_visit(psn_id,next_day_str,today_month)
 
+
+                    check_disciplinary = self.db.get_data_one(psn_id)
+                    # print(f'ผิดวินัย = {check_disciplinary[9]}')
+                    if check_disciplinary[9] == 'ผิดวินัย':
+                        alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังผิดวินัยไม่สามารถจองเยี่ยมได้'],button=False)
+                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        return
                     if check_visit[0] > 0 :
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nมีการจองเยี่ยมผู้ต้องขังแล้ว'],button=False)
                         alert.after(3000,lambda: (alert.destroy(),next_screen_on_close()))
@@ -4458,8 +4573,7 @@ class MainFrame(ctk.CTkFrame):
                         frame_follower_visit.pack(fill='both', expand=True)
                         text_from_round = f'จองเยี่ยม (จองเยี่ยมล่วงหน้า)\n{data[1]} {data[2]}\nเยี่ยมเวลา {round_visit_var.get()} น.'
                         ctk.CTkLabel(frame_follower_visit, text=text_from_round, font=('TH SarabunPSK', 28)).pack(pady=10)
-
-                        followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id, data[5])
+                        followers = self.db.get_join_prisoners_and_relatives_not_follower(prisoner_id, nationnal_id)
                         ctk.CTkLabel(frame_follower_visit, text='กรุณาเลือกผู้ติดตาม', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                         ctk.CTkLabel(frame_follower_visit, text='(เลือกผู้ติดตามได้สูงสุด 4 คน)', text_color='red', font=('TH SarabunPSK', 24, 'bold')).pack(pady=10)
                         if followers:
@@ -4602,7 +4716,6 @@ class MainFrame(ctk.CTkFrame):
                             self.open_nextscreen_window.lift()
                     except Exception as e:
                         print(f'เกิดข้อผิดพลาด item_select() : {e}')
-
 
                 def resize_tree_column():
                     future_tree_container.update_idletasks()
@@ -4749,7 +4862,7 @@ class MainFrame(ctk.CTkFrame):
                     future_tree.delete(row)
 
                 for index, row in enumerate(prisoners_data):
-                    if row[4] not in allowed_dan:
+                    if row[4] not in allowed_dan or row[6] != 'อยู่':
                         continue
                     future_tree.insert('', 'end', values=row)
 
