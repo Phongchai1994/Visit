@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import tempfile
 import sys
+import hashlib
 
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
 
@@ -644,11 +645,24 @@ class SQLiteDB:
             self.close()
 
 # ฟังก์ชันแก้ไขความสัมพันธ์ของญาติและผู้ต้องขัง
-    def edit_relation(self,prisoner_id,relative_id,relation):
+    def edit_relation(self,relation,relative_id,prisoner_id):
         self.connect()
         try:
             self.cursor.execute('UPDATE relations SET relation = ? WHERE prisoner_id = ? AND relative_id = ?',(relation,prisoner_id,relative_id))
             return True
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+            
+    # รดึงค่าความสัมพันธ์ของญาติและผู้ต้องขัง
+    def get_relation(self,prisoner_id,relative_id):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT relation FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id))
+            return self.cursor.fetchone()[0]
         except Exception as e:
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')

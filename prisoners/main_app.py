@@ -1144,6 +1144,8 @@ class MainFrame(ctk.CTkFrame):
             popup_register_relation.protocol("WM_DELETE_WINDOW", on_close)
 
         def show_relative(prisoner_id, f_name, l_name):
+            def get_join_prisoners_and_relatives_alldata():
+                return self.db.get_join_prisoners_and_relatives_alldata(prisoner_id)
             # print('show_relative fn')
             def resize_tree_columns():
                 tree_container_relative.update_idletasks()
@@ -1188,6 +1190,31 @@ class MainFrame(ctk.CTkFrame):
                                 tree_relative.insert('', 'end', values=row)
             
                 def edit_rel():
+                    def on_close_edit_rel():
+                        edit_relative_window.destroy()
+                        result = get_join_prisoners_and_relatives_alldata()
+                        print(result)
+                        for row in tree_relative.get_children():
+                            tree_relative.delete(row)
+                        for row in result:
+                            tree_relative.insert('', 'end', values=row)
+
+                    def get_relation():
+                        get_relation_data = self.db.get_relation(prisoner_id,relative_id)
+                        return get_relation_data if get_relation_data else None
+                    
+                    def save_edit_relative():
+                        result_save_edit_relative = self.db.edit_relation(relation_edit.get(),relative_id, prisoner_id)
+                        if result_save_edit_relative:
+                            alert = ALERT(edit_relative_window, [f'บันทึกความสัมพันธ์ของผู้ต้องขัง\n{f_name} {l_name}\nสำเร็จ'],button=True)
+                            if alert.show():
+                                on_close_edit_rel()
+                                return
+                            return
+                        else:
+                            alert = ALERT(edit_relative_window, [f'บันทึกความสัมพันธ์ของผู้ต้องขัง\n{f_name} {l_name}\nไม่สำเร็จ'],button=True)
+                            return
+
                     popup_window_delete_relative.destroy()
                     print("แก้ไข:", prisoner_id, relative_id)
                     print(f'{result[0][1]}{result[0][2]} {result[0][3]}')
@@ -1220,12 +1247,14 @@ class MainFrame(ctk.CTkFrame):
                     ctk.CTkLabel(
                         frame_edit_relative, text='ความสัมพันธ์เป็น :', font=('TH SarabunPSK', 24, 'bold'), text_color='#4a4a4a'
                     ).grid(row=2, column=0, padx=8, sticky='e', pady=5)
+
                     relation_edit = ctk.CTkOptionMenu(
                         frame_edit_relative, values=['ปู่','ย่า','ตา','ยาย','ลุง','ป้า','พ่อ','แม่','น้า','พี่ชาย','พี่สาว','น้องชาย','น้องสาว','สามี','ภรรยา','ลูกสาว','ลูกชาย','อื่น ๆ'],
                         font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 24),
                         fg_color='#fff', button_color='#b3d1ff', text_color='#222'
                     )
                     relation_edit.grid(row=2, column=1, padx=8, sticky='w', pady=5)
+                    relation_edit.set(get_relation() if get_relation() else '')
                     ctk.CTkLabel(
                         frame_edit_relative, text='ของ', font=('TH SarabunPSK', 24, 'bold'), text_color='#4a4a4a'
                     ).grid(row=3, column=0,columnspan = 2, padx=8, sticky='ew', pady=5)
@@ -1236,14 +1265,13 @@ class MainFrame(ctk.CTkFrame):
                         frame_edit_relative, text=f'{f_name} {l_name}', font=('TH SarabunPSK', 24), text_color='#2d3a4b'
                     ).grid(row=4, column=1, padx=8, sticky='w', pady=5)
 
-                    
                     ctk.CTkButton(
                         frame_edit_relative, text='บันทึกการแก้ไข', width=120, height=38,
                         font=('TH SarabunPSK', 20, 'bold'), fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#fff',
-                        corner_radius=14, command=lambda: print(f'บันทึกการแก้ไขข้อมูลความสัมพันธ์ {relative_id} และ {prisoner_id} ความสัมพันธ์ {relation_edit.get()}')
+                        corner_radius=14, command=lambda: save_edit_relative()
                     ).grid(row=5, column=0, padx=8, columnspan=2, sticky='n', pady=(16, 12))
                     
-                    edit_relative_window.protocol("WM_DELETE_WINDOW", lambda: edit_relative_window.destroy())
+                    edit_relative_window.protocol("WM_DELETE_WINDOW", lambda:on_close_edit_rel())
 
                 ctk.CTkButton(
                     popup_window_delete_relative,
@@ -1269,7 +1297,7 @@ class MainFrame(ctk.CTkFrame):
 
             popup_show_list = ctk.CTkToplevel(self)
             popup_show_list.title('รายชื่อญาติ')
-            popup_show_list.geometry('720x480+1+1')
+            popup_show_list.geometry('960x680+1+1')
             popup_show_list.grab_set()
             popup_show_list.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
             popup_show_list.attributes("-topmost", True)
@@ -1302,10 +1330,10 @@ class MainFrame(ctk.CTkFrame):
             tree_relative.column('tel',anchor='w')
             tree_relative.column('relation',anchor='w')
 
-            scrollbar = ttk.Scrollbar(tree_container_relative,orient='vertical',command=tree.yview)
-            tree_relative.configure(yscrollcommand=scrollbar.set)
+            # scrollbar = ttk.Scrollbar(tree_container_relative,orient='vertical',command=tree.yview)
+            # tree_relative.configure(yscrollcommand=scrollbar.set)
             tree_relative.grid(row=1,column=0,sticky='nsew')
-            scrollbar.grid(row=1,column=1,sticky='ns')
+            # scrollbar.grid(row=1,column=1,sticky='ns')
 
             column_ratio ={
                         'relative_id' : 0.16,
@@ -1317,8 +1345,9 @@ class MainFrame(ctk.CTkFrame):
                         'relation' : 0.12
             }
             print('prisoner_id = ',prisoner_id)
-            result = self.db.get_join_prisoners_and_relatives_alldata(prisoner_id)
+            result = get_join_prisoners_and_relatives_alldata()
             print('in show_relative ',result)
+            
             for row in result:
                 tree_relative.insert('','end',values=row)
 
@@ -1345,7 +1374,6 @@ class MainFrame(ctk.CTkFrame):
                 status_data.set(result[8])
                 disciplinary_data.set(result[9])
                 
-
             def update_level_and_dan():
                 id = id_data.cget('text')
                 sex = sex_data.get()
@@ -5095,8 +5123,6 @@ class MainFrame(ctk.CTkFrame):
                         return 
                     return info['cid']
                 
-                
-                
                 def save_to_db():
                     visit_id = values[0]
                     data_relative = []
@@ -5114,7 +5140,7 @@ class MainFrame(ctk.CTkFrame):
                             get_visits()
                     else:
                         alert = ALERT(add_visit_popup,[f'ไม่สามารถเพิ่มชื่อญาติเยี่ยมได้'],text_color='red',button=True)
-
+        
                 result_get_visits = self.db.get_visit_by_id(values[0])
                 relationship = self.db.get_join_prisoners_and_relatives(result_get_visits[4])
                 print(result_get_visits)
@@ -5123,7 +5149,7 @@ class MainFrame(ctk.CTkFrame):
                 add_visit_popup = ctk.CTkToplevel()
                 add_visit_popup.configure(fg_color='#f4f7fa')  # เพิ่มสีพื้นหลังให้สอดคล้องกับธีม
                 add_visit_popup.title('เพิ่มชื่อญาติเยี่ยม')
-                add_visit_popup.geometry('520x760+400+50')  
+                add_visit_popup.geometry('720x760+400+50')  
                 add_visit_popup.grab_set()
                 add_visit_popup.focus()
 
@@ -5223,8 +5249,6 @@ class MainFrame(ctk.CTkFrame):
                     elif index == 9 and data != None:
                         data_visit_no_5.configure(text=f'{data}')
 
-                
-
                 # Add entry and "เพิ่มญาติ" button if empty
                 def add_entry_and_btn_if_empty(data_label, row):
                     if data_label.cget('text') == '':
@@ -5235,6 +5259,9 @@ class MainFrame(ctk.CTkFrame):
                             placeholder_text='กรอกเลขญาติ'
                         )
                         entry.grid(row=row, column=1, sticky='w', padx=(8, 2), pady=8)
+
+                        # บันทึกข้อมูลลงฐานข้อมูล
+
 
                         # เช็คข้อมูล
                         def check_label_visit(relative_id):
@@ -5262,8 +5289,10 @@ class MainFrame(ctk.CTkFrame):
                             relative_id = entry.get().strip()
                             if not relative_id:
                                 relative_id = read_card()
-                                entry.insert(0, relative_id)
                                 print(relative_id)
+                                if not relative_id:
+                                    return
+                                entry.insert(0, relative_id)
                             result_check_data = check_label_visit(relative_id)
                             if not result_check_data:
                                 entry.delete(0, 'end')
