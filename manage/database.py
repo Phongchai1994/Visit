@@ -53,37 +53,21 @@ class SQLiteDB:
 
     # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners
     def add_data(self,data):
-        self.decode_db()
         self.connect()
         try :
             print('กำลังบันทึกข้อมูล')
             self.cursor.execute('INSERT INTO prisoners (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status) VALUES (?,?,?,?,?,?,?,?,?)',data)
             return True
-        except sqlite3.OperationalError as e:
-            self.msgbox(e)
-            print(f'syntax ผิด / database lock : {e}')
-            return False
-        except sqlite3.ProgrammingError as e:
-            self.msgbox(e)
-            print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
-            return False
-        except sqlite3.DatabaseError as e:
-            self.msgbox(e)
-            print(f'database เสียหาย : {e}')
-            return False
         except Exception as e:
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
         finally:
             self.close()
-            self.encode_db()
 
     # เพิ่มข้อมูลญาติใสในตาราง relatives
     def add_data_ralative_to_relatives(self,id,data,relation):
-        self.decode_db()
         self.connect()
-
         try:
             # บันทึกข้อมูล ในตารางญาติ
             self.cursor.execute('INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel) VALUES (?,?,?,?,?,?)',(data[0],data[1],data[2],data[3],data[4],data[5]))
@@ -211,7 +195,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
-
+    # ดึงข้อมูลญาติของผู้ต้องขัง
     def get_join_prisoners_and_relatives_alldata(self,prisoner_id):
         self.connect()
         try:
@@ -259,43 +243,26 @@ class SQLiteDB:
         finally:
             self.close()
 
-    def get_data_relation(self,id):
+    # ดึงรหัสผู้ต้องขัง และ รหัสประจำตัวญาติ
+    def get_data_relation(self,prisoner_id):
         self.connect()
-
         try:
-            self.cursor.execute('SELECT prisoner_id,relative_id FROM relations WHERE prisoner_id = ?',(id,))
+            self.cursor.execute('SELECT prisoner_id,relative_id FROM relations WHERE prisoner_id = ?',(prisoner_id,))
             result = self.cursor.fetchall()
-            print(result)
             return result
-        except sqlite3.OperationalError as e:
-            self.msgbox(e)
-            print(f'syntax ผิด / database lock : {e}')
-            return False
-        except sqlite3.ProgrammingError as e:
-            self.msgbox(e)
-            print(f'ใช้ connection หลังปิดไปแล้ว : {e}')
-            return False
-        except sqlite3.DatabaseError as e:
-            self.msgbox(e)
-            print(f'database เสียหาย : {e}')
-            return False
         except Exception as e:
             self.msgbox(e)
             print(e)
             return False
         finally:
             self.close()
-            self.encode_db()
     
-
+    # ดึงข้อมูลลายนิ้วมือของญาติทุกคน
     def get_all_fingerprint(self):
-        self.decode_db()
         self.connect()
-
         self.cursor.execute('SELECT relative_id,title,f_name,l_name,fingerprint FROM relatives')
         data = self.cursor.fetchall()
         self.close()
-        self.encode_db()
         return data
     
     # ดึงตารางข้อมูลผู้ต้องขัง อ้างอิงด้วย เลขบัตรประชาชนญาติ
@@ -311,7 +278,8 @@ class SQLiteDB:
                                     prisoners.level,
                                     prisoners.dan,
                                     relations.relation,
-                                    prisoners.status
+                                    prisoners.status,
+                                    prisoners.type
                                 FROM prisoners 
                                 JOIN relations ON prisoners.prisoner_id = relations.prisoner_id
                                 WHERE relations.relative_id = ?
@@ -353,6 +321,23 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    # เพิ่มช่องเยี่ยม
+    def add_channel_on_visits(self,data,channel):
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                UPDATE visits
+                                SET channel = ?
+                                WHERE date_visit = ? AND time_visit = ? AND prisoner_id = ? AND relative_id_1 = ?
+                                ''', (channel, data[0], data[1], data[2], data[3]))
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+
     # รายงานการเยี่ยมประจำวัน
     def get_visits(self,data_visit):
         self.decode_db()
@@ -369,7 +354,8 @@ class SQLiteDB:
                                     COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
                                     COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
                                     COALESCE(r4.title || " " || r4.f_name || " " || r4.l_name, '-') AS relative_4,
-                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5
+                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5,
+                                    visits.channel
                                 FROM
                                     visits
                                 JOIN prisoners ON visits.prisoner_id = prisoners.prisoner_id
@@ -447,7 +433,7 @@ class SQLiteDB:
             count = self.cursor.fetchone()[0]
             return count
         except Exception as e:
-            self.msgbox(e)
+            self.msgbox(e)  
             return False
         finally:
             self.close()
@@ -570,6 +556,7 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # ดึงข้อมูลญาติ เลขบัตร คำนำหน้า ชื่อ สกุล
     def get_join_prisoners_and_relatives(self,prisoner_id):
         self.connect()
         try:
@@ -591,6 +578,7 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # เช็คข้อมูลความสัมพันธ์ ถ้า 1 คือ มี 0 คือ ไม่มี
     def count_relative(self,prisoner_id,relative_id):
         self.connect()
         try:
@@ -604,6 +592,7 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # ดึงข้อมูลตารางเยี่ยม โดยใช้ visit_id
     def prisoner_id_on_table_visits(self,visit_id):
         print(f'visit_id on db = {visit_id}')
         self.connect()
@@ -618,12 +607,13 @@ class SQLiteDB:
         finally:
             self.close()
 
-    def execute_manual(self,query):
+    # execute ดึงข้อมูล โดยการส่ง query เอง
+    def get_execute_manual(self,query):
         self.connect()
         try:
             self.cursor.execute(query)
-            data = self.cursor.fetchall()
-            print(data)
+            data = self.cursor.fetchone()[0]
+            # print(data)
             return data
         except Exception as e:
             print(e)
@@ -632,6 +622,20 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # execute ส่งข้อมูล โดยการส่ง query เอง
+    def set_execute_manual(self,query):
+        self.connect()
+        try:
+            self.cursor.execute(query)
+            return True
+        except Exception as e:
+            print(e)
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    # เพิ่มข้อมูลในตาราง visits เพิ่มเติม
     def add_relative_to_visits(self,data):
         self.connect()
         try:
@@ -644,7 +648,7 @@ class SQLiteDB:
         finally:
             self.close()
 
-# ฟังก์ชันแก้ไขความสัมพันธ์ของญาติและผู้ต้องขัง
+    # ฟังก์ชันแก้ไขความสัมพันธ์ของญาติและผู้ต้องขัง
     def edit_relation(self,relation,relative_id,prisoner_id):
         self.connect()
         try:
@@ -669,6 +673,24 @@ class SQLiteDB:
             return False
         finally:
             self.close()
+
+    # ดึงข้อมูลเยี่ยมจากตารางเยี่ยม visits โดยดึงจากวันที่
+    def get_visits_all_on_date(self,date):
+        self.connect()
+        try:   
+            self.cursor.execute('SELECT * FROM visits WHERE date_visit = ?',(date,))
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+
+
+
+
 
     def decode_db(self):
         return

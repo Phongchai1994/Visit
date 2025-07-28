@@ -131,7 +131,14 @@ class MainFrame(ctk.CTkFrame):
         # สร้าง Frame สำหรับรายงานประวัติการเยี่ยมญาติ
         self.popup_report_visits = ctk.CTkFrame(self, fg_color='#fff0f8', corner_radius=20, border_width=2, border_color='#f4d4e6')
 
-        self.reserve_visit_by_national_id_frame = ctk.CTkFrame(self, fg_color='#f0f8ff', corner_radius=20, border_width=2, border_color='#d4e6f4')  # สำหรับจองเยี่ยมญาติด้วยหมายเลขบัตรประชาชน
+        # สร้าง Frame สำหรับจองเยี่ยมญาติด้วยหมายเลขบัตรประชาชน
+        self.reserve_visit_by_national_id_frame = ctk.CTkFrame(self, fg_color='#f0f8ff', corner_radius=20, border_width=2, border_color='#d4e6f4')
+
+        # สร้าง Frame สำหรับจองเยี่ยมญาติ
+        self.reserve_visit_frame = ctk.CTkFrame(self, fg_color='#f0f8ff', corner_radius=20, border_width=2, border_color='#d4e6f4')
+
+        # สร้าง Frame สำหรับลงทะเบียนลายนิ้วมือ
+        self.fingerprint_frame = ctk.CTkFrame(self, fg_color='#fff8f0', corner_radius=20, border_width=2, border_color='#f4e6d4')
 
         # ใช้ตรวจสอบการป้อนตัวเลขใน regis_entry_id
         self.vcmd = self.register(self.validate_number_input)
@@ -3718,7 +3725,7 @@ class MainFrame(ctk.CTkFrame):
             nonlocal nationnal_id
             nationnal_id = national_id_entry.get()
             prisoners_data = self.db.get_join_relatives_and_prisoners(nationnal_id)
-            print(f'prisoners_data = {prisoners_data}')
+            # print(f'prisoners_data = {prisoners_data}')
             relative_data = self.db.get_data_for_ralative_id(nationnal_id)
             # print(f'relative_data = {relative_data}')
             relative_name = f'{relative_data[1]}{relative_data[2]} {relative_data[3]}'
@@ -3754,6 +3761,7 @@ class MainFrame(ctk.CTkFrame):
                     # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
                     psn_id = data[0]
                     psn_level = data[3]
+                    psn_type = data[7]
                     today = datetime.today().date().isoformat()
                     today_month = datetime.today().strftime('%Y-%m')
                     check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
@@ -3924,7 +3932,7 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5) 
 
-                        elif day == 'พุธ' and str(data[4]) == '1':
+                        elif day == 'พุธ' and str(data[4]) == '1' and psn_type != 'ผู้ต้องกักขัง':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning.get_available_rounds(now):
@@ -3936,7 +3944,23 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
 
-                        elif day == 'พุธ' and str(data[4]) in ['2','3','4','7']:                    
+                        elif day == 'พุธ' and str(data[4]) == '1' and psn_type == 'ผู้ต้องกักขัง':
+                            # 🔹 ให้เฉพาะรอบ 4
+                            rounds = [
+                                ('เวลา 11.00 - 11.15', '11:00:00', '10:45:00')
+                            ]
+                            for text, start, close in rounds:
+                                close_time = datetime.strptime(close, "%H:%M:%S").time()
+                                if now < close_time:
+                                    ctk.CTkRadioButton(
+                                        frame_select_round,
+                                        text=text,
+                                        variable=round_visit_var,
+                                        value=start,
+                                        font=('TH SarabunPSK', 32, 'bold')
+                                    ).pack(pady=5)
+
+                        elif day == 'พุธ' and str(data[4]) in ['2','3','4','7'] and psn_type != 'ผู้ต้องกักขัง':                    
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon.get_available_rounds(now):
@@ -3947,6 +3971,22 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5) 
+
+                        elif day == 'พุธ' and str(data[4]) in ['4','7'] and psn_type == 'ผู้ต้องกักขัง':
+                            #  🔹 รอบบ่าย ให้เฉพาะรอบ 7
+                            rounds = [
+                                ('เวลา 14.15 - 14.30', '14:15:00', '13:15:00')
+                            ]
+                            for text, start, close in rounds:
+                                close_time = datetime.strptime(close, "%H:%M:%S").time()
+                                if now < close_time:
+                                    ctk.CTkRadioButton(
+                                        frame_select_round,
+                                        text=text,
+                                        variable=round_visit_var,
+                                        value=start,
+                                        font=('TH SarabunPSK', 32, 'bold')
+                                    ).pack(pady=5)
 
                         elif day == 'พฤหัสบดี' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
@@ -3970,7 +4010,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'ศุกร์' and str(data[4]) == '1':
+                        elif day == 'ศุกร์' and str(data[4]) == '1' and psn_type != 'ผู้ต้องกักขัง':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning.get_available_rounds(now):
@@ -3982,7 +4022,7 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
 
-                        elif day == 'ศุกร์' and str(data[4]) in ['2','3','4','7']:                    
+                        elif day == 'ศุกร์' and str(data[4]) in ['2','3','4','7'] and psn_type != 'ผู้ต้องกักขัง':                    
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon.get_available_rounds(now):
@@ -4025,6 +4065,7 @@ class MainFrame(ctk.CTkFrame):
                         round_time = round_visit_var.get()
                         round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
                         count_visit = self.db.get_count_visit_on_round(round_time,reserve_date)
+                        channel = int(count_visit) + 1
                         
                         print(f'count_visit = {count_visit}')
 
@@ -4061,7 +4102,7 @@ class MainFrame(ctk.CTkFrame):
 
                         submit = ctk.CTkButton(frame_follower_visit,
                                             text='ถัดไป',
-                                            command=lambda:confirm_visit(round_time_strtime,reserve_date),
+                                            command=lambda:confirm_visit(round_time_strtime,reserve_date,channel),
                                             font=('TH SarabunPSK',24,'bold'),
                                             height=100
                                             )
@@ -4076,7 +4117,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel.pack(side = 'bottom',pady = 10)
                         submit.pack(side = 'bottom',pady = 10)
 
-                    def confirm_visit(round_time_strtime,reserve_date):
+                    def confirm_visit(round_time_strtime,reserve_date,channel):
                         for widget in frame_confirm_visit.winfo_children():
                             widget.destroy()
 
@@ -4086,7 +4127,7 @@ class MainFrame(ctk.CTkFrame):
                         select_fl_id = [rid for rid,var in follower_vars if var.get()]
                         prepare_data = [reserve_date,round_time_strtime,prisoner_id,nationnal_id]
 
-                        ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nโดย {relative_dict.get(int(nationnal_id))}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
+                        ctk.CTkLabel(frame_confirm_visit,text=f'จองเยี่ยม\n{data[1]} {data[2]}\nเวลา {round_visit_var.get()} น.\nช่องเยี่ยมที่{channel}\nโดย {relative_dict.get(int(nationnal_id))}\nผู้ติดตาม',font=('TH SarabunPSK',28)).pack(pady = 5)
                         for index,row in enumerate(select_fl_id):
                             prepare_data.append(row)
                             ctk.CTkLabel(frame_confirm_visit,text=f'คนที่ {index +1} {relative_dict.get(row)}',font=('TH SarabunPSK',28)).pack(pady = 5)
@@ -4102,7 +4143,7 @@ class MainFrame(ctk.CTkFrame):
                         
                         submit = ctk.CTkButton(frame_confirm_visit,
                                             text='ยืนยันการจองเยี่ยม',
-                                            command=lambda:insert_reserve_visit_to_db(prepare_data),
+                                            command=lambda:insert_reserve_visit_to_db(prepare_data,channel),
                                             font=('TH SarabunPSK',24,'bold'),
                                             height=100
                                             )
@@ -4130,38 +4171,48 @@ class MainFrame(ctk.CTkFrame):
                             follower_vars.clear()
                             select_follower()
                             
-                    def insert_reserve_visit_to_db(prepare_data):
+                    def insert_reserve_visit_to_db(prepare_data,channel):
                         print(prepare_data)
                         if len(prepare_data) == 8:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5) VALUES (?,?,?,?,?,?,?,?)"
                             result = self.db.add_visits(query,prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 7:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4) VALUES (?,?,?,?,?,?,?)"
                             result = self.db.add_visits(query,prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 6:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3) VALUES (?,?,?,?,?,?)"
                             result = self.db.add_visits(query,prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 5:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2) VALUES (?,?,?,?,?)"
                             result = self.db.add_visits(query,prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 4:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1) VALUES (?,?,?,?)"
                             result = self.db.add_visits(query,prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         
                     def insert_succress():
                         alert = ALERT(next_screen,['จองเยี่ยมสำเร็จ'],button=True)
@@ -4179,6 +4230,7 @@ class MainFrame(ctk.CTkFrame):
                             prisoner_data = tree.item(i)['values']
                             break
                         if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
+                            print(f'prisoner_data on itemselect = {prisoner_data}')
                             self.open_nextscreen_window = open_next_screen(prisoner_data)
                         else:
                             self.open_nextscreen_window.lift()
@@ -4234,12 +4286,14 @@ class MainFrame(ctk.CTkFrame):
                 tree.heading('level',text='ชั้น')
                 tree.heading('dan',text='แดน')
                 tree.heading('relation',text='ความสัมพันธ์')
+
                 tree.column('prisoner_id', anchor='center')
                 tree.column('f_name', anchor='center')
                 tree.column('l_name', anchor='center')
                 tree.column('level', anchor='center')
                 tree.column('dan', anchor='center')
                 tree.column('relation', anchor='center')
+
                 scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
                 tree.configure(yscrollcommand=scrollbar.set)
 
@@ -4976,18 +5030,44 @@ class MainFrame(ctk.CTkFrame):
                 temp_pdf = tempfile.mktemp(".pdf")
                 c = canvas.Canvas(temp_pdf, pagesize=landscape(A4))
                 width, height = landscape(A4)
+                
                 # ฟรอน และ ระยะห่าง
                 c.setFont("TH SarabunPSK", 18)
                 c.drawCentredString(width / 2, height - 1.5 * cm, f"รายงานการเยี่ยม วันที่ {date_now} เวลาเยี่ยม {combo_round.get()}")
                 c.setFont("TH SarabunPSK", 11)
+                
                 # หัวตารางและความกว้าง
                 columns = tree["columns"]
-                col_widths = [3.07*cm] * (len(columns)-1)  # -1 เพราะจะไม่ print visit_id
                 headers = [tree.heading(col)["text"] for col in columns if col != 'visit_id']
+                
+                # ปรับขนาด column ให้พอดีกับหน้ากระดาษ
+                available_width = width - 2*cm  # หักขอบซ้าย-ขวา
+                num_columns = len(headers)
+                
+                # กำหนดความกว้างแต่ละ column ตามเนื้อหา
+                col_widths = []
+                if num_columns == 10:  # จำนวน column ที่แสดง (ไม่รวม visit_id)
+                    col_widths = [
+                        available_width * 0.10,  # Time Stamp
+                        available_width * 0.07,  # วันที่จอง
+                        available_width * 0.07,  # เวลาเยี่ยม
+                        available_width * 0.12,  # ชื่อผู้ต้องขัง
+                        available_width * 0.12,  # ญาติคนที่ 1
+                        available_width * 0.12,  # ญาติคนที่ 2
+                        available_width * 0.12,  # ญาติคนที่ 3
+                        available_width * 0.12,  # ญาติคนที่ 4
+                        available_width * 0.11,  # ญาติคนที่ 5
+                        available_width * 0.05,  # ช่อง
+                    ]
+                else:
+                    # ถ้าจำนวน column ไม่ใช่ 10 ให้แบ่งเท่า ๆ กัน
+                    col_widths = [available_width / num_columns] * num_columns
+                
                 # ตำแหน่งเริ่ม
                 start_x = 1*cm
                 start_y = height - 3 * cm
                 row_height = 0.8*cm
+                
                 # วาดหัวตาราง
                 y = start_y
                 x = start_x
@@ -4997,23 +5077,45 @@ class MainFrame(ctk.CTkFrame):
                     c.setFillColorRGB(1, 1, 1)
                     c.drawString(x+0.2*cm, y+0.3*cm, header)
                     x += col_widths[i]
+                    
                 # วาดข้อมูล
                 y -= row_height
                 for child_id in tree.get_children():
                     x = start_x
                     values = tree.item(child_id, "values")
-                    for i, value in enumerate(values[1:]):
+                    for i, value in enumerate(values[1:]):  # ข้าม visit_id
                         c.setFillColorRGB(0.97, 0.98, 1) if y % 2 == 0 else c.setFillColorRGB(1, 1, 1)
                         c.rect(x, y, col_widths[i], row_height, stroke=1, fill=1)
                         c.setFillColorRGB(0, 0, 0)
                         text = str(value)
+                        
+                        # ตัดข้อความถ้ายาวเกินไป
+                        max_width = col_widths[i] - 0.4*cm
+                        text_width = c.stringWidth(text, "TH SarabunPSK", 11)
+                        if text_width > max_width:
+                            # ตัดข้อความและเพิ่ม ...
+                            while text_width > max_width and len(text) > 3:
+                                text = text[:-1]
+                                text_width = c.stringWidth(text + "...", "TH SarabunPSK", 11)
+                            text = text + "..."
+                        
+                        # จัดตำแหน่งข้อความ
                         if text.isdigit():
-                            text_width = c.stringWidth(text, "TH SarabunPSK", 10)
+                            # จัดขวาสำหรับตัวเลข
+                            text_width = c.stringWidth(text, "TH SarabunPSK", 11)
                             c.drawString(x+col_widths[i]-text_width-0.2*cm, y+0.3*cm, text)
                         else:
+                            # จัดซ้ายสำหรับข้อความ
                             c.drawString(x+0.2*cm, y+0.3*cm, text)
                         x += col_widths[i]
                     y -= row_height
+                    
+                    # ตรวจสอบถ้าใกล้หมดหน้า ให้สร้างหน้าใหม่
+                    if y < 2*cm:
+                        c.showPage()
+                        c.setFont("TH SarabunPSK", 11)
+                        y = height - 2*cm
+                
                 c.save()
                 os.startfile(temp_pdf)
                 messagebox.showinfo('กำลังพิมพ์', 'สั่งพิมพ์เรียบร้อย')
@@ -5024,6 +5126,59 @@ class MainFrame(ctk.CTkFrame):
                     pass
             except Exception as e:
                 messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
+            # try:
+            #     # สร้าง pdf
+            #     temp_pdf = tempfile.mktemp(".pdf")
+            #     c = canvas.Canvas(temp_pdf, pagesize=landscape(A4))
+            #     width, height = landscape(A4)
+            #     # ฟรอน และ ระยะห่าง
+            #     c.setFont("TH SarabunPSK", 18)
+            #     c.drawCentredString(width / 2, height - 1.5 * cm, f"รายงานการเยี่ยม วันที่ {date_now} เวลาเยี่ยม {combo_round.get()}")
+            #     c.setFont("TH SarabunPSK", 11)
+            #     # หัวตารางและความกว้าง
+            #     columns = tree["columns"]
+            #     col_widths = [3.07*cm] * (len(columns)-1)  # -1 เพราะจะไม่ print visit_id
+            #     headers = [tree.heading(col)["text"] for col in columns if col != 'visit_id']
+            #     # ตำแหน่งเริ่ม
+            #     start_x = 1*cm
+            #     start_y = height - 3 * cm
+            #     row_height = 0.8*cm
+            #     # วาดหัวตาราง
+            #     y = start_y
+            #     x = start_x
+            #     for i, header in enumerate(headers):
+            #         c.setFillColorRGB(0.31, 0.55, 0.80)  # blue header
+            #         c.rect(x, y, col_widths[i], row_height, stroke=1, fill=1)
+            #         c.setFillColorRGB(1, 1, 1)
+            #         c.drawString(x+0.2*cm, y+0.3*cm, header)
+            #         x += col_widths[i]
+            #     # วาดข้อมูล
+            #     y -= row_height
+            #     for child_id in tree.get_children():
+            #         x = start_x
+            #         values = tree.item(child_id, "values")
+            #         for i, value in enumerate(values[1:]):
+            #             c.setFillColorRGB(0.97, 0.98, 1) if y % 2 == 0 else c.setFillColorRGB(1, 1, 1)
+            #             c.rect(x, y, col_widths[i], row_height, stroke=1, fill=1)
+            #             c.setFillColorRGB(0, 0, 0)
+            #             text = str(value)
+            #             if text.isdigit():
+            #                 text_width = c.stringWidth(text, "TH SarabunPSK", 10)
+            #                 c.drawString(x+col_widths[i]-text_width-0.2*cm, y+0.3*cm, text)
+            #             else:
+            #                 c.drawString(x+0.2*cm, y+0.3*cm, text)
+            #             x += col_widths[i]
+            #         y -= row_height
+            #     c.save()
+            #     os.startfile(temp_pdf)
+            #     messagebox.showinfo('กำลังพิมพ์', 'สั่งพิมพ์เรียบร้อย')
+            #     time.sleep(2)
+            #     try:
+            #         os.remove(temp_pdf)
+            #     except Exception:
+            #         pass
+            # except Exception as e:
+            #     messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
 
         def get_visits():
             # tree.grid_forget()
@@ -5035,6 +5190,7 @@ class MainFrame(ctk.CTkFrame):
             print(f'round_date = {round_date}')
             data = [round_date, round_time]
             result = self.db.get_visits(data)
+            print(f'data on get visits = {result}')
             for row in tree.get_children():
                 tree.delete(row)
             for row in result:
@@ -5051,6 +5207,7 @@ class MainFrame(ctk.CTkFrame):
             if not selected:
                 return
             values = tree.item(selected)['values']
+            print(f'values = {values}')
             # ฟังก์ชันสำหรับเมนูคลิกขวา
             def move_round():
 
@@ -5360,7 +5517,7 @@ class MainFrame(ctk.CTkFrame):
         header_frame.grid_columnconfigure(0, weight=1)
         date_now = datetime.now().strftime("%d/%m/%Y")
         label_content = ctk.CTkLabel(header_frame, text=f'รายงานการเยี่ยม ประจำวันที่ {date_now}', font=('TH SarabunPSK', 36, 'bold'), text_color="#2d3a4b", fg_color="#ffffff")
-        label_content.grid(row=0, column=0, sticky="nsew", pady=10)
+        label_content.grid(row=0, column=0, sticky="nsew", pady=10,padx = 10)
 
         # Filter Frame
         filter_frame = ctk.CTkFrame(self.popup_report_visits, fg_color="#f8fbff", corner_radius=18, border_width=2, border_color="#e0e6ed", height=80)
@@ -5442,7 +5599,8 @@ class MainFrame(ctk.CTkFrame):
                 'relation_id_2',
                 'relation_id_3',
                 'relation_id_4',
-                'relation_id_5'
+                'relation_id_5',
+                'channel'
             ),
             show='headings',
             height=12,
@@ -5458,6 +5616,8 @@ class MainFrame(ctk.CTkFrame):
         tree.heading('relation_id_3',text='ญาติคนที่ 3')
         tree.heading('relation_id_4',text='ญาติคนที่ 4')
         tree.heading('relation_id_5',text='ญาติคนที่ 5')
+        tree.heading('channel',text='ช่อง')
+
         tree.column('visit_id',width=0,stretch=False)
         tree.column('time_stamp', anchor='center')
         tree.column('date_visit', anchor='center')
@@ -5468,6 +5628,7 @@ class MainFrame(ctk.CTkFrame):
         tree.column('relation_id_3', anchor='center')
         tree.column('relation_id_4', anchor='center')
         tree.column('relation_id_5', anchor='center')
+        tree.column('channel',anchor='center')
 
         scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
@@ -5476,15 +5637,16 @@ class MainFrame(ctk.CTkFrame):
 
         # กำหนดความกว้าง column
         column_ratios = {
-            'time_stamp' : 0.12,
-            'date_visit' : 0.10,
+            'time_stamp' : 0.11,
+            'date_visit' : 0.08,
             'time_visit' : 0.08,
-            'prisoner_id' : 0.15,
+            'prisoner_id' : 0.12,
             'relation_id_1' : 0.11,
             'relation_id_2' : 0.11,
             'relation_id_3' : 0.11,
             'relation_id_4' : 0.11,
-            'relation_id_5' : 0.11
+            'relation_id_5' : 0.11,
+            'channel':0.06
         }
         tree_container.bind('<Configure>',lambda e: resize_tree_column())
         tree.bind('<Button-3>',on_right_click)
@@ -5514,9 +5676,11 @@ class MainFrame(ctk.CTkFrame):
             self.search_all_prisoner()
         elif page_name == 'จองเยี่ยม':
             print(page_name)
+            self.reserve_visit_frame.pack(fill='both',expand = True)
             self.reserve_to_visit()
         elif page_name == 'ลงทะเบียนลายนิ้วมือ':
             print(page_name)
+            self.fingerprint_frame.pack(fill='both',expand = True)
             self.register_fingerprint()
         elif page_name == 'รายงาน':
             print(page_name)
@@ -5530,3 +5694,14 @@ class MainFrame(ctk.CTkFrame):
             print(page_name)
             self.reserve_visit_by_national_id_frame.pack(fill='both',expand = True)
             self.reserve_visit_by_national_id()
+        else:
+            # สำหรับหน้าที่ยังไม่ได้เขียน แสดงข้อความแจ้งเตือน
+            temp_frame = ctk.CTkFrame(self, fg_color='#f4f7fa', corner_radius=20)
+            temp_frame.pack(fill='both', expand=True)
+            
+            ctk.CTkLabel(
+                temp_frame,
+                text=f'หน้า "{page_name}"\nอยู่ระหว่างการพัฒนา',
+                font=('TH SarabunPSK', 32, 'bold'),
+                text_color='#2d3a4b'
+            ).place(relx=0.5, rely=0.5, anchor='center')
