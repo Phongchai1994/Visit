@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from user_session import user_session, require_admin, require_login
 
 class MenuFrame(ctk.CTkFrame):
     def __init__(self,parent,main_frame):
@@ -89,14 +90,42 @@ class MenuFrame(ctk.CTkFrame):
         visit_section = ctk.CTkFrame(button_container, fg_color='transparent')
         visit_section.pack(fill='x', pady=(0, 20))
         
-        modern_button(visit_section, 'จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=4, fill='x')
-        modern_button(visit_section, 'จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=4, fill='x')
-        modern_button(visit_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
-        modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('')).pack(pady=4, fill='x')
+        if user_session.is_admin():
+            modern_button(visit_section, 'จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=4, fill='x')
+            modern_button(visit_section, 'จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=4, fill='x')
+            modern_button(visit_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
+            modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('')).pack(pady=4, fill='x')
         
         ctk.CTkLabel(button_container,
             text='Developer by Mr.Phongchai',
             font=('TH SarabunPSK', 14),
             text_color='#a0a0a0'
         ).pack(side='bottom', pady=12)
+
+    def refresh_data(self):
+        """รีเฟรชข้อมูลใน MenuFrame"""
+        try:
+            print("กำลังรีเฟรชข้อมูลใน MenuFrame...")
+            
+            # MenuFrame ไม่มีข้อมูลที่ต้องรีเฟรช แต่อาจจะมีการอัปเดต UI ตามสิทธิ์ผู้ใช้
+            # สามารถเพิ่มการอัปเดต menu items ตามสิทธิ์ของผู้ใช้ได้ที่นี่
+            
+            print("รีเฟรชข้อมูลใน MenuFrame เสร็จสิ้น")
+            
+        except Exception as e:
+            print(f"Error in MenuFrame refresh_data: {e}")
+
+    def update_database_path(self, new_path):
+        """อัปเดต path ฐานข้อมูลใหม่"""
+        try:
+            print(f"อัปเดต database path ใน MenuFrame: {new_path}")
+            
+            # MenuFrame ไม่ได้ใช้ database โดยตรง แต่อาจจะต้องแจ้ง main_frame
+            if hasattr(self.main_frame, 'update_database_path'):
+                self.main_frame.update_database_path(new_path)
+            
+            print(f"Database path ใน MenuFrame อัปเดตเป็น: {new_path}")
+            
+        except Exception as e:
+            print(f"Error updating database path in MenuFrame: {e}")
 

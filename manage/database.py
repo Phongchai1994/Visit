@@ -22,7 +22,10 @@ def load_config():
     return ''
 
 class SQLiteDB:
-    def __init__(self,db_path=load_config()):
+    def __init__(self, db_path=None):
+        # โหลด path จาก config ทุกครั้งที่สร้าง instance ใหม่
+        if db_path is None:
+            db_path = load_config()
         self.db_path = db_path
         self.conn = None
         self.cursor = None
@@ -35,11 +38,20 @@ class SQLiteDB:
 
     def connect(self):
         try:
-            self.conn =sqlite3.connect(self.db_path)
+            if not self.db_path or not os.path.exists(self.db_path):
+                print(f"Error: Database path is invalid or file doesn't exist: {self.db_path}")
+                return False
+                
+            self.conn = sqlite3.connect(self.db_path)
             self.conn.execute('PRAGMA foreign_keys = ON')
             self.cursor = self.conn.cursor()
+            return True
         except Exception as e:
-            messagebox.showerror('เชื่อมต่อฐานข้อมูลไม่สำเร็จ',e)
+            print(f"Database connection error: {e}")
+            messagebox.showerror('เชื่อมต่อฐานข้อมูลไม่สำเร็จ',str(e))
+            self.conn = None
+            self.cursor = None
+            return False
 
         # print('เชื่อมต่อฐานข้อมูล')
 
@@ -102,13 +114,17 @@ class SQLiteDB:
         self.decode_db()
         self.connect()
         try:
+            if self.cursor is None:
+                print("Error: Database cursor is None")
+                return []
+                
             self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status,disciplinary FROM prisoners')
             self.all_data = self.cursor.fetchall()
             return [[value if value is not None else "" for value in row] for row in self.all_data]
         except Exception as e:
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด {e}')
-            return False
+            return []
         finally:
             self.close()
             self.encode_db()
@@ -470,11 +486,17 @@ class SQLiteDB:
     def get_all_relatives(self):
         self.connect()
         try:
+            if self.cursor is None:
+                print("Error: Database cursor is None")
+                return []
+                
             self.cursor.execute('SELECT relative_id,title,f_name,l_name,address,tel FROM relatives')
-            return self.cursor.fetchall()
+            result = self.cursor.fetchall()
+            return result if result else []
         except Exception as e:
             self.msgbox(e)
-            return False
+            print(f'เกิดข้อผิดพลาดใน get_all_relatives: {e}')
+            return []
         finally:
             self.close()
 

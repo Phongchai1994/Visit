@@ -1481,19 +1481,29 @@ class MainFrame(ctk.CTkFrame):
         def show_prisoners(data):
             for row in tree.get_children():
                 tree.delete(row)
-            for row in data:
-                tree.insert('','end',values=row)
+            
+            # Check if data is valid and iterable
+            if data and isinstance(data, (list, tuple)):
+                for row in data:
+                    tree.insert('','end',values=row)
+            else:
+                print("Warning: ข้อมูลไม่ถูกต้องหรือเป็นค่าว่าง")
 
         # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
         def search_one_var_prisoners():
             nonlocal all_data
             keyword = search_all_var.get().lower()
-            filtered = [
-                row for row in all_data 
-                if keyword in row[2].lower() or keyword in row[3].lower()
-            ]
-            # print(filtered)
-            show_prisoners(filtered)
+            
+            # Check if all_data is valid before filtering
+            if all_data and isinstance(all_data, list):
+                filtered = [
+                    row for row in all_data 
+                    if len(row) > 3 and keyword in str(row[2]).lower() or keyword in str(row[3]).lower()
+                ]
+                show_prisoners(filtered)
+            else:
+                print("Warning: ไม่มีข้อมูลสำหรับการค้นหา")
+                show_prisoners([])
 
         def resize_tree_columns():
             tree_container.update_idletasks()
@@ -1504,8 +1514,14 @@ class MainFrame(ctk.CTkFrame):
         def load_data_on_db():
             nonlocal all_data
             all_data = []
-            all_data = self.db.get_data_all()
-            show_prisoners(all_data)
+            data_result = self.db.get_data_all()
+            if isinstance(data_result, list):
+                all_data = data_result
+                show_prisoners(all_data)
+            else:
+                print("Error: ไม่สามารถโหลดข้อมูลได้")
+                all_data = []
+                show_prisoners(all_data)
 
 
         # Modernize the main frame
@@ -1931,8 +1947,13 @@ class MainFrame(ctk.CTkFrame):
         def show_relatives(data):
             for row in tree.get_children():
                 tree.delete(row)
-            for row in data:
-                tree.insert('','end',values=row)
+            
+            # Check if data is valid and iterable
+            if data and isinstance(data, (list, tuple)):
+                for row in data:
+                    tree.insert('','end',values=row)
+            else:
+                print("Warning: ข้อมูลญาติไม่ถูกต้องหรือเป็นค่าว่าง")
 
         # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
         def search_one_var_prisoners():
@@ -1953,8 +1974,14 @@ class MainFrame(ctk.CTkFrame):
 
         def start_tree():
             nonlocal all_data
-            all_data = self.db.get_all_relatives()
-            show_relatives(all_data)
+            data_result = self.db.get_all_relatives()
+            if isinstance(data_result, list):
+                all_data = data_result
+                show_relatives(all_data)
+            else:
+                print("Error: ไม่สามารถโหลดข้อมูลญาติได้")
+                all_data = []
+                show_relatives(all_data)
 
         self.show_all_relative_frame.grid_rowconfigure(2,weight=1)
         self.show_all_relative_frame.grid_columnconfigure(0,weight=1)
@@ -5705,3 +5732,75 @@ class MainFrame(ctk.CTkFrame):
                 font=('TH SarabunPSK', 32, 'bold'),
                 text_color='#2d3a4b'
             ).place(relx=0.5, rely=0.5, anchor='center')
+
+    def refresh_data(self):
+        """รีเฟรชข้อมูลทั้งหมดใน MainFrame"""
+        try:
+            print("กำลังรีเฟรชข้อมูลใน MainFrame...")
+            
+            # รีเฟรชข้อมูลหน้าที่แสดงอยู่ในปัจจุบัน
+            current_widgets = [widget for widget in self.winfo_children() if widget.winfo_viewable()]
+            
+            if current_widgets:
+                for widget in current_widgets:
+                    # ตรวจสอบว่าเป็น frame ไหนที่แสดงอยู่
+                    if widget == self.show_all_prisoner_frame:
+                        print("รีเฟรชข้อมูลผู้ต้องขังทั้งหมด")
+                        self.search_all_prisoner()
+                    elif widget == self.show_all_relative_frame:
+                        print("รีเฟรชข้อมูลญาติทั้งหมด")
+                        self.search_all_relatives()
+                    elif widget == self.showdata_frame:
+                        print("รีเฟรชข้อมูลค้นหาผู้ต้องขัง")
+                        self.search_one_prisoner()
+                    elif widget == self.reserve_visit_frame:
+                        print("รีเฟรชข้อมูลการจองเยี่ยม")
+                        self.reserve_to_visit()
+                    elif widget == self.reserve_visit_by_national_id_frame:
+                        print("รีเฟรชข้อมูลการจองเยี่ยมด้วยเลขบัตรประชาชน")
+                        self.reserve_visit_by_national_id()
+                    
+            # อัปเดต database connection ใหม่
+            if hasattr(self, 'db'):
+                # ปิด connection เดิมก่อน
+                try:
+                    self.db.close()
+                except:
+                    pass
+                # สร้าง instance ใหม่เพื่อโหลด config ล่าสุด
+                from manage.database import SQLiteDB
+                self.db = SQLiteDB()
+                print("อัปเดต database connection ใน MainFrame สำเร็จ")
+            
+            print("รีเฟรชข้อมูลใน MainFrame เสร็จสิ้น")
+            
+        except Exception as e:
+            print(f"Error in MainFrame refresh_data: {e}")
+
+    def update_database_path(self, new_path):
+        """อัปเดต path ฐานข้อมูลใหม่"""
+        try:
+            print(f"อัปเดต database path ใน MainFrame: {new_path}")
+            
+            # ปิด connection เดิมก่อน (ถ้ามี)
+            if hasattr(self, 'db') and self.db:
+                try:
+                    self.db.close()
+                except:
+                    pass
+            
+            # สร้าง database connection ใหม่ด้วย path ใหม่
+            from manage.database import SQLiteDB
+            self.db = SQLiteDB(new_path)
+            
+            # ทดสอบการเชื่อมต่อ
+            test_connection = self.db.connect()
+            if test_connection:
+                print(f"Database connection ใหม่สำเร็จ: {new_path}")
+            else:
+                print(f"Database connection ล้มเหลว: {new_path}")
+            
+            print(f"Database path อัปเดตเป็น: {new_path}")
+            
+        except Exception as e:
+            print(f"Error updating database path in MainFrame: {e}")
