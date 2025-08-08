@@ -27,7 +27,7 @@ def cal_time():
 
 cal_next_day = CALCULATE_NEXT_DAY()
 next_day = cal_next_day.get_next_day()
-print(type(next_day))
+print(next_day)
 if isinstance(next_day,datetime):
     next_day = next_day.strftime("%Y-%m-%d")
-print(type(next_day))
+print(next_day)
