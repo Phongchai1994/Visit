@@ -122,9 +122,24 @@ class App_Prisoners(ctk.CTk):
                 if isinstance(widget, ctk.CTkFrame) and widget.winfo_reqheight() == 30:
                     widget.destroy()
             
-            status_frame = ctk.CTkFrame(self, height=30, corner_radius=0)
+            # Status bar container สไตล์เหมือน sidebar
+            status_frame = ctk.CTkFrame(
+                self, 
+                height=40,  # เพิ่มขนาดจาก 30 เป็น 40
+                corner_radius=0,
+                fg_color="#f4f7fa",  # สีเหมือน main.py
+                border_width=1,
+                border_color="#e0e6ed"
+            )
             status_frame.grid(row=1, column=0, columnspan=2, sticky='ew')
             status_frame.grid_propagate(False)
+            
+            # Container สำหรับ status items
+            status_container = ctk.CTkFrame(
+                status_frame,
+                fg_color="transparent"
+            )
+            status_container.pack(fill="both", expand=True, padx=10, pady=5)
             
             # ข้อมูลผู้ใช้
             if user_session.is_logged_in:
@@ -143,33 +158,38 @@ class App_Prisoners(ctk.CTk):
                 user_info += " | ฐานข้อมูล: ไม่ได้เลือก"
             
             status_label = ctk.CTkLabel(
-                status_frame,
+                status_container,
                 text=user_info,
-                font=ctk.CTkFont(size=12)
+                font=("TH SarabunPSK", 14, "normal"),  # เปลี่ยนฟ้อนท์เป็น TH SarabunPSK
+                text_color="#2d3a4b"  # สีเข้มสไตล์โมเดิล
             )
-            status_label.pack(side='left', padx=10, pady=5)
+            status_label.pack(side='left', padx=5, pady=2)
             
-            # ✅ เพิ่มปุ่ม Refresh ใน Status Bar
-            refresh_btn = ctk.CTkButton(
-                status_frame,
-                text="🔄 รีเฟรช",
-                width=80,
-                height=25,
-                font=ctk.CTkFont(size=11),
-                command=self.refresh_all_data
-            )
-            refresh_btn.pack(side='right', padx=10, pady=2)
+            # # ✅ เพิ่มปุ่ม Refresh ใน Status Bar
+            # refresh_btn = ctk.CTkButton(
+            #     status_container,
+            #     text="🔄 รีเฟรช",
+            #     width=90,
+            #     height=25,
+            #     font=("TH SarabunPSK", 12, "bold"),
+            #     fg_color="#4f8cff",
+            #     hover_color="#3d7bd6",
+            #     command=self.refresh_all_data
+            # )
+            # refresh_btn.pack(side='right', padx=5, pady=2)
             
-            # ✅ เพิ่มปุ่มตรวจสอบฐานข้อมูล
-            check_db_btn = ctk.CTkButton(
-                status_frame,
-                text="📊 ตรวจสอบ DB",
-                width=100,
-                height=25,
-                font=ctk.CTkFont(size=11),
-                command=self.check_database_connection
-            )
-            check_db_btn.pack(side='right', padx=5, pady=2)
+            # # ✅ เพิ่มปุ่มตรวจสอบฐานข้อมูล
+            # check_db_btn = ctk.CTkButton(
+            #     status_container,
+            #     text="📊 ตรวจสอบ DB",
+            #     width=110,
+            #     height=25,
+            #     font=("TH SarabunPSK", 12, "bold"),
+            #     fg_color="#26a69a",
+            #     hover_color="#1e8e85",
+            #     command=self.check_database_connection
+            # )
+            # check_db_btn.pack(side='right', padx=5, pady=2)
             
         except Exception as e:
             print(f"Error creating status bar: {e}")
@@ -334,7 +354,7 @@ class App_Prisoners(ctk.CTk):
             for widget in self.winfo_children():
                 if isinstance(widget, ctk.CTkFrame):
                     # ตรวจสอบว่าเป็น status bar หรือไม่
-                    if widget.winfo_reqheight() == 30:
+                    if widget.winfo_reqheight() == 40:
                         widget.destroy()
                         break
             
@@ -400,9 +420,12 @@ class SimpleLoginApp:
     def __init__(self):
         # สร้างหน้าต่างหลัก
         self.root = ctk.CTk()
-        self.root.title("ระบบเข้าสู่ระบบ")
-        self.root.geometry("400x500")
+        self.root.title("ระบบเข้าสู่ระบบ - โปรแกรมจองเยี่ยมญาติ")
+        self.root.geometry("450x500")  # ลดความสูงจาก 600 เป็น 500
         self.root.resizable(False, False)
+        
+        # Modern color scheme เหมือนกับ main.py
+        self.root.configure(fg_color="#f4f7fa")
         
         # จัดกึ่งกลางหน้าจอ
         self.center_window()
@@ -413,92 +436,101 @@ class SimpleLoginApp:
     def center_window(self):
         """จัดหน้าต่างให้อยู่กลางจอ"""
         self.root.update_idletasks()
-        x = (self.root.winfo_screenwidth() // 2) - (400 // 2)
-        y = (self.root.winfo_screenheight() // 2) - (500 // 2)
-        self.root.geometry(f"400x500+{x}+{y}")
+        x = (self.root.winfo_screenwidth() // 2) - (450 // 2)
+        y = (self.root.winfo_screenheight() // 2) - (500 // 2)  # ปรับจาก 600 เป็น 500
+        self.root.geometry(f"450x500+{x}+{y}")
         
     def create_ui(self):
-        """สร้าง UI ทั้งหมด"""
-        # หัวข้อ
-        title = ctk.CTkLabel(
+        """สร้าง UI ทั้งหมด - เฉพาะ content_frame"""
+        # Login form card - สีขาวเหมือน sidebar ใน main.py
+        form_frame = ctk.CTkFrame(
             self.root,
-            text="เข้าสู่ระบบ",
-            font=ctk.CTkFont(size=24, weight="bold")
+            fg_color="white",
+            border_width=1,
+            border_color="#e0e6ed",
+            corner_radius=12
         )
-        title.pack(pady=30)
+        form_frame.pack(fill="both", expand=True, padx=30, pady=30)
         
-        # ไอคอน
-        icon = ctk.CTkLabel(
-            self.root,
-            text="👤",
-            font=ctk.CTkFont(size=50)
+        # Form content
+        content_frame = ctk.CTkFrame(
+            form_frame,
+            fg_color="transparent"
         )
-        icon.pack(pady=10)
+        content_frame.pack(fill="both", expand=True, padx=30, pady=30)
         
-        # ช่องชื่อผู้ใช้
-        ctk.CTkLabel(
-            self.root,
-            text="ชื่อผู้ใช้:",
-            font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(pady=(20, 5), padx=50, anchor="w")
+        # Welcome message
+        welcome_label = ctk.CTkLabel(
+            content_frame,
+            text="ยินดีต้อนรับเข้าสู่ระบบ",
+            font=("TH SarabunPSK", 24, "bold"),
+            text_color="#2d3a4b"
+        )
+        welcome_label.pack(pady=(0, 20))
+        
+        # Username section
+        username_label = ctk.CTkLabel(
+            content_frame,
+            text="ชื่อผู้ใช้",
+            font=("TH SarabunPSK", 20, "bold"),
+            text_color="#2d3a4b"
+        )
+        username_label.pack(anchor="w", pady=(10, 5))
         
         self.username_entry = ctk.CTkEntry(
-            self.root,
+            content_frame,
             placeholder_text="กรุณาใส่ชื่อผู้ใช้",
-            height=35,
-            font=ctk.CTkFont(size=14)
+            height=45,
+            font=("TH SarabunPSK", 20),
+            border_color="#b3d1ff",
+            border_width=2
         )
-        self.username_entry.pack(pady=5, padx=50, fill="x")
+        self.username_entry.pack(fill="x", pady=(0, 15))
         
-        # ช่องรหัสผ่าน
-        ctk.CTkLabel(
-            self.root,
-            text="รหัสผ่าน:",
-            font=ctk.CTkFont(size=14, weight="bold")
-        ).pack(pady=(15, 5), padx=50, anchor="w")
+        # Password section
+        password_label = ctk.CTkLabel(
+            content_frame,
+            text="รหัสผ่าน",
+            font=("TH SarabunPSK", 20, "bold"),
+            text_color="#2d3a4b"
+        )
+        password_label.pack(anchor="w", pady=(5, 5))
         
         self.password_entry = ctk.CTkEntry(
-            self.root,
+            content_frame,
             placeholder_text="กรุณาใส่รหัสผ่าน",
-            height=35,
-            font=ctk.CTkFont(size=14),
+            height=45,
+            font=("TH SarabunPSK", 20),
+            border_color="#b3d1ff",
+            border_width=2,
             show="*"
         )
-        self.password_entry.pack(pady=5, padx=50, fill="x")
+        self.password_entry.pack(fill="x", pady=(0, 25))
         
-        # ปุ่มเข้าสู่ระบบ
+        # Login button - สไตล์เหมือนปุ่มใน main.py
         login_btn = ctk.CTkButton(
-            self.root,
-            text="เข้าสู่ระบบ",
-            height=40,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            content_frame,
+            text="🔑 เข้าสู่ระบบ",
+            height=50,
+            font=("TH SarabunPSK", 20, "bold"),
+            fg_color="#4f8cff",
+            hover_color="#3d7bd6",
             command=self.login
         )
-        login_btn.pack(pady=20, padx=50, fill="x")
+        login_btn.pack(fill="x", pady=(0, 15))
         
-        # ปุ่มล้างข้อมูล
+        # Clear button
         clear_btn = ctk.CTkButton(
-            self.root,
-            text="ล้างข้อมูล",
-            height=40,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            content_frame,
+            text="🗑️ ล้างข้อมูล",
+            height=45,
+            font=("TH SarabunPSK", 20, "bold"),
             fg_color="#ff6b6b",
             hover_color="#ff5252",
             command=self.clear_data
         )
-        clear_btn.pack(pady=5, padx=50, fill="x")
-        
-        # ปุ่มออกจากโปรแกรม
-        exit_btn = ctk.CTkButton(
-            self.root,
-            text="ออกจากโปรแกรม",
-            height=35,
-            font=ctk.CTkFont(size=14),
-            fg_color="#757575",
-            hover_color="#616161",
-            command=self.exit_app
-        )
-        exit_btn.pack(pady=5, padx=50, fill="x")
+        clear_btn.pack(fill="x", pady=(0, 15))
+
         
         # Event bindings
         self.root.bind('<Return>', lambda e: self.login())
@@ -529,10 +561,10 @@ class SimpleLoginApp:
             # บันทึกข้อมูล session
             user_session.login(username, user_type)
             
-            messagebox.showinfo("สำเร็จ", 
-                f"เข้าสู่ระบบสำเร็จ!\n"
-                f"ยินดีต้อนรับ {username}\n"
-                f"สิทธิ์: {user_type.upper()}")
+            # messagebox.showinfo("สำเร็จ", 
+            #     f"เข้าสู่ระบบสำเร็จ!\n"
+            #     f"ยินดีต้อนรับ {username}\n"
+            #     f"สิทธิ์: {user_type.upper()}")
             
             self.open_main_app()
         else:
@@ -560,12 +592,6 @@ class SimpleLoginApp:
         self.password_entry.delete(0, 'end')
         self.username_entry.focus()
         
-    def exit_app(self):
-        """ออกจากโปรแกรม"""
-        if messagebox.askyesno("ยืนยัน", "คุณต้องการออกจากโปรแกรมหรือไม่?"):
-            self.root.quit()
-            sys.exit()
-    
     def open_main_app(self):
         """เปิดหน้าหลัก"""
         self.root.destroy()

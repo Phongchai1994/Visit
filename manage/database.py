@@ -355,8 +355,8 @@ class SQLiteDB:
 
 
     # รายงานการเยี่ยมประจำวัน
-    def get_visits(self,data_visit):
-        self.decode_db()
+    def get_visits_on_db(self,data_visit):
+        # self.decode_db()
         self.connect()
         try:
             self.cursor.execute('''
@@ -391,7 +391,7 @@ class SQLiteDB:
             return False
         finally:
             self.close()
-            self.encode_db()
+            # self.encode_db()
 
     # ดึง ไอดี ชื่อ สกุล ของตารางญาติ
     def get_relatives_id_fname_lname(self):
@@ -401,6 +401,47 @@ class SQLiteDB:
         try:
             self.cursor.execute('SELECT relative_id,f_name,l_name FROM relatives')
             return self.cursor.fetchall()
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+            self.encode_db()
+            
+    # ดึงข้อมูลการเยี่ยมประจำเดือน
+    def get_visits_by_month(self, data_month):
+        """ดึงข้อมูลการเยี่ยมทั้งเดือน"""
+        self.decode_db()
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                SELECT
+                                    visits.visit_id,
+                                    visits.time_stamp,
+                                    visits.date_visit,
+                                    visits.time_visit,
+                                    prisoners.f_name || " " || prisoners.l_name AS prisoner_name,
+                                    COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
+                                    COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
+                                    COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
+                                    COALESCE(r4.title || " " || r4.f_name || " " || r4.l_name, '-') AS relative_4,
+                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5,
+                                    visits.channel
+                                FROM
+                                    visits
+                                JOIN prisoners ON visits.prisoner_id = prisoners.prisoner_id
+                                LEFT JOIN relatives AS r1 ON visits.relative_id_1 = r1.relative_id
+                                LEFT JOIN relatives AS r2 ON visits.relative_id_2 = r2.relative_id
+                                LEFT JOIN relatives AS r3 ON visits.relative_id_3 = r3.relative_id
+                                LEFT JOIN relatives AS r4 ON visits.relative_id_4 = r4.relative_id
+                                LEFT JOIN relatives AS r5 ON visits.relative_id_5 = r5.relative_id
+                                WHERE 
+                                    strftime('%Y', visits.date_visit) = ? AND strftime('%m', visits.date_visit) = ?
+                                ORDER BY visits.date_visit, visits.time_visit''',
+                                    (data_month[0], data_month[1])
+                                )
+            result = self.cursor.fetchall()
+            return result
         except Exception as e:
             self.msgbox(e)
             return False

@@ -66,35 +66,36 @@ class MenuFrame(ctk.CTkFrame):
         # modern_button('ค้นหาผู้ต้องขัง', lambda: self.main_frame.show_page('ค้นหาผู้ต้องขัง')).pack(pady=4, fill='x')
         # modern_button('ย้ายแดน,ปรับชั้น', lambda: self.main_frame.show_page('ย้ายแดน,ปรับชั้น')).pack(pady=4, fill='x')
         modern_button(prisoner_section, 'ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=4, fill='x')
-
-        ctk.CTkLabel(button_container,
-            text='เมนูจัดการข้อมูลญาติ',
-            font=('TH SarabunPSK', 24, 'bold'),
-            text_color='#2d3a4b'
-        ).pack(pady=(12, 12))
-
-        # Relative management section
-        relative_section = ctk.CTkFrame(button_container, fg_color='transparent')
-        relative_section.pack(fill='x', pady=(0, 20))
-        
-        modern_button(relative_section, 'ญาติทั้งหมด', lambda: self.main_frame.show_page('ญาติทั้งหมด')).pack(pady=4, fill='x')
-        modern_button(relative_section, 'ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=4, fill='x')
-
-        ctk.CTkLabel(button_container,
-            text='การเยี่ยมญาติ',
-            font=('TH SarabunPSK', 24, 'bold'),
-            text_color='#2d3a4b'
-        ).pack(pady=(12, 12))
-
-        # Visit management section
-        visit_section = ctk.CTkFrame(button_container, fg_color='transparent')
-        visit_section.pack(fill='x', pady=(0, 20))
         
         if user_session.is_admin():
+            ctk.CTkLabel(button_container,
+                text='เมนูจัดการข้อมูลญาติ',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack(pady=(12, 12))
+
+            # Relative management section
+            relative_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            relative_section.pack(fill='x', pady=(0, 20))
+            
+            modern_button(relative_section, 'ญาติทั้งหมด', lambda: self.main_frame.show_page('ญาติทั้งหมด')).pack(pady=4, fill='x')
+            modern_button(relative_section, 'ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=4, fill='x')
+
+            ctk.CTkLabel(button_container,
+                text='การเยี่ยมญาติ',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack(pady=(12, 12))
+
+            # Visit management section
+            visit_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            visit_section.pack(fill='x', pady=(0, 20))
+        
+
             modern_button(visit_section, 'จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=4, fill='x')
             modern_button(visit_section, 'จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=4, fill='x')
             modern_button(visit_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
-            modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('')).pack(pady=4, fill='x')
+            modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('รายงานประจำเดือน')).pack(pady=4, fill='x')
         
         ctk.CTkLabel(button_container,
             text='Developer by Mr.Phongchai',

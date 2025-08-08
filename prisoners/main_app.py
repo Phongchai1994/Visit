@@ -8,12 +8,16 @@ import threading
 import time as t
 from datetime import datetime,timedelta
 from prisoners.card_reader import ThaiIDReader
+import os
+import tempfile
+import time
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape,A4
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from user_session import user_session, require_admin, require_login
 
 import os
 import tempfile
@@ -110,6 +114,14 @@ class MainFrame(ctk.CTkFrame):
 
         self.grid(row=0,column=1,sticky='nsew')
         self.db = SQLiteDB()
+        
+        # ✅ ตรวจสอบและแสดง path ฐานข้อมูลเมื่อเริ่มต้น
+        print(f"Database path: {self.db.db_path}")
+        if self.db.db_path and os.path.exists(self.db.db_path):
+            print("✅ ไฟล์ฐานข้อมูลพบแล้ว")
+        else:
+            print(f"❌ ไม่พบไฟล์ฐานข้อมูล: {self.db.db_path}")
+        
         self.zkfp2 = ZKFP2()
         self.thai_id_reader = ThaiIDReader()
 
@@ -130,6 +142,9 @@ class MainFrame(ctk.CTkFrame):
 
         # สร้าง Frame สำหรับรายงานประวัติการเยี่ยมญาติ
         self.popup_report_visits = ctk.CTkFrame(self, fg_color='#fff0f8', corner_radius=20, border_width=2, border_color='#f4d4e6')
+
+        # สร้าง Frame สำหรับรายงานประจำเดือน
+        self.popup_report_visit_on_month = ctk.CTkFrame(self, fg_color='#f0f8ff', corner_radius=20, border_width=2, border_color='#d4e6f4')
 
         # สร้าง Frame สำหรับจองเยี่ยมญาติด้วยหมายเลขบัตรประชาชน
         self.reserve_visit_by_national_id_frame = ctk.CTkFrame(self, fg_color='#f0f8ff', corner_radius=20, border_width=2, border_color='#d4e6f4')
@@ -1280,6 +1295,7 @@ class MainFrame(ctk.CTkFrame):
                     
                     edit_relative_window.protocol("WM_DELETE_WINDOW", lambda:on_close_edit_rel())
 
+            
                 ctk.CTkButton(
                     popup_window_delete_relative,
                     text='แก้ไขความสัมพันธ์',
@@ -1295,8 +1311,6 @@ class MainFrame(ctk.CTkFrame):
                     width=120,
                     command=delete_rel
                 ).pack(padx=10, pady=(10, 5))
-            
-
             
                 # ✅ ให้โฟกัสหลังจากเปิด (ป้องกัน focus ไม่ติด)
                 popup_window_delete_relative.after(100, lambda: popup_window_delete_relative.focus_force())
@@ -1360,7 +1374,8 @@ class MainFrame(ctk.CTkFrame):
 
             popup_window_delete_relative = None
             tree_relative.bind('<Configure>',lambda e:resize_tree_columns())
-            tree_relative.bind("<Button-3>",show_menu_delete_relation)
+            if user_session.is_admin():
+                tree_relative.bind("<Button-3>", show_menu_delete_relation)
             popup_show_list.protocol("WM_DELETE_WINDOW", on_close)
 
         def move_dan_and_adjust_level(prisoner_id):
@@ -1475,7 +1490,7 @@ class MainFrame(ctk.CTkFrame):
             get_data_on_data_one()
             popup_move_dan.protocol("WM_DELETE_WINDOW", on_close)
 
-#############################################################################
+            #############################################################################
 
         # insert ข้อมูลให้อยู่ในตาราง treeview
         def show_prisoners(data):
@@ -1489,21 +1504,53 @@ class MainFrame(ctk.CTkFrame):
             else:
                 print("Warning: ข้อมูลไม่ถูกต้องหรือเป็นค่าว่าง")
 
-        # ค้นหาข้อมูลจากตาราง แค่คนเดียว 
-        def search_one_var_prisoners():
+        # ค้นหาข้อมูลจากตาราง และกรองตามเงื่อนไขต่างๆ
+        def search_and_filter_prisoners():
             nonlocal all_data
             keyword = search_all_var.get().lower()
             
             # Check if all_data is valid before filtering
-            if all_data and isinstance(all_data, list):
-                filtered = [
-                    row for row in all_data 
-                    if len(row) > 3 and keyword in str(row[2]).lower() or keyword in str(row[3]).lower()
-                ]
-                show_prisoners(filtered)
-            else:
+            if not all_data or not isinstance(all_data, list):
                 print("Warning: ไม่มีข้อมูลสำหรับการค้นหา")
                 show_prisoners([])
+                return
+            
+            # Start with all data
+            filtered = all_data.copy()
+            
+            # Filter by search keyword (name)
+            if keyword:
+                filtered = [
+                    row for row in filtered 
+                    if len(row) > 3 and (keyword in str(row[2]).lower() or keyword in str(row[3]).lower())
+                ]
+            
+            # Filter by level (ชั้น) - index 5
+            selected_levels = [level for level, var in level_filters.items() if var.get()]
+            if selected_levels:
+                filtered = [row for row in filtered if len(row) > 5 and row[5] in selected_levels]
+            
+            # Filter by dan (แดน) - index 6
+            selected_dans = [dan for dan, var in dan_filters.items() if var.get()]
+            if selected_dans:
+                filtered = [row for row in filtered if len(row) > 6 and row[6] in selected_dans]
+            
+            # Filter by type (ประเภท) - index 7
+            selected_types = [type_val for type_val, var in type_filters.items() if var.get()]
+            if selected_types:
+                filtered = [row for row in filtered if len(row) > 7 and row[7] in selected_types]
+            
+            # Filter by status (สถานะ) - index 8
+            selected_statuses = [status for status, var in status_filters.items() if var.get()]
+            if selected_statuses:
+                filtered = [row for row in filtered if len(row) > 8 and row[8] in selected_statuses]
+            
+            # Filter by disciplinary (ผิดวินัย) - index 9
+            selected_disciplinaries = [disc for disc, var in disciplinary_filters.items() if var.get()]
+            if selected_disciplinaries:
+                filtered = [row for row in filtered if len(row) > 9 and row[9] in selected_disciplinaries]
+            
+            show_prisoners(filtered)
 
         def resize_tree_columns():
             tree_container.update_idletasks()
@@ -1514,22 +1561,66 @@ class MainFrame(ctk.CTkFrame):
         def load_data_on_db():
             nonlocal all_data
             all_data = []
+            print(f"กำลังโหลดข้อมูลจากฐานข้อมูล: {self.db.db_path}")
+            
+            if not self.db.db_path or not os.path.exists(self.db.db_path):
+                print(f"Error: ไม่พบไฟล์ฐานข้อมูล: {self.db.db_path}")
+                messagebox.showerror("ข้อผิดพลาด", f"ไม่พบไฟล์ฐานข้อมูล:\n{self.db.db_path}")
+                show_prisoners([])
+                return
+                
             data_result = self.db.get_data_all()
+            print(f"ผลลัพธ์จาก get_data_all: {type(data_result)}, จำนวน: {len(data_result) if isinstance(data_result, list) else 'N/A'}")
+            
             if isinstance(data_result, list):
                 all_data = data_result
+                print(f"โหลดข้อมูลสำเร็จ: {len(all_data)} รายการ")
                 show_prisoners(all_data)
             else:
                 print("Error: ไม่สามารถโหลดข้อมูลได้")
                 all_data = []
                 show_prisoners(all_data)
+                messagebox.showwarning("คำเตือน", "ไม่สามารถโหลดข้อมูลจากฐานข้อมูลได้\nกรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล")
 
 
         # Modernize the main frame
         self.show_all_prisoner_frame.configure(fg_color="#ffffff", corner_radius=24)
-        self.show_all_prisoner_frame.grid_rowconfigure(2, weight=1)
+        self.show_all_prisoner_frame.grid_rowconfigure(3, weight=1)  # Changed from 2 to 3 for new filter row
         self.show_all_prisoner_frame.grid_columnconfigure(0, weight=1)
 
         search_all_var = tk.StringVar()
+        
+        # Initialize filter variables
+        level_filters = {}
+        dan_filters = {}
+        type_filters = {}
+        status_filters = {}
+        disciplinary_filters = {}
+        
+        # Level options
+        level_options = ['ระหว่างพิจารณาคดี','เยี่ยม','ดีมาก','ดี','กลาง','ปรับปรุง','ปรับปรุงมาก']
+        for level in level_options:
+            level_filters[level] = tk.BooleanVar()
+        
+        # Dan options
+        dan_options = ['1','2','3','4','5','6','7','รจช']
+        for dan in dan_options:
+            dan_filters[dan] = tk.BooleanVar()
+        
+        # Type options
+        type_options = ['ผู้ต้องขัง','ผู้ต้องกักขัง']
+        for type_val in type_options:
+            type_filters[type_val] = tk.BooleanVar()
+        
+        # Status options
+        status_options = ['อยู่','ไม่อยู่']
+        for status in status_options:
+            status_filters[status] = tk.BooleanVar()
+        
+        # Disciplinary options
+        disciplinary_options = ['ไม่มี','ผิดวินัย']
+        for disc in disciplinary_options:
+            disciplinary_filters[disc] = tk.BooleanVar()
 
         # Header
         ctk.CTkLabel(
@@ -1554,7 +1645,154 @@ class MainFrame(ctk.CTkFrame):
             textvariable=search_all_var
         )
         search_entry.grid(row=1, column=0, pady=(0, 16), sticky='n')
-        search_all_var.trace_add("write", lambda *args: search_one_var_prisoners())
+        search_all_var.trace_add("write", lambda *args: search_and_filter_prisoners())
+
+        # Filter Controls Frame
+        filter_frame = ctk.CTkFrame(
+            self.show_all_prisoner_frame,
+            fg_color="#f4f7fa",
+            corner_radius=18,
+            border_width=2,
+            border_color="#e0e6ed"
+        )
+        filter_frame.grid(row=2, column=0, padx=24, pady=(0, 12), sticky="ew")
+        
+        # Configure filter frame grid
+        filter_frame.grid_columnconfigure(0, weight=1)
+        filter_frame.grid_columnconfigure(1, weight=1)
+        filter_frame.grid_columnconfigure(2, weight=1)
+        filter_frame.grid_columnconfigure(3, weight=1)
+        filter_frame.grid_columnconfigure(4, weight=1)
+
+        # Filter header
+        filter_header = ctk.CTkLabel(
+            filter_frame,
+            text='🔍 กรองข้อมูล',
+            font=('TH SarabunPSK', 24, 'bold'),
+            text_color='#2d3a4b'
+        )
+        filter_header.grid(row=0, column=0, columnspan=5, pady=(12, 8), sticky='n')
+
+        # Level Filter
+        level_frame = ctk.CTkFrame(filter_frame, fg_color="#ffffff", corner_radius=12)
+        level_frame.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
+        ctk.CTkLabel(level_frame, text='ชั้น', font=('TH SarabunPSK', 18, 'bold'), text_color='#2d3a4b').pack(pady=(8, 4))
+        
+        # Create 2-column layout for level checkboxes
+        level_checkbox_frame = ctk.CTkFrame(level_frame, fg_color="transparent")
+        level_checkbox_frame.pack(fill='both', expand=True, padx=8, pady=4)
+        level_checkbox_frame.grid_columnconfigure(0, weight=1)
+        level_checkbox_frame.grid_columnconfigure(1, weight=1)
+        
+        for i, level in enumerate(level_options):
+            col = i % 2  # Alternate between column 0 and 1
+            row = i // 2  # Calculate row position
+            checkbox = ctk.CTkCheckBox(level_checkbox_frame, text=level, variable=level_filters[level], 
+                                     command=search_and_filter_prisoners, font=('TH SarabunPSK', 14))
+            checkbox.grid(row=row, column=col, sticky='w', padx=4, pady=1)
+
+        # Dan Filter
+        dan_frame = ctk.CTkFrame(filter_frame, fg_color="#ffffff", corner_radius=12)
+        dan_frame.grid(row=1, column=1, padx=8, pady=8, sticky="nsew")
+        ctk.CTkLabel(dan_frame, text='แดน', font=('TH SarabunPSK', 18, 'bold'), text_color='#2d3a4b').pack(pady=(8, 4))
+        
+        # Create 2-column layout for dan checkboxes
+        dan_checkbox_frame = ctk.CTkFrame(dan_frame, fg_color="transparent")
+        dan_checkbox_frame.pack(fill='both', expand=True, padx=8, pady=4)
+        dan_checkbox_frame.grid_columnconfigure(0, weight=1)
+        dan_checkbox_frame.grid_columnconfigure(1, weight=1)
+        
+        for i, dan in enumerate(dan_options):
+            col = i % 2  # Alternate between column 0 and 1
+            row = i // 2  # Calculate row position
+            checkbox = ctk.CTkCheckBox(dan_checkbox_frame, text=dan, variable=dan_filters[dan], 
+                                     command=search_and_filter_prisoners, font=('TH SarabunPSK', 14))
+            checkbox.grid(row=row, column=col, sticky='w', padx=4, pady=1)
+
+        # Type Filter
+        type_frame = ctk.CTkFrame(filter_frame, fg_color="#ffffff", corner_radius=12)
+        type_frame.grid(row=1, column=2, padx=8, pady=8, sticky="nsew")
+        ctk.CTkLabel(type_frame, text='ประเภท', font=('TH SarabunPSK', 18, 'bold'), text_color='#2d3a4b').pack(pady=(8, 4))
+        
+        # Create 2-column layout for type checkboxes
+        type_checkbox_frame = ctk.CTkFrame(type_frame, fg_color="transparent")
+        type_checkbox_frame.pack(fill='both', expand=True, padx=8, pady=4)
+        type_checkbox_frame.grid_columnconfigure(0, weight=1)
+        type_checkbox_frame.grid_columnconfigure(1, weight=1)
+        
+        for i, type_val in enumerate(type_options):
+            col = i % 2  # Alternate between column 0 and 1
+            row = i // 2  # Calculate row position
+            checkbox = ctk.CTkCheckBox(type_checkbox_frame, text=type_val, variable=type_filters[type_val], 
+                                     command=search_and_filter_prisoners, font=('TH SarabunPSK', 14))
+            checkbox.grid(row=row, column=col, sticky='w', padx=4, pady=1)
+
+        # Status Filter
+        status_frame = ctk.CTkFrame(filter_frame, fg_color="#ffffff", corner_radius=12)
+        status_frame.grid(row=1, column=3, padx=8, pady=8, sticky="nsew")
+        ctk.CTkLabel(status_frame, text='สถานะ', font=('TH SarabunPSK', 18, 'bold'), text_color='#2d3a4b').pack(pady=(8, 4))
+        
+        # Create 2-column layout for status checkboxes
+        status_checkbox_frame = ctk.CTkFrame(status_frame, fg_color="transparent")
+        status_checkbox_frame.pack(fill='both', expand=True, padx=8, pady=4)
+        status_checkbox_frame.grid_columnconfigure(0, weight=1)
+        status_checkbox_frame.grid_columnconfigure(1, weight=1)
+        
+        for i, status in enumerate(status_options):
+            col = i % 2  # Alternate between column 0 and 1
+            row = i // 2  # Calculate row position
+            checkbox = ctk.CTkCheckBox(status_checkbox_frame, text=status, variable=status_filters[status], 
+                                     command=search_and_filter_prisoners, font=('TH SarabunPSK', 14))
+            checkbox.grid(row=row, column=col, sticky='w', padx=4, pady=1)
+
+        # Disciplinary Filter
+        disciplinary_frame = ctk.CTkFrame(filter_frame, fg_color="#ffffff", corner_radius=12)
+        disciplinary_frame.grid(row=1, column=4, padx=8, pady=8, sticky="nsew")
+        ctk.CTkLabel(disciplinary_frame, text='ผิดวินัย', font=('TH SarabunPSK', 18, 'bold'), text_color='#2d3a4b').pack(pady=(8, 4))
+        
+        # Create 2-column layout for disciplinary checkboxes
+        disciplinary_checkbox_frame = ctk.CTkFrame(disciplinary_frame, fg_color="transparent")
+        disciplinary_checkbox_frame.pack(fill='both', expand=True, padx=8, pady=4)
+        disciplinary_checkbox_frame.grid_columnconfigure(0, weight=1)
+        disciplinary_checkbox_frame.grid_columnconfigure(1, weight=1)
+        
+        for i, disc in enumerate(disciplinary_options):
+            col = i % 2  # Alternate between column 0 and 1
+            row = i // 2  # Calculate row position
+            checkbox = ctk.CTkCheckBox(disciplinary_checkbox_frame, text=disc, variable=disciplinary_filters[disc], 
+                                     command=search_and_filter_prisoners, font=('TH SarabunPSK', 14))
+            checkbox.grid(row=row, column=col, sticky='w', padx=4, pady=1)
+
+        # Clear All Filters Button
+        clear_filters_btn = ctk.CTkButton(
+            filter_frame,
+            text='🗑️ ล้างตัวกรองทั้งหมด',
+            font=('TH SarabunPSK', 16, 'bold'),
+            fg_color='#ff6b6b',
+            hover_color='#ff5252',
+            text_color='#ffffff',
+            width=180,
+            height=32,
+            corner_radius=12,
+            command=lambda: clear_all_filters()
+        )
+        clear_filters_btn.grid(row=2, column=0, columnspan=5, pady=(8, 12))
+
+        def clear_all_filters():
+            # Clear all filter checkboxes
+            for var in level_filters.values():
+                var.set(False)
+            for var in dan_filters.values():
+                var.set(False)
+            for var in type_filters.values():
+                var.set(False)
+            for var in status_filters.values():
+                var.set(False)
+            for var in disciplinary_filters.values():
+                var.set(False)
+            
+            # Refresh the display
+            search_and_filter_prisoners()
 
         # Card-style container for table
         tree_container = ctk.CTkFrame(
@@ -1564,7 +1802,7 @@ class MainFrame(ctk.CTkFrame):
             border_width=2,
             border_color="#e0e6ed"
         )
-        tree_container.grid(row=2, column=0, padx=24, pady=12, sticky="nsew")
+        tree_container.grid(row=3, column=0, padx=24, pady=12, sticky="nsew")  # Changed from row=2 to row=3
         tree_container.grid_rowconfigure(0, weight=1)
         tree_container.grid_columnconfigure(0, weight=1)
 
@@ -1587,15 +1825,40 @@ class MainFrame(ctk.CTkFrame):
         )
         style.map('Treeview', background=[('selected', '#b3d1ff')])
 
-        # Modern Scrollbar style
-        style.configure('Vertical.TScrollbar',
+        # Modern Scrollbar style - เหมือน CTkScrollableFrame
+        style.configure('Custom.Vertical.TScrollbar',
             gripcount=0,
-            background="#e3eefa",
-            darkcolor="#e3eefa",
+            background="#e3eefa",        # scrollbar_fg_color
+            darkcolor="#e3eefa", 
             lightcolor="#e3eefa",
-            troughcolor="#f4f7fa",
-            bordercolor="#e0e6ed",
-            arrowcolor="#4f8cff"
+            troughcolor="#e3eefa",       # scrollbar_fg_color
+            bordercolor="#e3eefa",
+            borderwidth=0,
+            relief="flat",
+            arrowcolor="#b3d1ff",        # scrollbar_button_color
+            arrowsize=12,
+            width=16                     # ปรับความกว้างของ scrollbar
+        )
+        
+        # Configure scrollbar thumb (ส่วนที่ลากได้)
+        style.configure('Custom.Vertical.TScrollbar.thumb',
+            relief="flat",
+            background="#b3d1ff",        # scrollbar_button_color
+            bordercolor="#b3d1ff",
+            borderwidth=0
+        )
+        
+        # Map สำหรับ hover effects เหมือน CTkScrollableFrame
+        style.map('Custom.Vertical.TScrollbar',
+            background=[('active', '#b3d1ff'), ('pressed', '#2d3a4b')],  # scrollbar_button_hover_color
+            arrowcolor=[('active', '#2d3a4b'), ('pressed', '#ffffff')],
+            relief=[('pressed', 'flat'), ('!pressed', 'flat')]
+        )
+        
+        # Map สำหรับ thumb hover effects
+        style.map('Custom.Vertical.TScrollbar.thumb',
+            background=[('active', '#2d3a4b'), ('pressed', '#2d3a4b')],  # scrollbar_button_hover_color
+            relief=[('pressed', 'flat'), ('!pressed', 'flat')]
         )
 
         tree = ttk.Treeview(
@@ -1628,8 +1891,8 @@ class MainFrame(ctk.CTkFrame):
         tree.column('status', anchor='center', width=100, minwidth=80, stretch=True)
         tree.column('disciplinary', anchor='center', width=100, minwidth=80, stretch=True)
 
-        # Modern vertical scrollbar
-        scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview, style='Vertical.TScrollbar')
+        # Modern vertical scrollbar with CTkScrollableFrame styling
+        scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview, style='Custom.Vertical.TScrollbar')
         tree.configure(yscrollcommand=scrollbar.set)
         tree.grid(row=0, column=0, sticky='nsew')
         scrollbar.grid(row=0, column=1, sticky='ns', padx=(0, 4), pady=8)
@@ -1717,22 +1980,27 @@ class MainFrame(ctk.CTkFrame):
                         messagebox.showerror('ลบข้อมูล', 'ลบข้อมูลไม่สำเร็จ')
 
             # Modern buttons
-            ctk.CTkButton(
-                popup_window, text="➕ เพิ่มญาติ", fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff",
-                command=add_rel, **btn_kwargs
-            ).pack(padx=18, pady=(8, 4))
+            if user_session.is_admin():
+                ctk.CTkButton(
+                    popup_window, text="➕ เพิ่มญาติ", fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff",
+                    command=add_rel, **btn_kwargs
+                ).pack(padx=18, pady=(8, 4))
+
             ctk.CTkButton(
                 popup_window, text="👥 ดูรายชื่อญาติ", fg_color="#e3eefa", hover_color="#b3d1ff", text_color="#2d3a4b",
                 command=show_rel, **btn_kwargs
             ).pack(padx=18, pady=4)
+
             ctk.CTkButton(
                 popup_window, text="➡️ แก้ไขข้อมูลผู้ต้องขัง", fg_color="#e3eefa", hover_color="#b3d1ff", text_color="#2d3a4b",
                 command=move_dan, **btn_kwargs
             ).pack(padx=18, pady=4)
-            ctk.CTkButton(
-                popup_window, text="🗑️ ลบชื่อญาติ", fg_color="#ff4f4f", hover_color="#b30000", text_color="#fff",
-                command=delete_rel, **btn_kwargs
-            ).pack(padx=18, pady=(4, 14))
+
+            if user_session.is_admin():
+                ctk.CTkButton(
+                    popup_window, text="🗑️ ลบผู้ต้องขัง", fg_color="#ff4f4f", hover_color="#b30000", text_color="#fff",
+                    command=delete_rel, **btn_kwargs
+                ).pack(padx=18, pady=(4, 14))
 
             # Shadow effect (optional, for modern look)
             # popup_window.attributes('-alpha', 0.98)
@@ -5214,14 +5482,21 @@ class MainFrame(ctk.CTkFrame):
             month = month_dict[month_var.get()]
             day = day_var.get()
             round_date = f"{year}-{month}-{day}"
-            print(f'round_date = {round_date}')
+            print(f'round_date = {round_date} and round_time = {round_time}')
             data = [round_date, round_time]
-            result = self.db.get_visits(data)
+            result = self.db.get_visits_on_db(data)
             print(f'data on get visits = {result}')
             for row in tree.get_children():
                 tree.delete(row)
-            for row in result:
-                tree.insert('', 'end', values=row)
+            
+            # ตรวจสอบว่า result เป็น list หรือไม่ ถ้าเป็น False (error) จะไม่ iterate
+            if result and isinstance(result, (list, tuple)):
+                for row in result:
+                    tree.insert('', 'end', values=row)
+            else:
+                print("No data found or error occurred")
+                # แสดงข้อความว่าไม่พบข้อมูล
+                tree.insert('', 'end', values=('ไม่พบข้อมูล', '', '', '', '', '', '', '', '', '', ''))
             tree_container.grid(row=2, column=0, sticky='nsew')
             tree.grid(row=0, column=0, sticky='new', padx=6, pady=(8, 0))
             # ปุ่มพิมพ์แบบลอยขวา
@@ -5679,7 +5954,372 @@ class MainFrame(ctk.CTkFrame):
         tree.bind('<Button-3>',on_right_click)
         popup_window_right_click = None
 
+    def month_report_visits(self):
 
+        def resize_tree_column():
+            tree_container.update_idletasks()
+            total_width = tree_container.winfo_width()
+            for col, ratio in column_ratios.items():
+                tree.column(col, width=int(total_width * ratio), anchor='center')
+
+        def print_table():
+            try:
+                # สร้าง pdf
+                temp_pdf = tempfile.mktemp(".pdf")
+                c = canvas.Canvas(temp_pdf, pagesize=landscape(A4))
+                width, height = landscape(A4)
+                
+                # ฟรอน และ ระยะห่าง
+                c.setFont("TH SarabunPSK", 18)
+                c.drawCentredString(width / 2, height - 1.5 * cm, f"รายงานการเยี่ยมรายเดือน เดือน {month_var.get()} ปี {year_var.get()}")
+                c.setFont("TH SarabunPSK", 11)
+                
+                # หัวตารางและความกว้าง
+                columns = tree["columns"]
+                headers = [tree.heading(col)["text"] for col in columns if col != 'visit_id']
+                
+                # ปรับขนาด column ให้พอดีกับหน้ากระดาษ
+                available_width = width - 2*cm  # หักขอบซ้าย-ขวา
+                num_columns = len(headers)
+                
+                # กำหนดความกว้างแต่ละ column ตามเนื้อหา
+                col_widths = []
+                if num_columns == 10:  # จำนวน column ที่แสดง (ไม่รวม visit_id)
+                    col_widths = [
+                        available_width * 0.10,  # Time Stamp
+                        available_width * 0.07,  # วันที่จอง
+                        available_width * 0.07,  # เวลาเยี่ยม
+                        available_width * 0.12,  # ชื่อผู้ต้องขัง
+                        available_width * 0.12,  # ญาติคนที่ 1
+                        available_width * 0.12,  # ญาติคนที่ 2
+                        available_width * 0.12,  # ญาติคนที่ 3
+                        available_width * 0.12,  # ญาติคนที่ 4
+                        available_width * 0.11,  # ญาติคนที่ 5
+                        available_width * 0.05,  # ช่อง
+                    ]
+                else:
+                    # ถ้าจำนวน column ไม่ใช่ 10 ให้แบ่งเท่า ๆ กัน
+                    col_widths = [available_width / num_columns] * num_columns
+                
+                # ตำแหน่งเริ่ม
+                start_x = 1*cm
+                start_y = height - 3 * cm
+                row_height = 0.8*cm
+                
+                # วาดหัวตาราง
+                y = start_y
+                x = start_x
+                for i, header in enumerate(headers):
+                    c.setFillColorRGB(0.31, 0.55, 0.80)  # blue header
+                    c.rect(x, y, col_widths[i], row_height, stroke=1, fill=1)
+                    c.setFillColorRGB(1, 1, 1)
+                    c.drawString(x+0.2*cm, y+0.3*cm, header)
+                    x += col_widths[i]
+                    
+                # วาดข้อมูล
+                y -= row_height
+                for child_id in tree.get_children():
+                    x = start_x
+                    values = tree.item(child_id, "values")
+                    for i, value in enumerate(values[1:]):  # ข้าม visit_id
+                        c.setFillColorRGB(0.97, 0.98, 1) if y % 2 == 0 else c.setFillColorRGB(1, 1, 1)
+                        c.rect(x, y, col_widths[i], row_height, stroke=1, fill=1)
+                        c.setFillColorRGB(0, 0, 0)
+                        text = str(value)
+                        
+                        # ตัดข้อความถ้ายาวเกินไป
+                        max_width = col_widths[i] - 0.4*cm
+                        text_width = c.stringWidth(text, "TH SarabunPSK", 11)
+                        if text_width > max_width:
+                            # ตัดข้อความและเพิ่ม ...
+                            while text_width > max_width and len(text) > 3:
+                                text = text[:-1]
+                                text_width = c.stringWidth(text + "...", "TH SarabunPSK", 11)
+                            text = text + "..."
+                        
+                        # จัดตำแหน่งข้อความ
+                        if text.isdigit():
+                            # จัดขวาสำหรับตัวเลข
+                            text_width = c.stringWidth(text, "TH SarabunPSK", 11)
+                            c.drawString(x+col_widths[i]-text_width-0.2*cm, y+0.3*cm, text)
+                        else:
+                            # จัดซ้ายสำหรับข้อความ
+                            c.drawString(x+0.2*cm, y+0.3*cm, text)
+                        x += col_widths[i]
+                    y -= row_height
+                    
+                    # ตรวจสอบถ้าใกล้หมดหน้า ให้สร้างหน้าใหม่
+                    if y < 2*cm:
+                        c.showPage()
+                        c.setFont("TH SarabunPSK", 11)
+                        y = height - 2*cm
+                
+                c.save()
+                os.startfile(temp_pdf)
+                messagebox.showinfo('กำลังพิมพ์', 'สั่งพิมพ์เรียบร้อย')
+                time.sleep(2)
+                try:
+                    os.remove(temp_pdf)
+                except Exception:
+                    pass
+            except Exception as e:
+                messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
+
+        def get_visits():
+            year = year_var.get()
+            month = month_dict[month_var.get()]
+            # ค้นหาข้อมูลทั้งเดือน
+            data = [year, month]
+            result = self.db.get_visits_by_month(data)
+            print(f'data on get visits by month = {result}')
+            for row in tree.get_children():
+                tree.delete(row)
+            
+            # ตรวจสอบว่า result เป็น list หรือไม่ ถ้าเป็น False (error) จะไม่ iterate
+            if result and isinstance(result, (list, tuple)):
+                for row in result:
+                    tree.insert('', 'end', values=row)
+            else:
+                print("No data found or error occurred")
+                # แสดงข้อความว่าไม่พบข้อมูล
+                tree.insert('', 'end', values=('ไม่พบข้อมูล', '', '', '', '', '', '', '', '', '', ''))
+            tree_container.grid(row=2, column=0, sticky='nsew')
+            tree.grid(row=0, column=0, sticky='new', padx=6, pady=(8, 0))
+            # ปุ่มพิมพ์แบบลอยขวา
+            button_print = ctk.CTkButton(table_frame, text='พิมพ์', font=('TH SarabunPSK', 20, 'bold'), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12, command=lambda: print_table())
+            button_print.grid(row=1, column=0, padx=16, pady=(8, 8))
+
+        def on_right_click(event):
+            nonlocal popup_window_right_click
+            selected = tree.identify_row(event.y)
+            if not selected:
+                return
+            values = tree.item(selected)['values']
+            print(f'values = {values}')
+            # ฟังก์ชันสำหรับเมนูคลิกขวา - เหมือน report_visits
+            def move_round():
+
+                def move_round():
+                    round_selected = time_visit.get()
+                    date_current = datetime.now().strftime("%Y-%m-%d")
+                    print(date_current)
+                    print(f'move round {round_selected}')
+                    result_count_round_visit = self.db.get_count_visit_on_round(round_selected, date_current)
+                    print(f'จำนวนคนที่จองรอบ {result_count_round_visit}')
+                    if result_count_round_visit >=15:
+                        alert = ALERT(move_round_pupup,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
+                        alert.after(3000,lambda: (alert.destroy(),move_round_pupup.destroy()))
+                        return
+                    else:
+                        result_move_round = self.db.update_visit_round(round_selected,values[0])
+                        if result_move_round:
+                            alert = ALERT(move_round_pupup,[f'ย้ายรอบของ\n{values[4]}\nรอบใหม่เวลา {round_selected}'],text_color='black',button=True)
+                            if alert.show():
+                                move_round_pupup.destroy()
+                                get_visits()
+
+                popup_window_right_click.destroy()
+                print('ย้ายรอบ')
+                print('fn move_round ********* ',type(values[3]),values[3])
+                if values[3] == '12:00:00':
+                    alert = ALERT(self,msg=['เรือนจำชั่วคราวไม่สามารถย้ายรอบได้'],button=True)
+                    return
+                move_round_pupup = ctk.CTkToplevel()
+                move_round_pupup.configure(fg_color='#f4f7fa')
+                move_round_pupup.title('ย้ายรอบเยี่ยม')
+                move_round_pupup.geometry('500x200+400+50')
+                move_round_pupup.grab_set()
+                move_round_pupup.focus()
+
+                move_round_pupup.grid_columnconfigure(0,weight=1,uniform='move_round')
+                move_round_pupup.grid_rowconfigure((0,1,2),weight=1,uniform='move_round')
+                label_content = ctk.CTkLabel(move_round_pupup,text=f'ย้ายรอบเยี่ยม\n{values[4]}',font=('TH SarabunPSK',32,'bold'),text_color='#2d3a4b')
+                label_content.grid(row = 0 , column = 0 ,sticky = 'ns')
+                time_visit = ctk.CTkOptionMenu(move_round_pupup,
+                                                values=['09:30:00','10:00:00','10:30:00','11:00:00','13:15:00','13:45:00','14:15:00'],
+                                                font=('TH SarabunPSK',18),
+                                                dropdown_font=('TH SarabunPSK',18),
+                                                fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
+                time_visit.grid(row=1,column=0,sticky='ns',padx = 40,pady = 20)
+                button = ctk.CTkButton(move_round_pupup,text='ยืนยัน',width=140,font=('TH SarabunPSK',18),
+                    fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
+                    command=lambda: move_round())
+                button.grid(row = 2,column = 0 ,sticky = 'ns',padx = 20,pady = 20)
+
+            def remove_round():
+                popup_window_right_click.destroy()
+                print('ยกเลิกรอบ')
+                result_remove = self.db.remove_visit(values[0])
+                if result_remove:
+                    alert = ALERT(self,[f'ยกเลิกรอบเยี่ยมของ\n{values[4]}\nสำเร็จ'],text_color='black',button=True)
+                    if alert.show():
+                        get_visits()
+                else:
+                    alert = ALERT(self,['ไม่สามารถยกเลิกรอบเยี่ยมได้'],text_color='red',button=True)
+
+            nonlocal popup_window_right_click
+            try:
+                popup_window_right_click.destroy()
+            except:
+                pass
+
+            # เลือกแถวในตาราง tree
+            selected = tree.identify_row(event.y)
+            if not selected:
+                return
+            
+            tree.selection_set(selected)
+            values = tree.item(selected)['values']
+            
+            popup_window_right_click = ctk.CTkToplevel()
+            popup_window_right_click.configure(fg_color='#f4f7fa')
+            popup_window_right_click.overrideredirect(True)
+            popup_window_right_click.geometry(f'+{event.x_root}+{event.y_root}')
+            popup_window_right_click.configure(fg_color = '#f8fbff', border_width=2, border_color='#4f8cff')
+            # ปรับปุ่มเมนูคลิกขวาให้ดูทันสมัย
+            btn_style = {'font':('TH SarabunPSK',18,'bold'), 'width':160, 'corner_radius':10, 'height':36}
+            ctk.CTkButton(popup_window_right_click, text='ย้ายรอบ', fg_color="#f1c40f", hover_color="#f39c12", text_color="#2d3a4b", command=move_round, **btn_style).pack(padx=10, pady=(10,5))
+            ctk.CTkButton(popup_window_right_click, text='ยกเลิกรอบ', fg_color='#e74c3c', hover_color='#c0392b', text_color="#fff", command=remove_round, **btn_style).pack(padx=10, pady=(10,5))
+            popup_window_right_click.after(100, lambda: popup_window_right_click.focus_force())
+            popup_window_right_click.bind('<FocusOut>', lambda e: popup_window_right_click.destroy())
+        
+        # Modern card-style background
+        self.popup_report_visit_on_month.configure(fg_color="#f4f7fa")
+        self.popup_report_visit_on_month.grid_columnconfigure(0, weight=1)
+        self.popup_report_visit_on_month.grid_rowconfigure(0, minsize=100, weight=0)
+        self.popup_report_visit_on_month.grid_rowconfigure(1, minsize=80, weight=0)
+        self.popup_report_visit_on_month.grid_rowconfigure(2, weight=1)
+        self.popup_report_visit_on_month.grid_rowconfigure(3, minsize=80, weight=0)
+
+        # Header Frame
+        header_frame = ctk.CTkFrame(self.popup_report_visit_on_month, fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed", height=100)
+        header_frame.grid(row=0, column=0, sticky="nsew", padx=32, pady=(24, 8))
+        header_frame.grid_columnconfigure(0, weight=1)
+        current_month = datetime.now().strftime("%m/%Y")
+        label_content = ctk.CTkLabel(header_frame, text=f'รายงานการเยี่ยมรายเดือน ประจำเดือน {current_month}', font=('TH SarabunPSK', 36, 'bold'), text_color="#2d3a4b", fg_color="#ffffff")
+        label_content.grid(row=0, column=0, sticky="nsew", pady=10, padx=10)
+
+        # Filter Frame
+        filter_frame = ctk.CTkFrame(self.popup_report_visit_on_month, fg_color="#f8fbff", corner_radius=18, border_width=2, border_color="#e0e6ed", height=80)
+        filter_frame.grid(row=1, column=0, sticky="nsew", padx=32, pady=(0, 8))
+        # Add columns for centering
+        filter_frame.grid_columnconfigure(0, weight=1)
+        filter_frame.grid_columnconfigure(1, weight=0)
+        filter_frame.grid_columnconfigure(2, weight=0)
+        filter_frame.grid_columnconfigure(3, weight=0)
+        filter_frame.grid_columnconfigure(4, weight=1)
+
+        current_year = datetime.now().year
+        years = [str(current_year - 1), str(current_year), str(current_year + 1)]
+        months_th = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+        month_numbers = [f"{i+1:02d}" for i in range(12)]
+        month_dict = dict(zip(months_th, month_numbers))
+
+        year_var = ctk.StringVar(value=str(current_year))
+        month_var = ctk.StringVar(value=months_th[datetime.now().month - 1])
+
+        # Place widgets in columns for centering
+        label_select_month = ctk.CTkLabel(filter_frame, text='เลือกเดือนและปี', font=('TH SarabunPSK', 28, 'bold'), text_color="#2d3a4b")
+        label_select_month.grid(row=0, column=1, sticky='e', padx=(10, 5), pady=20)
+        combo_year = ctk.CTkComboBox(filter_frame, values=years, variable=year_var, width=100, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18),
+            fg_color='#ffffff', button_color='#4f8cff', text_color='#222', border_color='#b3d1ff')
+        combo_month = ctk.CTkComboBox(filter_frame, values=months_th, variable=month_var, width=140, font=('TH SarabunPSK', 18), dropdown_font=('TH SarabunPSK', 18),
+            fg_color='#ffffff', button_color='#4f8cff', text_color='#222', border_color='#b3d1ff')
+        combo_year.grid(row=0, column=2, padx=5, pady=20)
+        combo_month.grid(row=0, column=3, padx=5, pady=20)
+        button = ctk.CTkButton(filter_frame, text='ค้นหา', font=('TH SarabunPSK', 18), command=lambda:get_visits(), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12)
+        button.grid(row=0, column=4, sticky='w', padx=(10, 10), pady=20)
+
+        # Table Frame
+        table_frame = ctk.CTkFrame(self.popup_report_visit_on_month, fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed")
+        table_frame.grid(row=2, column=0, sticky="nsew", padx=32, pady=(0, 8))
+        table_frame.grid_columnconfigure(0, weight=1)
+        table_frame.grid_rowconfigure(0, weight=1)
+
+        # Treeview style
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure('Treeview',
+            font =('TH SarabunPSK', 18),
+            rowheight = 38,
+            background="#f8fbff",
+            fieldbackground="#f8fbff",
+            bordercolor="#e0e6ed",
+            borderwidth=1
+        )
+        style.configure('Treeview.Heading',
+            font = ('TH SarabunPSK', 20, 'bold'),
+            background="#4f8cff",
+            foreground="#ffffff",
+            borderwidth=2
+        )
+        style.map('Treeview', background=[('selected', '#b3d1ff')])
+
+        tree_container = table_frame
+        tree = ttk.Treeview(
+            tree_container,
+            columns=(
+                'visit_id',
+                'time_stamp',
+                'date_visit',
+                'time_visit',
+                'prisoner_id',
+                'relation_id_1',
+                'relation_id_2',
+                'relation_id_3',
+                'relation_id_4',
+                'relation_id_5',
+                'channel'
+            ),
+            show='headings',
+            height=12,
+            style='Treeview'
+        )
+        tree.heading('visit_id',text='ID')
+        tree.heading('time_stamp',text='Time Stamp')
+        tree.heading('date_visit',text='วันที่จอง')
+        tree.heading('time_visit',text='เวลาเยี่ยม')
+        tree.heading('prisoner_id',text='ชื่อ')
+        tree.heading('relation_id_1',text='ญาติคนที่ 1')
+        tree.heading('relation_id_2',text='ญาติคนที่ 2')
+        tree.heading('relation_id_3',text='ญาติคนที่ 3')
+        tree.heading('relation_id_4',text='ญาติคนที่ 4')
+        tree.heading('relation_id_5',text='ญาติคนที่ 5')
+        tree.heading('channel',text='ช่อง')
+
+        tree.column('visit_id',width=0,stretch=False)
+        tree.column('time_stamp', anchor='center')
+        tree.column('date_visit', anchor='center')
+        tree.column('time_visit', anchor='center')
+        tree.column('prisoner_id', anchor='center')
+        tree.column('relation_id_1', anchor='center')
+        tree.column('relation_id_2', anchor='center')
+        tree.column('relation_id_3', anchor='center')
+        tree.column('relation_id_4', anchor='center')
+        tree.column('relation_id_5', anchor='center')
+        tree.column('channel',anchor='center')
+
+        scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        # กำหนดความกว้าง column
+        column_ratios = {
+            'time_stamp' : 0.11,
+            'date_visit' : 0.08,
+            'time_visit' : 0.08,
+            'prisoner_id' : 0.12,
+            'relation_id_1' : 0.11,
+            'relation_id_2' : 0.11,
+            'relation_id_3' : 0.11,
+            'relation_id_4' : 0.11,
+            'relation_id_5' : 0.11,
+            'channel':0.06
+        }
+        tree_container.bind('<Configure>',lambda e: resize_tree_column())
+        tree.bind('<Button-3>',on_right_click)
+        popup_window_right_click = None
+        pass
 ##############################################################################################################################################################################
     # function แสดงหน้าตามปุ่มกดจากหน้า Menu Frame
 ##############################################################################################################################################################################
@@ -5721,17 +6361,9 @@ class MainFrame(ctk.CTkFrame):
             print(page_name)
             self.reserve_visit_by_national_id_frame.pack(fill='both',expand = True)
             self.reserve_visit_by_national_id()
-        else:
-            # สำหรับหน้าที่ยังไม่ได้เขียน แสดงข้อความแจ้งเตือน
-            temp_frame = ctk.CTkFrame(self, fg_color='#f4f7fa', corner_radius=20)
-            temp_frame.pack(fill='both', expand=True)
-            
-            ctk.CTkLabel(
-                temp_frame,
-                text=f'หน้า "{page_name}"\nอยู่ระหว่างการพัฒนา',
-                font=('TH SarabunPSK', 32, 'bold'),
-                text_color='#2d3a4b'
-            ).place(relx=0.5, rely=0.5, anchor='center')
+        elif page_name == 'รายงานประจำเดือน':
+            self.popup_report_visit_on_month.pack(fill='both',expand = True)
+            self.report_visit_on_month()
 
     def refresh_data(self):
         """รีเฟรชข้อมูลทั้งหมดใน MainFrame"""
