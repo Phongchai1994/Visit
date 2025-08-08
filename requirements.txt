@@ -1,0 +1,38 @@
+# GUI และ Interface
+customtkinter>=5.2.0
+tkinter  # Built-in with Python
+
+# ฐานข้อมูล
+sqlite3  # Built-in with Python
+
+# การเข้ารหัส
+cryptography>=41.0.0
+
+# PDF Generation
+reportlab>=4.0.0
+
+# Excel/Data Processing
+pandas>=2.0.0
+
+# Card Reader (Thai ID Card)
+pyscard>=2.0.0
+
+# Fingerprint Scanner
+pyzkfp>=1.0.0
+
+# Emoji Support
+emoji>=2.8.0
+
+# Standard Library (No installation needed)
+# datetime - Built-in
+# json - Built-in
+# os - Built-in
+# sys - Built-in
+# tempfile - Built-in
+# threading - Built-in
+# time - Built-in
+# hashlib - Built-in
+# pathlib - Built-in
+# dataclasses - Built-in (Python 3.7+)
+# typing - Built-in (Python 3.5+)
+# atexit - Built-in
