@@ -8,16 +8,22 @@ from tkinter import messagebox
 class UserSession:
     def __init__(self):
         self.is_logged_in = False
-        self.user_type = None  # 'admin' หรือ 'user'
+        self.user_id = None
         self.username = None
+        self.fullname = None  # เพิ่มฟิลด์ fullname
+        self.user_type = None
         self.login_time = None
     
-    def login(self, username, user_type):
+    def login(self, username, user_type, user_id=None, fullname=None):
         """เข้าสู่ระบบ"""
         self.is_logged_in = True
-        self.user_type = user_type
+        self.user_id = user_id
         self.username = username
+        self.fullname = fullname or username  # ใช้ username เป็นค่าเริ่มต้น
+        self.user_type = user_type
         self.login_time = datetime.datetime.now()
+        print(f"User {self.fullname} ({self.username}) logged in as {self.user_type}")
+    
     
     def logout(self):
         """ออกจากระบบ"""

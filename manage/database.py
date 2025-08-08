@@ -1,13 +1,10 @@
 import sqlite3
 import os
 from manage.encryption_utils import decrypt_file,encrypt_file
-import customtkinter as ctk
 from tkinter import messagebox
 import json
 from pathlib import Path
 import tempfile
-import sys
-import hashlib
 
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
 
@@ -770,3 +767,7 @@ class SQLiteDB:
         except Exception as e:
             self.msgbox(f'เข้ารหัสฐานข้อมูลล้มเหลว: {e}')
 
+
+########################################################## 
+# สำหรับการเข้าใู
+# ########################################################

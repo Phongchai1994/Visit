@@ -150,10 +150,9 @@ class App_Prisoners(ctk.CTk):
             else:
                 user_info = "ไม่ได้เข้าสู่ระบบ"
             
-            # ✅ เพิ่มข้อมูลฐานข้อมูล
+            # ✅ เพิ่มข้อมูลฐานข้อมูล (แสดงทั้ง Path)
             if hasattr(self, 'db_path') and self.db_path:
-                db_name = os.path.basename(self.db_path)
-                user_info += f" | ฐานข้อมูล: {db_name}"
+                user_info += f" | ฐานข้อมูล: {self.db_path}"
             else:
                 user_info += " | ฐานข้อมูล: ไม่ได้เลือก"
             
@@ -190,6 +189,7 @@ class App_Prisoners(ctk.CTk):
             #     command=self.check_database_connection
             # )
             # check_db_btn.pack(side='right', padx=5, pady=2)
+            
             
         except Exception as e:
             print(f"Error creating status bar: {e}")
@@ -578,8 +578,6 @@ class SimpleLoginApp:
         users_db = {
             'admin': {'password': '123456', 'type': 'admin'},
             'user': {'password': '123456', 'type': 'user'},
-            'manager': {'password': '123456', 'type': 'admin'},
-            'staff': {'password': '123456', 'type': 'user'}
         }
         
         if username in users_db and users_db[username]['password'] == password:

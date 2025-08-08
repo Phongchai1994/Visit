@@ -2009,10 +2009,90 @@ class MainFrame(ctk.CTkFrame):
             popup_window.bind("<FocusOut>", lambda e: popup_window.destroy())
             popup_window.focus_set()
 
+        # ฟังก์ชันสำหรับ Ctrl + คลิกขวา เพื่อคัดลอกข้อมูล
+        def show_copy_menu(event):
+            nonlocal popup_copy_window
+            # ปิดเมนูคัดลอกเก่าหากมี
+            try:
+                popup_copy_window.destroy()
+            except:
+                pass
+
+            # ระบุแถวที่คลิก
+            selected = tree.identify_row(event.y)
+            if not selected:
+                return "break"
+
+            tree.selection_set(selected)
+            values = tree.item(selected).get('values')
+            if not values or len(values) < 4:
+                return "break"
+
+            prisoner_id = str(values[0])
+            f_name = str(values[2])
+            l_name = str(values[3])
+
+            # สร้าง popup เมนูแบบ modern
+            popup_copy_window = ctk.CTkToplevel()
+            popup_copy_window.overrideredirect(True)
+            popup_copy_window.geometry(f"+{event.x_root}+{event.y_root}")
+            popup_copy_window.configure(fg_color="#ffffff", corner_radius=12, border_width=1, border_color="#e0e6ed")
+            popup_copy_window.attributes("-topmost", True)
+
+            btn_kwargs = dict(
+                font=("TH SarabunPSK", 18, "bold"),
+                width=220,
+                height=36,
+                corner_radius=10
+            )
+
+            def copy_only_id():
+                try:
+                    self.clipboard_clear()
+                    self.clipboard_append(prisoner_id)
+                finally:
+                    popup_copy_window.destroy()
+
+            def copy_full_name():
+                try:
+                    self.clipboard_clear()
+                    self.clipboard_append(f"{f_name} {l_name}")
+                finally:
+                    popup_copy_window.destroy()
+
+            ctk.CTkButton(
+                popup_copy_window,
+                text="คัดลอกเฉพาะ รหัสประจำตัว",
+                fg_color="#4f8cff",
+                hover_color="#2d3a4b",
+                text_color="#fff",
+                command=copy_only_id,
+                **btn_kwargs
+            ).pack(padx=12, pady=(10, 6))
+
+            ctk.CTkButton(
+                popup_copy_window,
+                text="คัดลอกชื่อ + นามสกุล",
+                fg_color="#e3eefa",
+                hover_color="#b3d1ff",
+                text_color="#2d3a4b",
+                command=copy_full_name,
+                **btn_kwargs
+            ).pack(padx=12, pady=(0, 10))
+
+            popup_copy_window.bind("<FocusOut>", lambda e: popup_copy_window.destroy())
+            popup_copy_window.focus_set()
+
+            # ป้องกันไม่ให้เมนูคลิกขวาปกติแสดงซ้อน
+            return "break"
+
         # ผูกกับคลิกขวา
         tree.bind("<Button-3>", show_ctk_popup)
+        # ผูก Ctrl + คลิกขวา สำหรับเมนูคัดลอกข้อมูล
+        tree.bind("<Control-Button-3>", show_copy_menu)
         tree.bind('<Configure>',lambda e:resize_tree_columns())
         popup_window = None
+        popup_copy_window = None
         all_data = []
         load_data_on_db()
 
@@ -5316,8 +5396,23 @@ class MainFrame(ctk.CTkFrame):
         def resize_tree_column():
             tree_container.update_idletasks()
             total_width = tree_container.winfo_width()
+            # กำหนด anchor แต่ละคอลัมน์
+            column_anchors = {
+                'time_stamp': 'center',
+                'date_visit': 'center', 
+                'time_visit': 'center',
+                'prisoner_id': 'w',
+                'relation_id_1': 'w',
+                'relation_id_2': 'w',
+                'relation_id_3': 'w',
+                'relation_id_4': 'w',
+                'relation_id_5': 'w',
+                'channel': 'center'
+            }
+            
             for col, ratio in column_ratios.items():
-                tree.column(col, width=int(total_width * ratio), anchor='center')
+                anchor_type = column_anchors.get(col, 'w')  # default เป็น 'w'
+                tree.column(col, width=int(total_width * ratio), anchor=anchor_type)
 
         def print_table():
             try:
@@ -5492,7 +5587,9 @@ class MainFrame(ctk.CTkFrame):
             # ตรวจสอบว่า result เป็น list หรือไม่ ถ้าเป็น False (error) จะไม่ iterate
             if result and isinstance(result, (list, tuple)):
                 for row in result:
-                    tree.insert('', 'end', values=row)
+                    # แทนที่ค่า None ด้วย "-"
+                    processed_row = ["-" if value is None else value for value in row]
+                    tree.insert('', 'end', values=processed_row)
             else:
                 print("No data found or error occurred")
                 # แสดงข้อความว่าไม่พบข้อมูล
@@ -5953,14 +6050,30 @@ class MainFrame(ctk.CTkFrame):
         tree_container.bind('<Configure>',lambda e: resize_tree_column())
         tree.bind('<Button-3>',on_right_click)
         popup_window_right_click = None
-
+######################################################################################### 
+## รายงานเยี่ยมประจำเดือน
+#########################################################################################
     def month_report_visits(self):
 
         def resize_tree_column():
             tree_container.update_idletasks()
             total_width = tree_container.winfo_width()
+            # กำหนด anchor แต่ละคอลัมน์
+            column_anchors = {
+                'time_stamp': 'center',
+                'date_visit': 'center', 
+                'time_visit': 'center',
+                'prisoner_id': 'w',
+                'relation_id_1': 'w',
+                'relation_id_2': 'w',
+                'relation_id_3': 'w',
+                'relation_id_4': 'w',
+                'relation_id_5': 'w',
+                'channel': 'center'
+            }
             for col, ratio in column_ratios.items():
-                tree.column(col, width=int(total_width * ratio), anchor='center')
+                anchor_type = column_anchors.get(col, 'w')  # default เป็น 'w'
+                tree.column(col, width=int(total_width * ratio), anchor=anchor_type)
 
         def print_table():
             try:
@@ -6072,17 +6185,45 @@ class MainFrame(ctk.CTkFrame):
             data = [year, month]
             result = self.db.get_visits_by_month(data)
             print(f'data on get visits by month = {result}')
-            for row in tree.get_children():
-                tree.delete(row)
-            
-            # ตรวจสอบว่า result เป็น list หรือไม่ ถ้าเป็น False (error) จะไม่ iterate
+
+            # ล้างข้อมูลเดิมในตาราง
+            for row_id in tree.get_children():
+                tree.delete(row_id)
+
+            # เตรียมคำค้นหาชื่อ (column ชื่อ อยู่ index 4)
+            try:
+                search_term = entry_search_name.get().strip().lower()
+            except Exception:
+                search_term = ""
+
+            # ตรวจสอบและกรองข้อมูล
             if result and isinstance(result, (list, tuple)):
-                for row in result:
-                    tree.insert('', 'end', values=row)
+                filtered = []
+                if search_term:
+                    for r in result:
+                        name_val = None
+                        try:
+                            name_val = r[4]
+                        except Exception:
+                            name_val = None
+                        if name_val is not None and search_term in str(name_val).lower():
+                            filtered.append(r)
+                else:
+                    filtered = list(result)
+
+                if filtered:
+                    for r in filtered:
+                        # แทนที่ค่า None ด้วย "-"
+                        processed_row = ["-" if v is None else v for v in r]
+                        tree.insert('', 'end', values=processed_row)
+                else:
+                    # ไม่พบข้อมูลหลังกรอง
+                    tree.insert('', 'end', values=('ไม่พบข้อมูล', '', '', '', '', '', '', '', '', '', ''))
             else:
                 print("No data found or error occurred")
                 # แสดงข้อความว่าไม่พบข้อมูล
                 tree.insert('', 'end', values=('ไม่พบข้อมูล', '', '', '', '', '', '', '', '', '', ''))
+
             tree_container.grid(row=2, column=0, sticky='nsew')
             tree.grid(row=0, column=0, sticky='new', padx=6, pady=(8, 0))
             # ปุ่มพิมพ์แบบลอยขวา
@@ -6208,6 +6349,7 @@ class MainFrame(ctk.CTkFrame):
         filter_frame.grid_columnconfigure(2, weight=0)
         filter_frame.grid_columnconfigure(3, weight=0)
         filter_frame.grid_columnconfigure(4, weight=1)
+        filter_frame.grid_columnconfigure(5, weight=0)
 
         current_year = datetime.now().year
         years = [str(current_year - 1), str(current_year), str(current_year + 1)]
@@ -6230,6 +6372,16 @@ class MainFrame(ctk.CTkFrame):
         combo_month.grid(row=0, column=3, padx=5, pady=20)
         button = ctk.CTkButton(filter_frame, text='ค้นหา', font=('TH SarabunPSK', 18), command=lambda:get_visits(), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12)
         button.grid(row=0, column=4, sticky='w', padx=(10, 10), pady=20)
+        entry_search_name = ctk.CTkEntry(filter_frame, placeholder_text='ค้นหาชื่อผู้ต้องขัง', font=('TH SarabunPSK', 18), width=200, fg_color="#ffffff", text_color="#222", border_color="#b3d1ff")
+        entry_search_name.grid(row=0, column=5, sticky='ew', padx=(10, 10), pady=20)
+        # พิมพ์แล้วค้นหาอัตโนมัติ
+        entry_search_name.bind('<KeyRelease>', lambda e: get_visits())
+
+        # แสดงข้อมูลเริ่มต้นของเดือนปัจจุบัน
+        try:
+            get_visits()
+        except Exception as _e:
+            print('initial get_visits error: ', _e)
 
         # Table Frame
         table_frame = ctk.CTkFrame(self.popup_report_visit_on_month, fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed")
@@ -6292,13 +6444,13 @@ class MainFrame(ctk.CTkFrame):
         tree.column('time_stamp', anchor='center')
         tree.column('date_visit', anchor='center')
         tree.column('time_visit', anchor='center')
-        tree.column('prisoner_id', anchor='center')
-        tree.column('relation_id_1', anchor='center')
-        tree.column('relation_id_2', anchor='center')
-        tree.column('relation_id_3', anchor='center')
-        tree.column('relation_id_4', anchor='center')
-        tree.column('relation_id_5', anchor='center')
-        tree.column('channel',anchor='center')
+        tree.column('prisoner_id', anchor='w')
+        tree.column('relation_id_1', anchor='w')
+        tree.column('relation_id_2', anchor='w')
+        tree.column('relation_id_3', anchor='w')
+        tree.column('relation_id_4', anchor='w')
+        tree.column('relation_id_5', anchor='w')
+        tree.column('channel',anchor='w')
 
         scrollbar = ttk.Scrollbar(tree_container, orient='vertical', command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
@@ -6317,7 +6469,7 @@ class MainFrame(ctk.CTkFrame):
             'channel':0.06
         }
         tree_container.bind('<Configure>',lambda e: resize_tree_column())
-        tree.bind('<Button-3>',on_right_click)
+        # tree.bind('<Button-3>',on_right_click)
         popup_window_right_click = None
         pass
 ##############################################################################################################################################################################
@@ -6363,7 +6515,7 @@ class MainFrame(ctk.CTkFrame):
             self.reserve_visit_by_national_id()
         elif page_name == 'รายงานประจำเดือน':
             self.popup_report_visit_on_month.pack(fill='both',expand = True)
-            self.report_visit_on_month()
+            self.month_report_visits()
 
     def refresh_data(self):
         """รีเฟรชข้อมูลทั้งหมดใน MainFrame"""
