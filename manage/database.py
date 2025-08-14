@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 import tempfile
 
+
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
+
 
 def get_config_path():
     return os.path.join(os.getcwd(), "config", "config.json")
@@ -18,6 +20,23 @@ def load_config():
             return json.load(f).get('db_path')
     return ''
 
+def check_key_on_db():
+    db = sqlite3.connect(load_config())
+    cursor = db.cursor()
+    cursor.execute('SELECT key FROM check_')
+    result = cursor.fetchone()
+    db.close()
+    return result[0] if result else None
+
+def require_valid_key(func):
+    KEY = 'E54F2JN5F2'
+    KEY_DB = check_key_on_db()
+    def wrapper(self, *args, **kwargs):
+        if KEY_DB != KEY:
+            raise PermissionError("KEY ไม่ถูกต้อง ไม่สามารถใช้งาน method นี้ได้")
+        return func(self, *args, **kwargs)
+    return wrapper
+
 class SQLiteDB:
     def __init__(self, db_path=None):
         # โหลด path จาก config ทุกครั้งที่สร้าง instance ใหม่
@@ -26,6 +45,7 @@ class SQLiteDB:
         self.db_path = db_path
         self.conn = None
         self.cursor = None
+        self.key = self.check_key()
         # โปรแกรมถอดรหัส และเข้ารหัส
         # self.EN_DB = load_config()  # โหลดข้อมูลจาก ไฟล์ config.json
         # self.DE_DB = TEMP_DIR / 'visit_report.db'
@@ -59,8 +79,20 @@ class SQLiteDB:
             self.conn = None
             self.cursor = None
             # print('ปิดฐานข้อมูล')
+    def check_key(self):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT key FROM check_')
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
 
     # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners
+    @require_valid_key
     def add_data(self,data):
         self.connect()
         try :
@@ -75,6 +107,7 @@ class SQLiteDB:
             self.close()
 
     # เพิ่มข้อมูลญาติใสในตาราง relatives
+    @require_valid_key
     def add_data_ralative_to_relatives(self,id,data,relation):
         self.connect()
         try:
@@ -90,6 +123,7 @@ class SQLiteDB:
             self.encode_db()
 
     # เพิมความสัมพันธ์ของญาติและผู้ต้องขังโดยใส่ในตาราง relations
+    @require_valid_key
     def add_data_relation_to_ralations(self,id,data,relation):
         self.decode_db()
         self.connect()
@@ -107,6 +141,7 @@ class SQLiteDB:
             self.encode_db()
 
     # ดึงข้อมูลผู้ต้องขังใส่ตาราง prisoners 
+    @require_valid_key
     def get_data_all(self):
         self.decode_db()
         self.connect()
@@ -127,6 +162,7 @@ class SQLiteDB:
             self.encode_db()
 
     # ดึงข้อมูลผู้ต้องขัง 1 คน ในตาราง prisoners ด้วย prisoner_id
+    @require_valid_key
     def get_data_one(self,prisoner_id):
         self.decode_db()
         self.connect()
@@ -154,6 +190,7 @@ class SQLiteDB:
             self.encode_db()
 
     # ดึงข้อมูลญาติ โดยการค้นหาด้วย relative_id
+    @require_valid_key
     def get_data_for_ralative_id(self,id):
         self.decode_db()
         self.connect()
@@ -182,6 +219,7 @@ class SQLiteDB:
             self.encode_db()
 
     # ลงทะเบียนลายนิ้วมือในตาราง relatives 
+    @require_valid_key
     def set_fingerprint(self,id,fingerprint):
         self.decode_db()
         self.connect()
@@ -209,6 +247,7 @@ class SQLiteDB:
             self.encode_db()
 
     # ดึงข้อมูลญาติของผู้ต้องขัง
+    @require_valid_key
     def get_join_prisoners_and_relatives_alldata(self,prisoner_id):
         self.connect()
         try:
@@ -235,6 +274,7 @@ class SQLiteDB:
             self.close()
 
     # ดึงข้อมูลญาติที่ไม่ใช่ผู้ติดตามของผู้ต้องขัง
+    @require_valid_key
     def get_join_prisoners_and_relatives_not_follower(self,prisoner_id,national_id):
         self.connect()
         try:
@@ -257,6 +297,7 @@ class SQLiteDB:
             self.close()
 
     # ดึงรหัสผู้ต้องขัง และ รหัสประจำตัวญาติ
+    @require_valid_key
     def get_data_relation(self,prisoner_id):
         self.connect()
         try:
@@ -271,6 +312,7 @@ class SQLiteDB:
             self.close()
     
     # ดึงข้อมูลลายนิ้วมือของญาติทุกคน
+    @require_valid_key
     def get_all_fingerprint(self):
         self.connect()
         self.cursor.execute('SELECT relative_id,title,f_name,l_name,fingerprint FROM relatives')
@@ -279,6 +321,7 @@ class SQLiteDB:
         return data
     
     # ดึงตารางข้อมูลผู้ต้องขัง อ้างอิงด้วย เลขบัตรประชาชนญาติ
+    @require_valid_key
     def get_join_relatives_and_prisoners(self,relative_id):
         self.decode_db()
         self.connect()
@@ -319,6 +362,7 @@ class SQLiteDB:
             self.encode_db()
 
     # เพิ่มข้อมูลการเยี่ยมลงตาราง visit
+    @require_valid_key
     def add_visits(self,query,data):
         # print(f'{query},',data)
         self.decode_db()
@@ -335,6 +379,7 @@ class SQLiteDB:
             self.encode_db()
 
     # เพิ่มช่องเยี่ยม
+    @require_valid_key
     def add_channel_on_visits(self,data,channel):
         self.connect()
         try:
@@ -352,6 +397,7 @@ class SQLiteDB:
 
 
     # รายงานการเยี่ยมประจำวัน
+    @require_valid_key
     def get_visits_on_db(self,data_visit):
         # self.decode_db()
         self.connect()
@@ -391,6 +437,7 @@ class SQLiteDB:
             # self.encode_db()
 
     # ดึง ไอดี ชื่อ สกุล ของตารางญาติ
+    @require_valid_key
     def get_relatives_id_fname_lname(self):
         self.decode_db()
         self.connect()
@@ -406,6 +453,7 @@ class SQLiteDB:
             self.encode_db()
             
     # ดึงข้อมูลการเยี่ยมประจำเดือน
+    @require_valid_key
     def get_visits_by_month(self, data_month):
         """ดึงข้อมูลการเยี่ยมทั้งเดือน"""
         self.decode_db()
@@ -447,6 +495,7 @@ class SQLiteDB:
             self.encode_db()
 
     # ดึงข้อมูลของญาติด้วย เลขบัตรประชาชน   
+    @require_valid_key
     def get_relative_by_national_id(self,id):
         self.connect()
         try:
@@ -459,6 +508,7 @@ class SQLiteDB:
             self.close()
 
     # นับครั้งการเยี่ยม เงื่อนไขตามชั้น
+    @require_valid_key
     def get_count_visit(self,prisoner_id,today,month):
         self.decode_db()
         self.connect()
@@ -477,6 +527,7 @@ class SQLiteDB:
             self.encode_db()
 
     # นับครั้งการเยี่ยม ประจำวัน
+    @require_valid_key
     def get_count_visit_on_round(self,round_time,date_current):
         self.decode_db()
         self.connect()
@@ -494,6 +545,7 @@ class SQLiteDB:
             self.encode_db()
 
     # แก้ไขชั้นและแดน
+    @require_valid_key
     def update_level_and_dan(self,id,sex,f_name,l_name,lawsuit,level,dan,type_data,status,disciplinary):
         self.connect()
         try:
@@ -521,6 +573,7 @@ class SQLiteDB:
             self.close()    
 
     # ดึงข้อมูลญาติทั้งหมดใน DB
+    @require_valid_key
     def get_all_relatives(self):
         self.connect()
         try:
@@ -539,6 +592,7 @@ class SQLiteDB:
             self.close()
 
     # ลบข้อมูลญาติ
+    @require_valid_key
     def delete_relation_from_prisoner_and_relative(self,prisoner_id,relative_id):
         print(prisoner_id,relative_id)
         self.connect()
@@ -552,6 +606,7 @@ class SQLiteDB:
             self.close()
 
     # ลบข้อมูลผู้ต้องขัง
+    @require_valid_key
     def delete_prisoner(self,id):
         self.connect()
         try:
@@ -565,6 +620,7 @@ class SQLiteDB:
             self.close()
 
     # แก้ไขข้อมูลญาติ
+    @require_valid_key
     def edit_relative(self,data,id):
         self.connect()
         try:
@@ -578,6 +634,7 @@ class SQLiteDB:
             self.close()
             
     # ย้ายรอบเยี่ยม
+    @require_valid_key
     def update_visit_round(self,new_round,visit_id):
         self.decode_db()
         self.connect()
@@ -591,6 +648,7 @@ class SQLiteDB:
             self.close()
 
     # ลบข้อมูลการเยี่ยม
+    @require_valid_key
     def remove_visit(self,visit_id):
         self.decode_db()
         self.connect()
@@ -604,6 +662,7 @@ class SQLiteDB:
             self.close()
 
     # ดึงข้อมูลตาราง visits ทั้งหมดอ้างอิงด้วย visit_id
+    @require_valid_key
     def get_visit_by_id(self,visit_id):
         self.decode_db()
         self.connect()
@@ -617,6 +676,7 @@ class SQLiteDB:
             self.close()
 
     # ดึงข้อมูลญาติ เลขบัตร คำนำหน้า ชื่อ สกุล
+    @require_valid_key
     def get_join_prisoners_and_relatives(self,prisoner_id):
         self.connect()
         try:
@@ -639,6 +699,7 @@ class SQLiteDB:
             self.close()
 
     # เช็คข้อมูลความสัมพันธ์ ถ้า 1 คือ มี 0 คือ ไม่มี
+    @require_valid_key
     def count_relative(self,prisoner_id,relative_id):
         self.connect()
         try:
@@ -653,6 +714,7 @@ class SQLiteDB:
             self.close()
 
     # ดึงข้อมูลตารางเยี่ยม โดยใช้ visit_id
+    @require_valid_key
     def prisoner_id_on_table_visits(self,visit_id):
         print(f'visit_id on db = {visit_id}')
         self.connect()
@@ -668,6 +730,7 @@ class SQLiteDB:
             self.close()
 
     # execute ดึงข้อมูล โดยการส่ง query เอง
+    @require_valid_key
     def get_execute_manual(self,query):
         self.connect()
         try:
@@ -683,10 +746,14 @@ class SQLiteDB:
             self.close()
 
     # execute ส่งข้อมูล โดยการส่ง query เอง
-    def set_execute_manual(self,query):
+    @require_valid_key
+    def set_execute_manual(self,query,params = None):
         self.connect()
         try:
-            self.cursor.execute(query)
+            if params:
+                self.cursor.execute(query, params)
+            else:
+                self.cursor.execute(query)
             return True
         except Exception as e:
             print(e)
@@ -696,6 +763,7 @@ class SQLiteDB:
             self.close()
 
     # เพิ่มข้อมูลในตาราง visits เพิ่มเติม
+    @require_valid_key
     def add_relative_to_visits(self,data):
         self.connect()
         try:
@@ -709,6 +777,7 @@ class SQLiteDB:
             self.close()
 
     # ฟังก์ชันแก้ไขความสัมพันธ์ของญาติและผู้ต้องขัง
+    @require_valid_key
     def edit_relation(self,relation,relative_id,prisoner_id):
         self.connect()
         try:
@@ -722,6 +791,7 @@ class SQLiteDB:
             self.close()
             
     # รดึงค่าความสัมพันธ์ของญาติและผู้ต้องขัง
+    @require_valid_key
     def get_relation(self,prisoner_id,relative_id):
         self.connect()
         try:
@@ -735,6 +805,7 @@ class SQLiteDB:
             self.close()
 
     # ดึงข้อมูลเยี่ยมจากตารางเยี่ยม visits โดยดึงจากวันที่
+    @require_valid_key
     def get_visits_all_on_date(self,date):
         self.connect()
         try:   
@@ -747,8 +818,24 @@ class SQLiteDB:
         finally:
             self.close()
 
-
-
+    def get_users(self):
+        self.connect()
+        users = {}
+        try:
+            self.cursor.execute('SELECT username,password,user_type,fullname FROM users')
+            for username,password,user_type,fullname in self.cursor.fetchall():
+                users[username] = {
+                    'password': password,
+                    'user_type': user_type,
+                    'fullname': fullname
+                }
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+        return users
 
 
 

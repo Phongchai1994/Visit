@@ -5599,7 +5599,8 @@ class MainFrame(ctk.CTkFrame):
             # ปุ่มพิมพ์แบบลอยขวา
             button_print = ctk.CTkButton(table_frame, text='พิมพ์', font=('TH SarabunPSK', 20, 'bold'), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12, command=lambda: print_table())
             button_print.grid(row=1, column=0, padx=16, pady=(8, 8))
-
+       
+        @require_admin
         def on_right_click(event):
             nonlocal popup_window_right_click
             selected = tree.identify_row(event.y)

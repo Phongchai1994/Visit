@@ -7,6 +7,8 @@ import json
 import os
 import sys
 import datetime
+from manage.database import SQLiteDB
+import hashlib
 
 # ✅ เพิ่ม import user_session
 from user_session import user_session, require_admin, require_login
@@ -195,10 +197,10 @@ class App_Prisoners(ctk.CTk):
             print(f"Error creating status bar: {e}")
 
     def select_database(self):
-        # ✅ ตรวจสอบสิทธิ์ก่อนให้เลือกฐานข้อมูล
-        if not user_session.is_admin():
-            messagebox.showerror("ไม่มีสิทธิ์", "เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถเลือกฐานข้อมูลได้")
-            return
+        # # ✅ ตรวจสอบสิทธิ์ก่อนให้เลือกฐานข้อมูล
+        # if not user_session.is_admin():
+        #     messagebox.showerror("ไม่มีสิทธิ์", "เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถเลือกฐานข้อมูลได้")
+        #     return
             
         file_path = filedialog.askopenfilename(
             title="เลือกไฟล์ฐานข้อมูล",
@@ -573,15 +575,21 @@ class SimpleLoginApp:
             self.password_entry.focus()
     
     def authenticate_user(self, username, password):
+        # print(f'ตรวจสอบผู้ใช้: {username}')
+        # print(f'รหัสผ่านที่กรอก: {password}')
         """ตรวจสอบ username และ password"""
         # ✅ ข้อมูล Login (ในการใช้งานจริงควรเก็บในฐานข้อมูลและเข้ารหัส)
-        users_db = {
-            'admin': {'password': '123456', 'type': 'admin'},
-            'user': {'password': '123456', 'type': 'user'},
-        }
-        
-        if username in users_db and users_db[username]['password'] == password:
-            return users_db[username]['type']
+        users_db = SQLiteDB().get_users()
+        print(f'ข้อมูลผู้ใช้ในฐานข้อมูล: {users_db}')
+        if username in users_db:
+            # password_hash = hashlib.sha256(password.encode('utf-8')).digest()
+
+            # แปลง password ที่กรอกเป็น hash (BLOB)
+            password_hash = hashlib.sha256(password.encode('utf-8')).digest()
+            # print(f'รหัสผ่านที่แปลงเป็น hash: {password_hash}')
+            if users_db[username]['password'] == password_hash:
+                print(f'ประเภทผู้ใช้: {users_db[username]["user_type"]}')
+                return users_db[username]['user_type']
         return None
     
     def clear_data(self):
