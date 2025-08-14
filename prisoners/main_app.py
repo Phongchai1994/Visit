@@ -242,7 +242,7 @@ class MainFrame(ctk.CTkFrame):
             font=('TH SarabunPSK', 20, 'bold'), text_color='#4a4a4a')
         regis_label_dan.grid(row=7, column=0, sticky='e', padx=12)
         regis_combo_dan = ctk.CTkOptionMenu(self.register_frame,
-            values=['1', '2', '3', '4', '5', '6', '7', 'รจช'],
+            values=['1', '2', '3', '4', '5', '6', '7', 'รจช','รพ.นอก'],
             font=('TH SarabunPSK', 20), dropdown_font=('TH SarabunPSK', 20),
             fg_color='#ffffff', button_color='#b3d1ff', text_color='#222')
         regis_combo_dan.grid(row=7, column=1, sticky='w', padx=12)
@@ -866,7 +866,7 @@ class MainFrame(ctk.CTkFrame):
         lname_data = ctk.CTkLabel(search_frame,text='',font=('TH SarabunPSK',18))
         lawsuit_data = ctk.CTkLabel(search_frame,text='',font=('TH SarabunPSK',18))
         level_data = ctk.CTkOptionMenu(search_frame,values=['ระหว่างพิจารณาคดี','เยี่ยม','ดีมาก','ดี','กลาง','ปรับปรุง','ปรับปรุงมาก'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-        dan_data = ctk.CTkOptionMenu(search_frame,values=['1','2','3','4','5','6','7','รจช'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+        dan_data = ctk.CTkOptionMenu(search_frame,values=['1','2','3','4','5','6','7','รจช','รพ.นอก'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
         type_data = ctk.CTkOptionMenu(search_frame,values=['ผู้ต้องขัง','ผู้ต้องกักขัง'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
         status_data = ctk.CTkOptionMenu(search_frame,values=['อยู่','ไม่อยู่'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
 
@@ -1460,7 +1460,7 @@ class MainFrame(ctk.CTkFrame):
             lname_data = ctk.CTkEntry(search_frame,font=('TH SarabunPSK',18))
             lawsuit_data = ctk.CTkTextbox(search_frame,font=('TH SarabunPSK',18),height=60)
             level_data = ctk.CTkOptionMenu(search_frame,values=['ระหว่างพิจารณาคดี','เยี่ยม','ดีมาก','ดี','กลาง','ปรับปรุง','ปรับปรุงมาก'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
-            dan_data = ctk.CTkOptionMenu(search_frame,values=['1','2','3','4','5','6','7','รจช'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
+            dan_data = ctk.CTkOptionMenu(search_frame,values=['1','2','3','4','5','6','7','รจช','รพ.นอก'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
             type_data = ctk.CTkOptionMenu(search_frame,values=['ผู้ต้องขัง','ผู้ต้องกักขัง'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
             status_data = ctk.CTkOptionMenu(search_frame,values=['อยู่','ไม่อยู่'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
             disciplinary_data = ctk.CTkOptionMenu(search_frame,values=['ไม่มี','ผิดวินัย'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
