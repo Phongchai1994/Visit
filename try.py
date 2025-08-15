@@ -1,7 +1,7 @@
 import hashlib
 from manage.database import SQLiteDB
-password = hashlib.sha256(b'123456').digest()
-print(password)
+user_password = hashlib.sha256(b'123456').digest()
+admin_password = hashlib.sha256(b'066986').digest()
 
 db = SQLiteDB()
-db.set_execute_manual('UPDATE users SET password = ? WHERE username = ?', (password, 'user'))
+db.set_execute_manual('''INSERT INTO users (username ,password ,user_type ,fullname) VALUES (?,?,?,?)''', ('user', user_password, 'user', 'ผู้ใช้ทั่วไป'))

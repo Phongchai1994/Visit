@@ -21,7 +21,11 @@ def load_config():
     return ''
 
 def check_key_on_db():
-    db = sqlite3.connect(load_config())
+    db_path = load_config()
+    if not db_path or not os.path.exists(db_path):
+        print(f"Error: Database path is invalid or file doesn't exist: {db_path}")
+        return False
+    db = sqlite3.connect(db_path)
     cursor = db.cursor()
     cursor.execute('SELECT key FROM check_')
     result = cursor.fetchone()
@@ -91,13 +95,13 @@ class SQLiteDB:
         finally:
             self.close()
 
-    # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners
+    # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners_
     @require_valid_key
     def add_data(self,data):
         self.connect()
         try :
             print('กำลังบันทึกข้อมูล')
-            self.cursor.execute('INSERT INTO prisoners (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status) VALUES (?,?,?,?,?,?,?,?,?)',data)
+            self.cursor.execute('INSERT INTO prisoners_ (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status) VALUES (?,?,?,?,?,?,?,?,?)',data)
             return True
         except Exception as e:
             self.msgbox(e)
@@ -140,7 +144,7 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
-    # ดึงข้อมูลผู้ต้องขังใส่ตาราง prisoners 
+    # ดึงข้อมูลผู้ต้องขังใส่ตาราง prisoners_ 
     @require_valid_key
     def get_data_all(self):
         self.decode_db()
@@ -150,7 +154,7 @@ class SQLiteDB:
                 print("Error: Database cursor is None")
                 return []
                 
-            self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status,disciplinary FROM prisoners')
+            self.cursor.execute('SELECT prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status,disciplinary FROM prisoners_')
             self.all_data = self.cursor.fetchall()
             return [[value if value is not None else "" for value in row] for row in self.all_data]
         except Exception as e:
@@ -161,13 +165,13 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
-    # ดึงข้อมูลผู้ต้องขัง 1 คน ในตาราง prisoners ด้วย prisoner_id
+    # ดึงข้อมูลผู้ต้องขัง 1 คน ในตาราง prisoners_ ด้วย prisoner_id
     @require_valid_key
     def get_data_one(self,prisoner_id):
         self.decode_db()
         self.connect()
         try:
-            self.cursor.execute('SELECT * FROM prisoners WHERE prisoner_id = ?',(prisoner_id,))
+            self.cursor.execute('SELECT * FROM prisoners_ WHERE prisoner_id = ?',(prisoner_id,))
             return self.cursor.fetchone()
         except sqlite3.OperationalError as e:
             self.msgbox(e)
@@ -328,16 +332,16 @@ class SQLiteDB:
         try:
             self.cursor.execute('''
                                 SELECT 
-                                    prisoners.prisoner_id,
-                                    prisoners.f_name,
-                                    prisoners.l_name,
-                                    prisoners.level,
-                                    prisoners.dan,
+                                    prisoners_.prisoner_id,
+                                    prisoners_.f_name,
+                                    prisoners_.l_name,
+                                    prisoners_.level,
+                                    prisoners_.dan,
                                     relations.relation,
-                                    prisoners.status,
-                                    prisoners.type
-                                FROM prisoners 
-                                JOIN relations ON prisoners.prisoner_id = relations.prisoner_id
+                                    prisoners_.status,
+                                    prisoners_.type
+                                FROM prisoners_ 
+                                JOIN relations ON prisoners_.prisoner_id = relations.prisoner_id
                                 WHERE relations.relative_id = ?
                                 ''',(relative_id,))
             return self.cursor.fetchall()
@@ -408,7 +412,7 @@ class SQLiteDB:
                                     visits.time_stamp,
                                     visits.date_visit,
                                     visits.time_visit,
-                                    prisoners.f_name || " " || prisoners.l_name AS prisoner_name,
+                                    prisoners_.f_name || " " || prisoners_.l_name AS prisoner_name,
                                     COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
                                     COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
                                     COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
@@ -417,7 +421,7 @@ class SQLiteDB:
                                     visits.channel
                                 FROM
                                     visits
-                                JOIN prisoners ON visits.prisoner_id = prisoners.prisoner_id
+                                JOIN prisoners_ ON visits.prisoner_id = prisoners_.prisoner_id
                                 LEFT JOIN relatives AS r1 ON visits.relative_id_1 = r1.relative_id
                                 LEFT JOIN relatives AS r2 ON visits.relative_id_2 = r2.relative_id
                                 LEFT JOIN relatives AS r3 ON visits.relative_id_3 = r3.relative_id
@@ -465,7 +469,7 @@ class SQLiteDB:
                                     visits.time_stamp,
                                     visits.date_visit,
                                     visits.time_visit,
-                                    prisoners.f_name || " " || prisoners.l_name AS prisoner_name,
+                                    prisoners_.f_name || " " || prisoners_.l_name AS prisoner_name,
                                     COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
                                     COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
                                     COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
@@ -474,7 +478,7 @@ class SQLiteDB:
                                     visits.channel
                                 FROM
                                     visits
-                                JOIN prisoners ON visits.prisoner_id = prisoners.prisoner_id
+                                JOIN prisoners_ ON visits.prisoner_id = prisoners_.prisoner_id
                                 LEFT JOIN relatives AS r1 ON visits.relative_id_1 = r1.relative_id
                                 LEFT JOIN relatives AS r2 ON visits.relative_id_2 = r2.relative_id
                                 LEFT JOIN relatives AS r3 ON visits.relative_id_3 = r3.relative_id
@@ -552,7 +556,7 @@ class SQLiteDB:
             disciplinary_values = None if disciplinary == 'ไม่มี' else disciplinary
             print(id,level,dan,type_data,status,disciplinary)
             self.cursor.execute('''UPDATE 
-                                    prisoners 
+                                    prisoners_ 
                                 SET 
                                     sex = ? ,
                                     f_name = ? ,
@@ -611,7 +615,7 @@ class SQLiteDB:
         self.connect()
         try:
             print(type(id))
-            self.cursor.execute('DELETE FROM prisoners WHERE prisoner_id = ?',(id,))
+            self.cursor.execute('DELETE FROM prisoners_ WHERE prisoner_id = ?',(id,))
             return True
         except Exception as e:
             self.msgbox(e)

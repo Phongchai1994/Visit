@@ -43,7 +43,7 @@ def save_config(file_path):
 class App_Prisoners(ctk.CTk):
     def __init__(self):
         super().__init__()
-        
+
         # ✅ โหลด path ฐานข้อมูลจาก config
         self.db_path = load_config()
         
@@ -420,6 +420,34 @@ class App_Prisoners(ctk.CTk):
 
 class SimpleLoginApp:
     def __init__(self):
+        # ตรวจสอบและบังคับเลือกฐานข้อมูลก่อนเข้าสู่ระบบ
+        self.ensure_database_selected()
+
+        # ...existing code...
+
+    def ensure_database_selected(self):
+        config_path = os.path.join(os.getcwd(), "config", "config.json")
+        db_path = ''
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    db_path = json.load(f).get('db_path', '')
+            except Exception:
+                db_path = ''
+        if not db_path or not os.path.exists(db_path):
+            messagebox.showwarning("เลือกฐานข้อมูล", "กรุณาเลือกไฟล์ฐานข้อมูลก่อนเข้าสู่ระบบ")
+            file_path = filedialog.askopenfilename(
+                title="เลือกไฟล์ฐานข้อมูล",
+                filetypes=[('SQLite Database', '*.db'), ('All Files', '*.*')]
+            )
+            if file_path:
+                os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                with open(config_path, 'w', encoding='utf-8') as f:
+                    json.dump({'db_path': file_path}, f)
+            else:
+                messagebox.showerror("ข้อผิดพลาด", "ต้องเลือกไฟล์ฐานข้อมูลก่อนใช้งาน")
+                exit()
+
         # สร้างหน้าต่างหลัก
         self.root = ctk.CTk()
         self.root.title("ระบบเข้าสู่ระบบ - โปรแกรมจองเยี่ยมญาติ")
