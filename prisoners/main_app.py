@@ -4141,6 +4141,7 @@ class MainFrame(ctk.CTkFrame):
                     today_month = datetime.today().strftime('%Y-%m')
                     check_visit = self.db.get_count_visit(psn_id,today,today_month) # index 0 count_day index 1 coutn_month
                     # print(type(check_visit[1]))
+                    
 
                     reserve_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -4374,6 +4375,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
+                                
                         elif day == 'พฤหัสบดี' and str(data[4]) == '6':
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
@@ -4739,7 +4741,9 @@ class MainFrame(ctk.CTkFrame):
 
             def reserve_future():
                 def open_next_screen(data):
+
                     print(f'data on open next screen {data}')
+
                     # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
                     psn_id = data[0]
                     psn_level = data[3]
@@ -4747,9 +4751,11 @@ class MainFrame(ctk.CTkFrame):
                     next_day_str = next_day.date().isoformat()
                     today_month = datetime.today().strftime('%Y-%m')
                     # next_day_ = (days[current_time.tm_wday])+1
-                    # print(f'next_day_ = {next_day_}')
+                    # print(f'next_day_ = {next_day_str}')
+                    name_next_day = days[current_time.tm_wday+1]
+                    # print(f'day = {name_next_day}')
 
-                    print(f'psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
+                    # print(f'open_next_screen name next day = {next_day} psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
                     check_visit = self.db.get_count_visit(psn_id,next_day_str,today_month)
 
 
@@ -4757,7 +4763,7 @@ class MainFrame(ctk.CTkFrame):
                     # print(f'ผิดวินัย = {check_disciplinary[9]}')
                     if check_disciplinary[9] == 'ผิดวินัย':
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังผิดวินัยไม่สามารถจองเยี่ยมได้'],button=False)
-                        alert.after(3000,lambda: (alert.destroy(),config_label()))
+                        alert.after(3000,lambda: (alert.destroy()))
                         return
                     if check_visit[0] > 0 :
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nมีการจองเยี่ยมผู้ต้องขังแล้ว'],button=False)
@@ -4878,7 +4884,7 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
 
-                        elif day == 'จันทร์' and str(data[4]) == '6':
+                        elif name_next_day == 'จันทร์' and str(data[4]) == '6':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4900,7 +4906,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'อังคาร' and str(data[4]) == '5':
+                        elif name_next_day == 'อังคาร' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4922,7 +4928,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พุธ' and str(data[4]) == '1':
+                        elif name_next_day == 'พุธ' and str(data[4]) == '1':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4933,7 +4939,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พุธ' and str(data[4]) in ['2','3','4','7']:
+                        elif name_next_day == 'พุธ' and str(data[4]) in ['2','3','4','7']:
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon_rounds:
@@ -4944,7 +4950,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พฤหัสบดี' and str(data[4]) == '5':
+                        elif name_next_day == 'พฤหัสบดี' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4955,7 +4961,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พฤหัสบดี' and str(data[4]) == '6':
+                        elif name_next_day == 'พฤหัสบดี' and str(data[4]) == '6':
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon_rounds:
@@ -5570,17 +5576,34 @@ class MainFrame(ctk.CTkFrame):
             # except Exception as e:
             #     messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
 
-        def get_visits():
-            # tree.grid_forget()
-            round_time = combo_round.get()
-            year = year_var.get()
-            month = month_dict[month_var.get()]
-            day = day_var.get()
-            round_date = f"{year}-{month}-{day}"
-            print(f'round_date = {round_date} and round_time = {round_time}')
-            data = [round_date, round_time]
-            result = self.db.get_visits_on_db(data)
-            print(f'data on get visits = {result}')
+        def get_visits(keyword = None):
+            if keyword is None:
+                print(f'Searching for visits with keyword: {keyword}')
+                # tree.grid_forget()
+                round_time = combo_round.get()
+                year = year_var.get()
+                month = month_dict[month_var.get()]
+                day = day_var.get()
+                round_date = f"{year}-{month}-{day}"
+                # print(f'round_date = {round_date} and round_time = {round_time}')
+                data = [round_date, round_time]
+                result = self.db.get_visits_on_db(data)
+                # print(f'data on get visits = {result}')
+            else:
+                print(f'Searching for visits with keyword: {keyword}')
+                # เพิ่มโค้ดค้นหาด้วย keyword
+                # round_time = combo_round.get()
+                # year = year_var.get()
+                # month = month_dict[month_var.get()]
+                # day = day_var.get()
+                # round_date = f"{year}-{month}-{day}"
+                data = [round_date, round_time]
+                all_results = self.db.get_visits_on_db(data)
+                # กรองข้อมูลด้วย keyword (ค้นหาชื่อผู้ต้องขัง)
+                if all_results and isinstance(all_results, (list, tuple)):
+                    result = [row for row in all_results if keyword.lower() in str(row[4]).lower()]
+                else:
+                    result = []
             for row in tree.get_children():
                 tree.delete(row)
             
@@ -5929,7 +5952,8 @@ class MainFrame(ctk.CTkFrame):
         filter_frame.grid_columnconfigure(3, weight=0)
         filter_frame.grid_columnconfigure(4, weight=0)
         filter_frame.grid_columnconfigure(5, weight=0)
-        filter_frame.grid_columnconfigure(6, weight=1)
+        filter_frame.grid_columnconfigure(6, weight=0)
+        filter_frame.grid_columnconfigure(7, weight=1)
 
         current_year = datetime.now().year
         years = [str(current_year - 1), str(current_year), str(current_year + 1)]
@@ -5960,6 +5984,8 @@ class MainFrame(ctk.CTkFrame):
         combo_round.grid(row=0, column=5, sticky='ew', padx=20, pady=20)
         button = ctk.CTkButton(filter_frame, text='ค้นหา', font=('TH SarabunPSK', 18), command=lambda:get_visits(), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12)
         button.grid(row=0, column=6, sticky='w', padx=(10, 10), pady=20)
+        search_name = ctk.CTkEntry(filter_frame, placeholder_text='ค้นหาชื่อผู้ต้องขัง', font=('TH SarabunPSK', 18), width=200, fg_color='#ffffff', border_color='#b3d1ff')
+        search_name.grid(row=0, column=7, sticky='ew', padx=(10, 10), pady=20)
 
         # Table Frame
         table_frame = ctk.CTkFrame(self.popup_report_visits, fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed")
@@ -6048,6 +6074,7 @@ class MainFrame(ctk.CTkFrame):
             'relation_id_5' : 0.11,
             'channel':0.06
         }
+        search_name.bind('<Return>', lambda e: get_visits(search_name.get()))
         tree_container.bind('<Configure>',lambda e: resize_tree_column())
         tree.bind('<Button-3>',on_right_click)
         popup_window_right_click = None
