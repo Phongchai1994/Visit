@@ -1,6 +1,7 @@
 from datetime import datetime,timedelta
 import time as t
 import sqlite3
+from prisoners.main_app import CALCULATE_NEXT_DAY
 
 db_path = "Z:/db/visit_report.db"
 conn = sqlite3.connect(db_path)
@@ -23,4 +24,10 @@ def cal_time():
     weekday_thai = thai_days[next_day_obj.weekday()]
     return f"{weekday_thai}"
 
-print(cal_time())
+
+cal_next_day = CALCULATE_NEXT_DAY()
+next_day = cal_next_day.get_next_day()
+print(type(next_day))
+if isinstance(next_day,datetime):
+    next_day = next_day.strftime("%Y-%m-%d")
+print(type(next_day))

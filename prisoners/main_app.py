@@ -4770,24 +4770,17 @@ class MainFrame(ctk.CTkFrame):
                 def open_next_screen(data):
 
                     print(f'data on open next screen {data}')
+                    print(f'next_day = {next_day}')
+                    print(f'weekday = {weekday}')
 
                     # ตรวจสอบว่าวันนี้ได้เยี่ยมแล้วหรือยัง psn_id คือ prisoner_id
                     psn_id = data[0]
                     psn_level = data[3]
-                    next_day = datetime.today() + timedelta(days=1)
-                    next_day_str = next_day.date().isoformat()
                     today_month = datetime.today().strftime('%Y-%m')
-                    # next_day_ = (days[current_time.tm_wday])+1
-                    # print(f'next_day_ = {next_day_str}')
-                    name_next_day = days[current_time.tm_wday+1]
-                    # print(f'day = {name_next_day}')
-
-
-                    # print(f'open_next_screen name next day = {next_day} psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
-                    check_visit = self.db.get_count_visit(psn_id,next_day_str,today_month)
-
+                    check_visit = self.db.get_count_visit(psn_id,next_day,today_month)
 
                     check_disciplinary = self.db.get_data_one(psn_id)
+
                     # print(f'ผิดวินัย = {check_disciplinary[9]}')
                     if check_disciplinary[9] == 'ผิดวินัย':
                         alert = ALERT(popup_reserve_to_visit,['กรุณาตรวจสอบข้อมูล\nผู้ต้องขังผิดวินัยไม่สามารถจองเยี่ยมได้'],button=False)
@@ -4872,10 +4865,8 @@ class MainFrame(ctk.CTkFrame):
                         config_label()
 
                     def select_round():
-                        morning = MORING_ROUNDS()
-                        afternoon = AFTERNOON_ROUNDS()
                         for widget in frame_select_round.winfo_children():
-                            widget.destroy()
+                            widget.destroy()  
 
                         frame_follower_visit.pack_forget()
                         frame_select_round.pack(fill='both', expand=True)
@@ -4912,7 +4903,7 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
 
-                        elif name_next_day == 'จันทร์' and str(data[4]) == '6':
+                        elif str(weekday) == 'จันทร์' and str(data[4]) == '6':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4934,7 +4925,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif name_next_day == 'อังคาร' and str(data[4]) == '5':
+                        elif str(weekday) == 'อังคาร' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4956,7 +4947,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif name_next_day == 'พุธ' and str(data[4]) == '1':
+                        elif str(weekday) == 'พุธ' and str(data[4]) == '1':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4967,7 +4958,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif name_next_day == 'พุธ' and str(data[4]) in ['2','3','4','7']:
+                        elif str(weekday) == 'พุธ' and str(data[4]) in ['2','3','4','7']:
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon_rounds:
@@ -4978,7 +4969,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif name_next_day == 'พฤหัสบดี' and str(data[4]) == '5':
+                        elif str(weekday) == 'พฤหัสบดี' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -4989,7 +4980,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif name_next_day == 'พฤหัสบดี' and str(data[4]) == '6':
+                        elif str(weekday) == 'พฤหัสบดี' and str(data[4]) == '6':
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon_rounds:
@@ -5052,7 +5043,8 @@ class MainFrame(ctk.CTkFrame):
                         # date time จากการเลือกรอบเยี่ยม
                         round_time = round_visit_var.get()
                         round_time_strtime = (datetime.strptime(round_time, "%H:%M:%S")).strftime("%H:%M:%S")
-                        count_visit = self.db.get_count_visit_on_round(round_time, next_day.date().isoformat())
+                        count_visit = self.db.get_count_visit_on_round(round_time, next_day)
+                        channel = int(count_visit) + 1
                         
                         print(f'count_visit = {count_visit}')
 
@@ -5083,7 +5075,7 @@ class MainFrame(ctk.CTkFrame):
                             ctk.CTkLabel(frame_follower_visit, text='ไม่มีผู้ติดตาม', font=('TH SarabunPSK', 28, 'bold')).pack(pady=10)
                         submit = ctk.CTkButton(frame_follower_visit,
                                             text='ถัดไป',
-                                            command=lambda: confirm_visit(round_time_strtime, next_day.date().isoformat()),
+                                            command=lambda: confirm_visit(round_time_strtime, next_day,channel),
                                             font=('TH SarabunPSK', 24, 'bold'),
                                             height=100
                                             )
@@ -5097,20 +5089,20 @@ class MainFrame(ctk.CTkFrame):
                         cancel.pack(side='bottom', pady=10)
                         submit.pack(side='bottom', pady=10)
 
-                    def confirm_visit(round_time_strtime, reserve_date):
+                    def confirm_visit(round_time_strtime, reserve_date,channel):
                         for widget in frame_confirm_visit.winfo_children():
                             widget.destroy()
-
+                        
                         frame_follower_visit.pack_forget()
                         frame_confirm_visit.pack(fill='both', expand=True)
                         ctk.CTkLabel(frame_confirm_visit, text='กรุณาตรวจสอบข้อมูลให้ถูกต้อง', font=('TH SarabunPSK', 24, 'bold')).pack(pady=20)
                         select_fl_id = [rid for rid, var in follower_vars if var.get()]
                         prepare_data = [reserve_date, round_time_strtime, prisoner_id, nationnal_id]
                         print(select_fl_id,prepare_data)
-
+                        print(f'check visit = {check_visit}')
                         ctk.CTkLabel(
                             frame_confirm_visit,
-                            text=f'จองเยี่ยม (จองเยี่ยมล่วงหน้า)\n{data[1]} {data[2]}\nวันที่ {next_day_str} เวลา {round_visit_var.get()} น.\nโดย {relative_name}\nผู้ติดตาม', font=('TH SarabunPSK', 28)).pack(pady=5)
+                            text=f'จองเยี่ยม (จองเยี่ยมล่วงหน้า)\n{data[1]} {data[2]}\n{date_thai}\nเวลา {round_visit_var.get()} น.\nช่องที่ {channel}\nโดย {relative_name}\nผู้ติดตาม', font=('TH SarabunPSK', 28)).pack(pady=5)
                         for index, row in enumerate(select_fl_id):
                             prepare_data.append(row)
                             ctk.CTkLabel(frame_confirm_visit, text=f'คนที่ {index + 1} {relative_dict.get(row)}', font=('TH SarabunPSK', 28)).pack(pady=5)
@@ -5126,7 +5118,7 @@ class MainFrame(ctk.CTkFrame):
                         
                         submit = ctk.CTkButton(frame_confirm_visit,
                                             text='ยืนยันการจองเยี่ยม',
-                                            command=lambda: insert_reserve_visit_to_db(prepare_data),
+                                            command=lambda: insert_reserve_visit_to_db(prepare_data,channel),
                                             font=('TH SarabunPSK', 24, 'bold'),
                                             height=100
                                             )
@@ -5154,38 +5146,48 @@ class MainFrame(ctk.CTkFrame):
                             follower_vars.clear()
                             select_follower()
 
-                    def insert_reserve_visit_to_db(prepare_data):
+                    def insert_reserve_visit_to_db(prepare_data,channel):
                         print(prepare_data)
                         if len(prepare_data) == 8:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5) VALUES (?,?,?,?,?,?,?,?)"
                             result = self.db.add_visits(query, prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 7:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4) VALUES (?,?,?,?,?,?,?)"
                             result = self.db.add_visits(query, prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 6:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3) VALUES (?,?,?,?,?,?)"
                             result = self.db.add_visits(query, prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 5:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2) VALUES (?,?,?,?)"
                             result = self.db.add_visits(query, prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                         elif len(prepare_data) == 4:
                             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1) VALUES (?,?,?,?)"
                             result = self.db.add_visits(query, prepare_data)
                             if result:
-                                insert_succress()
-                                return
+                                result = self.db.add_channel_on_visits(prepare_data[:4],channel)
+                                if result:
+                                    insert_succress()
+                                    return
                     def insert_succress():
                         alert = ALERT(next_screen, ['จองเยี่ยมสำเร็จ'], button=True)
                         result = alert.show()
@@ -5215,9 +5217,14 @@ class MainFrame(ctk.CTkFrame):
                         future_tree.column(col,width=int(total_width * ratio),anchor='w')
 
                 today = datetime.today()
-                next_day = today + timedelta(days=1)
-                print(f'วันนี้ {today.strftime("%Y-%m-%d")}\nวันถัดไป {next_day.strftime("%Y-%m-%d")}')
-                print('จองเยี่ยมล่วงหน้า')# สร้าง tree ใหม่สำหรับจองล่วงหน้า
+                # next_day = today + timedelta(days=1)
+                # print(f'วันนี้ {today.strftime("%Y-%m-%d")}\nวันถัดไป {next_day.strftime("%Y-%m-%d")}')
+                # print('จองเยี่ยมล่วงหน้า')# สร้าง tree ใหม่สำหรับจองล่วงหน้า
+
+                cal_next_day = CALCULATE_NEXT_DAY()
+                next_day = cal_next_day.get_next_day()
+                dt = datetime.strptime(next_day, '%Y-%m-%d')
+
 
                 # Ensure previous widgets are hidden to avoid overlap
                 relative_label.grid_forget()
@@ -5235,10 +5242,10 @@ class MainFrame(ctk.CTkFrame):
                     "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
                     "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
                 ]
-                weekday = thai_days[next_day.weekday()]
-                month = thai_months[next_day.month - 1]
-                year_th = next_day.year + 543
-                date_thai = f"วัน{weekday} ที่ {next_day.day} {month} {year_th}"
+                weekday = thai_days[dt.weekday()]
+                month = thai_months[dt.month - 1]
+                year_th = dt.year + 543
+                date_thai = f"วัน{weekday} ที่ {dt.day} {month} {year_th}"
 
                 content_reserve = ctk.CTkLabel(
                     reserve_header_frame,
@@ -5326,7 +5333,7 @@ class MainFrame(ctk.CTkFrame):
                     'relation': 0.17,
                 }
                 allowed_dan_by_dan={
-                    "เสาร์" : [],
+                    "อาทิตย์" : [],
                     "จันทร์" : ['6','รจช'],
                     "อังคาร" : ['5','รจช'],
                     "พุธ" : ['1','2','3','4','7','รจช'],
@@ -5336,7 +5343,7 @@ class MainFrame(ctk.CTkFrame):
                 }
                 # print(days)
                 try:
-                    allowed_dan = allowed_dan_by_dan.get(days[current_time.tm_wday+1], [])
+                    allowed_dan = allowed_dan_by_dan.get(weekday)
                 except Exception as e:
                     print(f'เกิดข้อผิดพลาด {e}')
                 
@@ -5358,6 +5365,7 @@ class MainFrame(ctk.CTkFrame):
                     future_tree.insert('', 'end', values=row)
 
                 if len(future_tree.get_children()) == 0:
+                    print(weekday,type(weekday))
                     alert = ALERT(popup_reserve_to_visit, ['ไม่มีข้อมูลผู้ต้องขัง\nที่สามารถจองล่วงหน้าได้'], button=True)
                     national_id_entry.delete(0, 'end')
                 else:

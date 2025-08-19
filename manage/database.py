@@ -371,8 +371,6 @@ class SQLiteDB:
     # เพิ่มข้อมูลการเยี่ยมลงตาราง visit
     @require_valid_key
     def add_visits(self,query,data):
-        # print(f'{query},',data)
-        self.decode_db()
         self.connect()
         try:
             self.cursor.execute(query,data)
@@ -384,7 +382,7 @@ class SQLiteDB:
         finally:
             self.close()
             self.encode_db()
-
+    
     # เพิ่มช่องเยี่ยม
     @require_valid_key
     def add_channel_on_visits(self,data,channel):
