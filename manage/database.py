@@ -5,6 +5,9 @@ from tkinter import messagebox
 import json
 from pathlib import Path
 import tempfile
+from datetime import datetime
+TODAYS = datetime.today()
+TODAYS_STR = TODAYS.strftime("%Y-%m-%d")
 
 
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
@@ -393,6 +396,44 @@ class SQLiteDB:
                                 WHERE date_visit = ? AND time_visit = ? AND prisoner_id = ? AND relative_id_1 = ?
                                 ''', (channel, data[0], data[1], data[2], data[3]))
             return True
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    # รายงานการเยี่ยมประจำวัน ค้นหาทั้งหมด
+    @require_valid_key
+    def get_visits_all_on_db(self):
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                SELECT
+                                    visits.visit_id,
+                                    visits.time_stamp,
+                                    visits.date_visit,
+                                    visits.time_visit,
+                                    prisoners_.f_name || " " || prisoners_.l_name AS prisoner_name,
+                                    COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
+                                    COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
+                                    COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
+                                    COALESCE(r4.title || " " || r4.f_name || " " || r4.l_name, '-') AS relative_4,
+                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5,
+                                    visits.channel
+                                FROM
+                                    visits
+                                JOIN prisoners_ ON visits.prisoner_id = prisoners_.prisoner_id
+                                LEFT JOIN relatives AS r1 ON visits.relative_id_1 = r1.relative_id
+                                LEFT JOIN relatives AS r2 ON visits.relative_id_2 = r2.relative_id
+                                LEFT JOIN relatives AS r3 ON visits.relative_id_3 = r3.relative_id
+                                LEFT JOIN relatives AS r4 ON visits.relative_id_4 = r4.relative_id
+                                LEFT JOIN relatives AS r5 ON visits.relative_id_5 = r5.relative_id
+                                WHERE 
+                                    visits.date_visit = ?''',
+                                    (TODAYS_STR,)
+                                )
+            result = self.cursor.fetchall()
+            return result
         except Exception as e:
             self.msgbox(e)
             return False

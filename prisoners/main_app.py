@@ -23,6 +23,8 @@ import os
 import tempfile
 import time
 
+import difflib
+
 pdfmetrics.registerFont(TTFont("TH SarabunPSK", "THSarabun.ttf"))
 
 class MORING_ROUNDS:
@@ -3281,6 +3283,7 @@ class MainFrame(ctk.CTkFrame):
                 button_reserve_now.grid_forget()
                 button_reserve_future.grid_forget()
                 button_cancel.grid_forget()
+                name_next_day = days[current_time.tm_wday+1]
 
                 def open_next_screen(data):
                     print(f'data on open next screen {data}')
@@ -3418,7 +3421,7 @@ class MainFrame(ctk.CTkFrame):
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
 
-                        elif day == 'จันทร์' and str(data[4]) == '6':
+                        elif name_next_day == 'จันทร์' and str(data[4]) == '6':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -3440,7 +3443,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'อังคาร' and str(data[4]) == '5':
+                        elif name_next_day == 'อังคาร' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -3462,7 +3465,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พุธ' and str(data[4]) == '1':
+                        elif name_next_day == 'พุธ' and str(data[4]) == '1':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -3473,7 +3476,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พุธ' and str(data[4]) in ['2','3','4','7']:
+                        elif name_next_day == 'พุธ' and str(data[4]) in ['2','3','4','7']:
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon_rounds:
@@ -3484,7 +3487,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พฤหัสบดี' and str(data[4]) == '5':
+                        elif name_next_day == 'พฤหัสบดี' and str(data[4]) == '5':
                             # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                             ctk.CTkLabel(frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in morning_rounds:
@@ -3495,7 +3498,7 @@ class MainFrame(ctk.CTkFrame):
                                     value=start,
                                     font=('TH SarabunPSK', 32, 'bold')
                                 ).pack(pady=5)
-                        elif day == 'พฤหัสบดี' and str(data[4]) == '6':
+                        elif name_next_day == 'พฤหัสบดี' and str(data[4]) == '6':
                             # 🔹 รอบบ่าย
                             ctk.CTkLabel(frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 32, 'bold')).pack(pady=10)
                             for text, start in afternoon_rounds:
@@ -3541,7 +3544,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel = ctk.CTkButton(
                             frame_select_round,
                             text='ยกเลิก',
-                            command=lambda:reserve_future_next_screen_on_close(),
+                            command=lambda:(reserve_future_next_screen_on_close()),
                             font=('TH SarabunPSK', 24, 'bold'),
                             height=40,
                             fg_color='red'
@@ -5577,6 +5580,7 @@ class MainFrame(ctk.CTkFrame):
             #     messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
 
         def get_visits(keyword = None):
+            result = []
             if keyword is None:
                 print(f'Searching for visits with keyword: {keyword}')
                 # tree.grid_forget()
@@ -5591,19 +5595,25 @@ class MainFrame(ctk.CTkFrame):
                 # print(f'data on get visits = {result}')
             else:
                 print(f'Searching for visits with keyword: {keyword}')
+                if keyword == '':
+                    alert = ALERT(self, ['กรุณากรอก คำค้นหา'], button=True)
+                    return
                 # เพิ่มโค้ดค้นหาด้วย keyword
-                # round_time = combo_round.get()
-                # year = year_var.get()
-                # month = month_dict[month_var.get()]
-                # day = day_var.get()
-                # round_date = f"{year}-{month}-{day}"
-                data = [round_date, round_time]
-                all_results = self.db.get_visits_on_db(data)
+
+                all_results = self.db.get_visits_all_on_db()
+
+                print(f'ค้นหาด้วย keyword = {keyword} และ all_results = {all_results}')
                 # กรองข้อมูลด้วย keyword (ค้นหาชื่อผู้ต้องขัง)
+
                 if all_results and isinstance(all_results, (list, tuple)):
-                    result = [row for row in all_results if keyword.lower() in str(row[4]).lower()]
+                    
+                    for row in all_results:
+                        name = str(row[4])
+                        if difflib.SequenceMatcher(None,keyword.lower(),name.lower()).ratio() > 0.4:
+                            result.append(row)
                 else:
                     result = []
+            
             for row in tree.get_children():
                 tree.delete(row)
             
