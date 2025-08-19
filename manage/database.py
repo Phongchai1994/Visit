@@ -863,6 +863,19 @@ class SQLiteDB:
         finally:
             self.close()
 
+    # ดึงข้อมูลวันหยุด
+    def get_holidays(self):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT date FROM holidays')
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
     def get_users(self):
         self.connect()
         users = {}

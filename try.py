@@ -1,14 +1,26 @@
-# import hashlib
-# from manage.database import SQLiteDB
-# user_password = hashlib.sha256(b'123456').digest()
-# admin_password = hashlib.sha256(b'066986').digest()
+from datetime import datetime,timedelta
+import time as t
+import sqlite3
 
-# db = SQLiteDB()
-# db.set_execute_manual('''INSERT INTO users (username ,password ,user_type ,fullname) VALUES (?,?,?,?)''', ('user', user_password, 'user', 'ผู้ใช้ทั่วไป'))
+db_path = "Z:/db/visit_report.db"
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
 
-from datetime import datetime
+cursor.execute("SELECT date FROM holidays")
+date_db = cursor.fetchall()
 
-today = datetime.today()
-date_str = today.strftime("%Y-%m-%d")
+conn.close()
 
-print(f'date format = {date_str}')
+def cal_time():
+    thai_days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์']
+    today_str = "2025-08-22"  # หรือใช้ datetime.today().strftime("%Y-%m-%d")
+    today_obj = datetime.strptime(today_str, "%Y-%m-%d")
+    next_day_obj = today_obj + timedelta(days=1)
+
+    while any(value[0] == next_day_obj.strftime("%Y-%m-%d") for value in date_db):
+        next_day_obj += timedelta(days=1)
+
+    weekday_thai = thai_days[next_day_obj.weekday()]
+    return f"{weekday_thai}"
+
+print(cal_time())

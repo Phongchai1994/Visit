@@ -27,6 +27,26 @@ import difflib
 
 pdfmetrics.registerFont(TTFont("TH SarabunPSK", "THSarabun.ttf"))
 
+class CALCULATE_NEXT_DAY:
+    def __init__(self):
+        self.db = SQLiteDB()
+        self.date_db = self.db.get_holidays()
+        self.today_str = datetime.today().strftime("%Y-%m-%d")
+        self.today_obj = datetime.strptime(self.today_str, "%Y-%m-%d")
+        self.next_day_obj = self.today_obj + timedelta(days=1)
+
+    def get_next_day(self):
+
+        while any(value[0] == self.next_day_obj.strftime("%Y-%m-%d") for value in self.date_db):
+            self.next_day_obj += timedelta(days=1)
+
+        return self.next_day_obj.strftime("%Y-%m-%d")
+    
+    def get_weekday_thai(self):
+        thai_days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์']
+        return thai_days[self.next_day_obj.weekday()]
+
+
 class MORING_ROUNDS:
     """คลาสสำหรับจัดการข้อมูลรอบเช้า"""
     def __init__(self):
@@ -3730,6 +3750,10 @@ class MainFrame(ctk.CTkFrame):
                 print(f'วันนี้ {today.strftime("%Y-%m-%d")}\nวันถัดไป {next_day.strftime("%Y-%m-%d")}')
                 print('จองเยี่ยมล่วงหน้า')# สร้าง tree ใหม่สำหรับจองล่วงหน้า
 
+                cal_day = CALCULATE_NEXT_DAY()
+                print(f'cal_day = {cal_day.get_next_day()}')
+                print(f'cal_day = {cal_day.get_weekday_thai()}')
+
                 # Ensure previous widgets are hidden to avoid overlap
                 for widget in popup_reserve_to_visit.grid_slaves():
                     if isinstance(widget, ctk.CTkLabel) and widget.cget("text").startswith("จองเยี่ยมล่วงหน้า"):
@@ -4757,6 +4781,7 @@ class MainFrame(ctk.CTkFrame):
                     # print(f'next_day_ = {next_day_str}')
                     name_next_day = days[current_time.tm_wday+1]
                     # print(f'day = {name_next_day}')
+
 
                     # print(f'open_next_screen name next day = {next_day} psn_id = {psn_id}, psn_level = {psn_level}, next_day = {next_day_str}, today_month = {today_month}')
                     check_visit = self.db.get_count_visit(psn_id,next_day_str,today_month)
