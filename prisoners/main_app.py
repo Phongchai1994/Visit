@@ -665,7 +665,6 @@ class RESERVE:
         year_th = dt.year + 543
         return f"วัน{weekday} ที่ {dt.day} {month} {year_th}"
 
-
 class CALCULATE_NEXT_DAY:
     def __init__(self):
         self.db = SQLiteDB()
@@ -3136,31 +3135,41 @@ class MainFrame(ctk.CTkFrame):
                     info = self.thai_id_reader.get_person_info()
                 except Exception as e:
                     print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
-                    messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
-                    return 
+                    messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน และเสียบบัตรประชาชน')
+                    return
                 return info['cid']
+            
             if read_card():
                 regis_fp_entry.delete(0,tk.END)
                 regis_fp_entry.insert(0,read_card())
-            if not regis_fp_entry.get():
-                messagebox.showwarning('แจ้งเตือน','กรุณากรอกข้อมูล')
+                n_id = str(regis_fp_entry.get())
+                get_data(n_id)
+
             else:
-                result = self.db.get_data_for_ralative_id(regis_fp_entry.get().strip())
-                if result:
-                    print(result[0])
-                    show_regis_id_var.set(result[0])
-                    show_regis_title.set(result[1])
-                    show_regis_entry_fname_var.set(result[2])
-                    show_regis_entry_lname_var.set(result[3])
-                    show_regis_entry_address_var.set(result[4])
-                    show_regis_entry_tel_var.set(result[5])
-                    if result[6] == None:
-                        label_fingerprint_state.configure(text = f'{emoji.emojize(':cross_mark: ไม่พบลายนิ้วมือ')}',text_color='#FE0000')
-                    else:
-                        label_fingerprint_state.configure(text = f'{emoji.emojize(':check_mark: ลงทะเบียนเรียบร้อย')}',text_color='#00CC00')
-                    show_regis_data()
+                print('ไม่พบบัตร')
+                return
+
+        def get_data_manual():
+            n_id = str(regis_fp_entry.get())
+            get_data(n_id)
+
+        def get_data(n_id):
+            result = self.db.get_data_for_ralative_id(n_id)
+            if result:
+                print(result[0])
+                show_regis_id_var.set(result[0])
+                show_regis_title.set(result[1])
+                show_regis_entry_fname_var.set(result[2])
+                show_regis_entry_lname_var.set(result[3])
+                show_regis_entry_address_var.set(result[4])
+                show_regis_entry_tel_var.set(result[5])
+                if result[6] == None:
+                    label_fingerprint_state.configure(text = f'{emoji.emojize(':cross_mark: ไม่พบลายนิ้วมือ')}',text_color='#FE0000')
                 else:
-                    messagebox.showerror('แจ้งเตือน',f'ไม่พบข้อมูลหมายเลขประจำตัว {regis_fp_entry.get()}')
+                    label_fingerprint_state.configure(text = f'{emoji.emojize(':check_mark: ลงทะเบียนเรียบร้อย')}',text_color='#00CC00')
+                show_regis_data()
+            else:
+                messagebox.showerror('แจ้งเตือน',f'ไม่พบข้อมูลหมายเลขประจำตัว {regis_fp_entry.get()}')
 
         def insert_fingerprint_to_db():
             popup_fingerprint = ctk.CTkToplevel(popup_register_fingerprint)
@@ -3297,6 +3306,7 @@ class MainFrame(ctk.CTkFrame):
         current_time = t.localtime()
         day = days[current_time.tm_wday]
         month = months[current_time.tm_mon - 1]
+        regis_fp_entry.bind('<Return>',lambda event:get_data_manual())
 
         popup_register_fingerprint.protocol("WM_DELETE_WINDOW", on_close)
 ##############################################################################################################################################################################
