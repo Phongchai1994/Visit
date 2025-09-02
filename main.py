@@ -16,6 +16,8 @@ from user_session import user_session, require_admin, require_login
 ctk.set_appearance_mode('system')
 ctk.set_default_color_theme('blue')
 
+
+
 def resource_path(relative_path):
     """ให้ path ทำงานได้ทั้งตอนรันจาก .py และ .exe"""
     try:
@@ -115,6 +117,19 @@ class App_Prisoners(ctk.CTk):
         self.bind('<F5>', lambda e: self.refresh_all_data())
         self.bind('<Control-r>', lambda e: self.refresh_all_data())
         self.bind('<Control-R>', lambda e: self.refresh_all_data())
+        self.reload_db()
+
+    def reload_db(self):
+        
+        import importlib
+        import manage.database
+        importlib.reload(manage.database)
+
+        # ✅ อัปเดตข้อมูลใน main_frame และ menu_frame
+        self.refresh_database_connection()
+        
+        # ✅ รีเฟรชข้อมูลทั้งหมด
+        self.refresh_all_data()
 
     def create_status_bar(self):
         """สร้าง Status Bar แสดงข้อมูลผู้ใช้และฐานข้อมูล"""
