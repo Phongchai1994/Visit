@@ -3256,7 +3256,8 @@ class MainFrame(ctk.CTkFrame):
                     label_on_popup_fingerprint.configure(text='บันทึกเสร็จสิ้น')
                     popup_fingerprint.after(1000, lambda: popup_fingerprint.destroy())
                     self.zkfp2.CloseDevice()
-                    # get_data_relative()
+                    print(f'id = {show_regis_id_var.get()}')
+                    get_data(show_regis_id_var.get())
                     # insert_fingerprint_to_db()
 
                 threading.Thread(target=run, daemon=True).start()
@@ -3347,6 +3348,7 @@ class MainFrame(ctk.CTkFrame):
                     popup_reserve_to_visit.unbind_all(seq)
                 except Exception:
                     pass
+
         def config_label():
             nonlocal nationnal_id, idle_bind_set
             cancel_idle_timer() # ยกเลิก timer ทุกครั้งที่กลับหน้าหลัก
@@ -3909,6 +3911,10 @@ class MainFrame(ctk.CTkFrame):
 
 
         def update_time_label():
+            nonlocal current_time, day, month
+            current_time = t.localtime()
+            day = days[current_time.tm_wday]
+            month = months[current_time.tm_mon - 1]
             text = f"วัน {day} ที่ {current_time.tm_mday} {month} {(current_time.tm_year)+543} เวลา {t.strftime('%H:%M:%S')}"
             date_label.configure(text=text)
             if popup_reserve_to_visit.winfo_exists():
@@ -4553,6 +4559,18 @@ class MainFrame(ctk.CTkFrame):
     # รายงานการเยี่ยม
 ##############################################################################################################################################################################
     def report_visits(self):
+        # helper สำหรับเรียงตาม channel
+        def _channel_key(val):
+            try:
+                return int(val)
+            except Exception:
+                return 10**9  # ค่ามากไว้ท้ายสุด
+
+        def _sort_rows_by_channel(rows):
+            try:
+                return sorted(rows, key=lambda r: _channel_key(r[11] if len(r) > 11 else None))
+            except Exception:
+                return rows
 
         def resize_tree_column():
             tree_container.update_idletasks()
@@ -4563,6 +4581,7 @@ class MainFrame(ctk.CTkFrame):
                 'date_visit': 'center', 
                 'time_visit': 'center',
                 'prisoner_id': 'w',
+                'dan': 'w',
                 'relation_id_1': 'w',
                 'relation_id_2': 'w',
                 'relation_id_3': 'w',
@@ -4572,7 +4591,7 @@ class MainFrame(ctk.CTkFrame):
             }
             
             for col, ratio in column_ratios.items():
-                anchor_type = column_anchors.get(col, 'w')  # default เป็น 'w'
+                anchor_type = column_anchors.get(col, 'center')  # default เป็น 'w'
                 tree.column(col, width=int(total_width * ratio), anchor=anchor_type)
 
         def print_table():
@@ -4597,21 +4616,22 @@ class MainFrame(ctk.CTkFrame):
                 
                 # กำหนดความกว้างแต่ละ column ตามเนื้อหา
                 col_widths = []
-                if num_columns == 10:  # จำนวน column ที่แสดง (ไม่รวม visit_id)
+                if num_columns == 11:  # จำนวน column ที่แสดง (ไม่รวม visit_id)
                     col_widths = [
                         available_width * 0.10,  # Time Stamp
                         available_width * 0.07,  # วันที่จอง
                         available_width * 0.07,  # เวลาเยี่ยม
-                        available_width * 0.12,  # ชื่อผู้ต้องขัง
-                        available_width * 0.12,  # ญาติคนที่ 1
-                        available_width * 0.12,  # ญาติคนที่ 2
-                        available_width * 0.12,  # ญาติคนที่ 3
-                        available_width * 0.12,  # ญาติคนที่ 4
+                        available_width * 0.14,  # ชื่อผู้ต้องขัง
+                        available_width * 0.035,  # แดน
+                        available_width * 0.11,  # ญาติคนที่ 1
+                        available_width * 0.11,  # ญาติคนที่ 2
+                        available_width * 0.11,  # ญาติคนที่ 3
+                        available_width * 0.11,  # ญาติคนที่ 4
                         available_width * 0.11,  # ญาติคนที่ 5
-                        available_width * 0.05,  # ช่อง
+                        available_width * 0.035,  # ช่อง
                     ]
                 else:
-                    # ถ้าจำนวน column ไม่ใช่ 10 ให้แบ่งเท่า ๆ กัน
+                    # ถ้าจำนวน column ไม่ใช่ 11 ให้แบ่งเท่า ๆ กัน
                     col_widths = [available_width / num_columns] * num_columns
                 
                 # ตำแหน่งเริ่ม
@@ -4744,7 +4764,7 @@ class MainFrame(ctk.CTkFrame):
                 # print(f'round_date = {round_date} and round_time = {round_time}')
                 data = [round_date, round_time]
                 result = self.db.get_visits_on_db(data)
-                # print(f'data on get visits = {result}')
+                print(f'data on get visits = {result}')
             else:
                 print(f'Searching for visits with keyword: {keyword}')
                 if keyword == '':
@@ -4765,6 +4785,8 @@ class MainFrame(ctk.CTkFrame):
                             result.append(row)
                 else:
                     result = []
+            # เรียงผลลัพธ์ตาม channel ก่อนใส่ลงตาราง
+            result = _sort_rows_by_channel(result)
             
             for row in tree.get_children():
                 tree.delete(row)
@@ -4803,12 +4825,24 @@ class MainFrame(ctk.CTkFrame):
                     print(f'move round {round_selected}')
                     result_count_round_visit = self.db.get_count_visit_on_round(round_selected, date_current)
                     print(f'จำนวนคนที่จองรอบ {result_count_round_visit}')
+                    channel_on_db = self.db.get_channel(date_current,round_selected)
+                    print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
+                    channel_empty = None
+                    for index,value in enumerate(channel_on_db):
+                        if index+1 != int(value):
+                            channel_empty = index+1
+                            break
+                        else:
+                            print(index+1)
+                            channel_empty = index + 2
+                    print(f'ช่องที่ว่าง = {channel_empty}')
+
                     if result_count_round_visit >=15:
                         alert = ALERT(move_round_pupup,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
                         alert.after(3000,lambda: (alert.destroy(),move_round_pupup.destroy()))
                         return
                     else:
-                        result_move_round = self.db.update_visit_round(round_selected,values[0])
+                        result_move_round = self.db.update_visit_round_and_channel(round_selected,channel_empty,values[0])
                         if result_move_round:
                             alert = ALERT(move_round_pupup,[f'ย้ายรอบของ\n{values[4]}\nรอบใหม่เวลา {round_selected}'],text_color='black',button=True)
                             if alert.show():
@@ -5159,7 +5193,7 @@ class MainFrame(ctk.CTkFrame):
         style = ttk.Style()
         style.theme_use('clam')
         style.configure('Treeview',
-            font =('TH SarabunPSK', 18),
+            font =('TH SarabunPSK', 16),
             rowheight = 38,
             background="#f8fbff",
             fieldbackground="#f8fbff",
@@ -5167,7 +5201,7 @@ class MainFrame(ctk.CTkFrame):
             borderwidth=1
         )
         style.configure('Treeview.Heading',
-            font = ('TH SarabunPSK', 20, 'bold'),
+            font = ('TH SarabunPSK', 18, 'bold'),
             background="#4f8cff",
             foreground="#ffffff",
             borderwidth=2
@@ -5183,6 +5217,7 @@ class MainFrame(ctk.CTkFrame):
                 'date_visit',
                 'time_visit',
                 'prisoner_id',
+                'dan',
                 'relation_id_1',
                 'relation_id_2',
                 'relation_id_3',
@@ -5199,6 +5234,7 @@ class MainFrame(ctk.CTkFrame):
         tree.heading('date_visit',text='วันที่จอง')
         tree.heading('time_visit',text='เวลาเยี่ยม')
         tree.heading('prisoner_id',text='ชื่อ')
+        tree.heading('dan',text='แดน')
         tree.heading('relation_id_1',text='ญาติคนที่ 1')
         tree.heading('relation_id_2',text='ญาติคนที่ 2')
         tree.heading('relation_id_3',text='ญาติคนที่ 3')
@@ -5211,6 +5247,7 @@ class MainFrame(ctk.CTkFrame):
         tree.column('date_visit', anchor='center')
         tree.column('time_visit', anchor='center')
         tree.column('prisoner_id', anchor='center')
+        tree.column('dan', anchor='center')
         tree.column('relation_id_1', anchor='center')
         tree.column('relation_id_2', anchor='center')
         tree.column('relation_id_3', anchor='center')
@@ -5222,19 +5259,31 @@ class MainFrame(ctk.CTkFrame):
         tree.configure(yscrollcommand=scrollbar.set)
         # scrollbar.grid(row=0, column=1, sticky='ns', pady=6)
         # tree.grid(row=0, column=0, sticky='new', padx=(0, 8), pady=6)
+        
+        # คลิกหัวคอลัมน์เพื่อเรียง/สลับทิศทางได้
+        def _sort_tree_by(col, reverse=False):
+            data = [(iid, tree.set(iid, col)) for iid in tree.get_children('')]
+            def key_fn(v):
+                return int(v) if str(v).isdigit() else float('inf')
+            data.sort(key=lambda t: key_fn(t[1]), reverse=reverse)
+            for idx, (iid, _) in enumerate(data):
+                tree.move(iid, '', idx)
+            tree.heading(col, command=lambda: _sort_tree_by(col, not reverse))
 
+        tree.heading('channel', command=lambda: _sort_tree_by('channel', False))
         # กำหนดความกว้าง column
         column_ratios = {
             'time_stamp' : 0.11,
-            'date_visit' : 0.08,
-            'time_visit' : 0.08,
+            'date_visit' : 0.07,
+            'time_visit' : 0.07,
             'prisoner_id' : 0.12,
+            'dan' : 0.03,
             'relation_id_1' : 0.11,
             'relation_id_2' : 0.11,
             'relation_id_3' : 0.11,
             'relation_id_4' : 0.11,
             'relation_id_5' : 0.11,
-            'channel':0.06
+            'channel':0.03
         }
         search_name.bind('<Return>', lambda e: get_visits(search_name.get()))
         tree_container.bind('<Configure>',lambda e: resize_tree_column())
@@ -5420,100 +5469,7 @@ class MainFrame(ctk.CTkFrame):
             button_print = ctk.CTkButton(table_frame, text='พิมพ์', font=('TH SarabunPSK', 20, 'bold'), fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12, command=lambda: print_table())
             button_print.grid(row=1, column=0, padx=16, pady=(8, 8))
 
-        def on_right_click(event):
-            nonlocal popup_window_right_click
-            selected = tree.identify_row(event.y)
-            if not selected:
-                return
-            values = tree.item(selected)['values']
-            print(f'values = {values}')
-            # ฟังก์ชันสำหรับเมนูคลิกขวา - เหมือน report_visits
-            def move_round():
 
-                def move_round():
-                    round_selected = time_visit.get()
-                    date_current = datetime.now().strftime("%Y-%m-%d")
-                    print(date_current)
-                    print(f'move round {round_selected}')
-                    result_count_round_visit = self.db.get_count_visit_on_round(round_selected, date_current)
-                    print(f'จำนวนคนที่จองรอบ {result_count_round_visit}')
-                    if result_count_round_visit >=15:
-                        alert = ALERT(move_round_pupup,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
-                        alert.after(3000,lambda: (alert.destroy(),move_round_pupup.destroy()))
-                        return
-                    else:
-                        result_move_round = self.db.update_visit_round(round_selected,values[0])
-                        if result_move_round:
-                            alert = ALERT(move_round_pupup,[f'ย้ายรอบของ\n{values[4]}\nรอบใหม่เวลา {round_selected}'],text_color='black',button=True)
-                            if alert.show():
-                                move_round_pupup.destroy()
-                                get_visits()
-
-                popup_window_right_click.destroy()
-                print('ย้ายรอบ')
-                print('fn move_round ********* ',type(values[3]),values[3])
-                if values[3] == '12:00:00':
-                    alert = ALERT(self,msg=['เรือนจำชั่วคราวไม่สามารถย้ายรอบได้'],button=True)
-                    return
-                move_round_pupup = ctk.CTkToplevel()
-                move_round_pupup.configure(fg_color='#f4f7fa')
-                move_round_pupup.title('ย้ายรอบเยี่ยม')
-                move_round_pupup.geometry('500x200+400+50')
-                move_round_pupup.grab_set()
-                move_round_pupup.focus()
-
-                move_round_pupup.grid_columnconfigure(0,weight=1,uniform='move_round')
-                move_round_pupup.grid_rowconfigure((0,1,2),weight=1,uniform='move_round')
-                label_content = ctk.CTkLabel(move_round_pupup,text=f'ย้ายรอบเยี่ยม\n{values[4]}',font=('TH SarabunPSK',32,'bold'),text_color='#2d3a4b')
-                label_content.grid(row = 0 , column = 0 ,sticky = 'ns')
-                time_visit = ctk.CTkOptionMenu(move_round_pupup,
-                                                values=['09:30:00','10:00:00','10:30:00','11:00:00','13:15:00','13:45:00','14:15:00'],
-                                                font=('TH SarabunPSK',18),
-                                                dropdown_font=('TH SarabunPSK',18),
-                                                fg_color='#ffffff', button_color='#4f8cff', text_color='#222')
-                time_visit.grid(row=1,column=0,sticky='ns',padx = 40,pady = 20)
-                button = ctk.CTkButton(move_round_pupup,text='ยืนยัน',width=140,font=('TH SarabunPSK',18),
-                    fg_color='#4f8cff', hover_color='#2d3a4b', text_color='#ffffff',
-                    command=lambda: move_round())
-                button.grid(row = 2,column = 0 ,sticky = 'ns',padx = 20,pady = 20)
-
-            def remove_round():
-                popup_window_right_click.destroy()
-                print('ยกเลิกรอบ')
-                result_remove = self.db.remove_visit(values[0])
-                if result_remove:
-                    alert = ALERT(self,[f'ยกเลิกรอบเยี่ยมของ\n{values[4]}\nสำเร็จ'],text_color='black',button=True)
-                    if alert.show():
-                        get_visits()
-                else:
-                    alert = ALERT(self,['ไม่สามารถยกเลิกรอบเยี่ยมได้'],text_color='red',button=True)
-
-            nonlocal popup_window_right_click
-            try:
-                popup_window_right_click.destroy()
-            except:
-                pass
-
-            # เลือกแถวในตาราง tree
-            selected = tree.identify_row(event.y)
-            if not selected:
-                return
-            
-            tree.selection_set(selected)
-            values = tree.item(selected)['values']
-            
-            popup_window_right_click = ctk.CTkToplevel()
-            popup_window_right_click.configure(fg_color='#f4f7fa')
-            popup_window_right_click.overrideredirect(True)
-            popup_window_right_click.geometry(f'+{event.x_root}+{event.y_root}')
-            popup_window_right_click.configure(fg_color = '#f8fbff', border_width=2, border_color='#4f8cff')
-            # ปรับปุ่มเมนูคลิกขวาให้ดูทันสมัย
-            btn_style = {'font':('TH SarabunPSK',18,'bold'), 'width':160, 'corner_radius':10, 'height':36}
-            ctk.CTkButton(popup_window_right_click, text='ย้ายรอบ', fg_color="#f1c40f", hover_color="#f39c12", text_color="#2d3a4b", command=move_round, **btn_style).pack(padx=10, pady=(10,5))
-            ctk.CTkButton(popup_window_right_click, text='ยกเลิกรอบ', fg_color='#e74c3c', hover_color='#c0392b', text_color="#fff", command=remove_round, **btn_style).pack(padx=10, pady=(10,5))
-            popup_window_right_click.after(100, lambda: popup_window_right_click.focus_force())
-            popup_window_right_click.bind('<FocusOut>', lambda e: popup_window_right_click.destroy())
-        
         # Modern card-style background
         self.popup_report_visit_on_month.configure(fg_color="#f4f7fa")
         self.popup_report_visit_on_month.grid_columnconfigure(0, weight=1)

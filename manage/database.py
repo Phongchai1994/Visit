@@ -452,6 +452,7 @@ class SQLiteDB:
                                     visits.date_visit,
                                     visits.time_visit,
                                     prisoners_.f_name || " " || prisoners_.l_name AS prisoner_name,
+                                    prisoners_.dan,
                                     COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
                                     COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
                                     COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
@@ -678,11 +679,10 @@ class SQLiteDB:
             
     # ย้ายรอบเยี่ยม
     @require_valid_key
-    def update_visit_round(self,new_round,visit_id):
-        self.decode_db()
+    def update_visit_round_and_channel(self,new_round,new_channel,visit_id):
         self.connect()
         try:
-            self.cursor.execute('UPDATE visits SET time_visit = ? WHERE visit_id = ?',(new_round,visit_id))
+            self.cursor.execute('UPDATE visits SET time_visit = ?, channel = ? WHERE visit_id = ?',(new_round,new_channel,visit_id))
             return True
         except Exception as e:
             self.msgbox(e)
@@ -840,6 +840,33 @@ class SQLiteDB:
         try:
             self.cursor.execute('SELECT relation FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id))
             return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    @require_valid_key
+    def get_channel(self,date,round_time):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT channel FROM visits WHERE date_visit = ? AND time_visit = ?',(date,round_time))
+            data = [row[0] for row in self.cursor.fetchall() if row[0] is not None]
+            return data
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    @require_valid_key
+    def update_channel(self,channel,visit_id):
+        self.connect()
+        try:
+            self.cursor.execute('UPDATE visits SET channel = ? WHERE visit_id = ?',(channel,visit_id))
+            return True
         except Exception as e:
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')

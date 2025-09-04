@@ -1,9 +1,11 @@
 # GUI และ Interface
 customtkinter>=5.2.0
-tkinter  # Built-in with Python
+# NOTE: tkinter is bundled with Python (via Tcl/Tk). Do NOT install via pip.
+# tkinter
 
 # ฐานข้อมูล
-sqlite3  # Built-in with Python
+# NOTE: sqlite3 module is part of the Python standard library. Do NOT install via pip.
+# sqlite3
 
 # การเข้ารหัส
 cryptography>=41.0.0
