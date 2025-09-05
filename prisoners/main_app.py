@@ -492,12 +492,28 @@ class RESERVE:
             widget.destroy()
         self.frame_select_round.pack_forget()
         self.frame_confirm_visit.pack_forget()
+        date_current = datetime.now().strftime("%Y-%m-%d")
+
 
         # date time จากการเลือกรอบเยี่ยม
         round_time = self.round_visit_var.get()
         round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
         count_visit = self.db.get_count_visit_on_round(round_time,self.today)
-        channel = int(count_visit) + 1
+        channel_on_db = self.db.get_channel(date_current,round_time_strtime)
+        print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
+        sorted_channel_on_db = sorted(channel_on_db)
+        channel = None
+
+        for index,value in enumerate(sorted_channel_on_db):
+            print(index,value)
+            if index+1 != int(value):
+                channel = index + 1
+                print(f'channel ช่องว่าง = {channel}')
+                break
+            elif index == len(sorted_channel_on_db) - 1:
+                channel = index + 2
+                print(f'channel ตัวสุดท้าย = {channel}')
+        print(f'ค่าที่เติม = {channel}')
         
         if count_visit > 14:
             count_alert = ALERT(self.next_screen,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
@@ -4827,15 +4843,19 @@ class MainFrame(ctk.CTkFrame):
                     print(f'จำนวนคนที่จองรอบ {result_count_round_visit}')
                     channel_on_db = self.db.get_channel(date_current,round_selected)
                     print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
+                    sorted_channel_on_db = sorted(channel_on_db)
                     channel_empty = None
-                    for index,value in enumerate(channel_on_db):
+
+                    for index,value in enumerate(sorted_channel_on_db):
+                        print(index,value)
                         if index+1 != int(value):
-                            channel_empty = index+1
+                            channel_empty = index + 1
+                            print(f'channel ช่องว่าง = {channel_empty}')
                             break
-                        else:
-                            print(index+1)
+                        elif index == len(sorted_channel_on_db) - 1:
                             channel_empty = index + 2
-                    print(f'ช่องที่ว่าง = {channel_empty}')
+                            print(f'channel ตัวสุดท้าย = {channel_empty}')
+                    print(f'ค่าที่เติม = {channel_empty}')
 
                     if result_count_round_visit >=15:
                         alert = ALERT(move_round_pupup,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
