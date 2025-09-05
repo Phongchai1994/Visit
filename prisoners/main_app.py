@@ -502,7 +502,7 @@ class RESERVE:
         channel_on_db = self.db.get_channel(date_current,round_time_strtime)
         print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
         sorted_channel_on_db = sorted(channel_on_db)
-        channel = None
+        channel = 1
 
         for index,value in enumerate(sorted_channel_on_db):
             print(index,value)
@@ -4844,10 +4844,10 @@ class MainFrame(ctk.CTkFrame):
                     channel_on_db = self.db.get_channel(date_current,round_selected)
                     print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
                     sorted_channel_on_db = sorted(channel_on_db)
-                    channel_empty = None
+                    channel_empty = 1
 
                     for index,value in enumerate(sorted_channel_on_db):
-                        print(index,value)
+                        print(f'index,value {index}{value}')
                         if index+1 != int(value):
                             channel_empty = index + 1
                             print(f'channel ช่องว่าง = {channel_empty}')
@@ -4856,7 +4856,6 @@ class MainFrame(ctk.CTkFrame):
                             channel_empty = index + 2
                             print(f'channel ตัวสุดท้าย = {channel_empty}')
                     print(f'ค่าที่เติม = {channel_empty}')
-
                     if result_count_round_visit >=15:
                         alert = ALERT(move_round_pupup,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
                         alert.after(3000,lambda: (alert.destroy(),move_round_pupup.destroy()))
