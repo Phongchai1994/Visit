@@ -499,7 +499,7 @@ class RESERVE:
         round_time = self.round_visit_var.get()
         round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
         count_visit = self.db.get_count_visit_on_round(round_time,self.today)
-        channel_on_db = self.db.get_channel(date_current,round_time_strtime)
+        channel_on_db = self.db.get_channel(self.today,round_time_strtime)
         print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
         sorted_channel_on_db = sorted(channel_on_db)
         channel = 1
