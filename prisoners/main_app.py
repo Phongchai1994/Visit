@@ -588,9 +588,14 @@ class RESERVE:
             self.select_follower()
             alert = ALERT(self.frame_follower_visit,msg=['เลือกผู้ติดตามได้ไม่เกิน 4 คน','กรุณาเลือกใหม่'])
         
+        def on_confirm():
+            # ซ่อนปุ่มเพื่อป้องกันการกดซ้ำ แล้วค่อยบันทึกข้อมูล
+            submit.grid_forget()
+            self.insert_reserve_visit_to_db(prepare_data,channel)
+
         submit = ctk.CTkButton(self.frame_confirm_visit,
                             text='ยืนยันการจองเยี่ยม',
-                            command=lambda:self.insert_reserve_visit_to_db(prepare_data,channel),
+                            command=on_confirm,
                             font=('TH SarabunPSK',32,'bold'),
                             height=100
                             )
