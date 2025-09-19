@@ -316,6 +316,21 @@ class RESERVE:
                         value=start,
                         font=('TH SarabunPSK', 35, 'bold')
                     ).pack(pady=5)
+            elif self.thai_day == 'ศุกร์' and str(self.dan) == '1' and self.type == 'ผู้ต้องกักขัง':
+                # 🔹 ให้เฉพาะรอบ 4
+                rounds = [
+                    ('เวลา 11.00 - 11.15', '11:00:00', '10:45:00')
+                ]
+                for text, start, close in rounds:
+                    close_time = datetime.strptime(close, "%H:%M:%S").time()
+                    if now < close_time:
+                        ctk.CTkRadioButton(
+                            self.frame_select_round,
+                            text=text,
+                            variable=self.round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 35, 'bold')
+                        ).pack(pady=5)
             elif self.thai_day == 'ศุกร์' and str(self.dan) in ['2','3','4','7'] and self.type != 'ผู้ต้องกักขัง':                    
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
@@ -327,6 +342,21 @@ class RESERVE:
                         value=start,
                         font=('TH SarabunPSK', 35, 'bold')
                     ).pack(pady=5)
+            elif self.thai_day == 'ศุกร์' and str(self.dan) in ['4','7'] and self.type == 'ผู้ต้องกักขัง':
+                #  🔹 รอบบ่าย ให้เฉพาะรอบ 7
+                rounds = [
+                    ('เวลา 14.15 - 14.30', '14:15:00', '13:15:00')
+                ]
+                for text, start, close in rounds:
+                    close_time = datetime.strptime(close, "%H:%M:%S").time()
+                    if now < close_time:
+                        ctk.CTkRadioButton(
+                            self.frame_select_round,
+                            text=text,
+                            variable=self.round_visit_var,
+                            value=start,
+                            font=('TH SarabunPSK', 35, 'bold')
+                        ).pack(pady=5)
         else:
             morning_rounds = [
                 ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00'),
