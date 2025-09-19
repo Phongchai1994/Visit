@@ -3609,15 +3609,15 @@ class MainFrame(ctk.CTkFrame):
                 style = ttk.Style()
                 style.theme_use('clam')
                 style.configure('Treeview',
-                    font =('TH SarabunPSK', 20),
-                    rowheight = 38,
+                    font =('TH SarabunPSK', 30),
+                    rowheight = 50,
                     background="#f8fbff",
                     fieldbackground="#f8fbff",
                     bordercolor="#3a7ca5",
                     borderwidth=1
                 )
                 style.configure('Treeview.Heading',
-                    font = ('TH SarabunPSK', 22, 'bold'),
+                    font = ('TH SarabunPSK', 30, 'bold'),
                     background="#3a7ca5",
                     foreground="#ffffff",
                     borderwidth=2
@@ -3628,7 +3628,7 @@ class MainFrame(ctk.CTkFrame):
                     tree_container,
                     columns=('prisoner_id','f_name','l_name','level','dan','relation'),
                     show='headings',
-                    height=10,
+                    height=18,
                     style='Treeview'
                 )
                 tree.heading('prisoner_id',text='รหัสประจำตัว')
@@ -3844,15 +3844,15 @@ class MainFrame(ctk.CTkFrame):
                 style = ttk.Style()
                 style.theme_use('clam')
                 style.configure('Treeview',
-                    font =('TH SarabunPSK', 20),
-                    rowheight = 38,
+                    font =('TH SarabunPSK', 30),
+                    rowheight = 50,
                     background="#f8fbff",
                     fieldbackground="#f8fbff",
                     bordercolor="#3a7ca5",
                     borderwidth=1
                 )
                 style.configure('Treeview.Heading',
-                    font = ('TH SarabunPSK', 22, 'bold'),
+                    font = ('TH SarabunPSK', 30, 'bold'),
                     background="#3a7ca5",
                     foreground="#ffffff",
                     borderwidth=2
@@ -3863,7 +3863,7 @@ class MainFrame(ctk.CTkFrame):
                     future_tree_container,
                     columns=('prisoner_id','f_name','l_name','level','dan','relation'),
                     show='headings',
-                    height=10,
+                    height=18,
                     style='Treeview'
                 )
                 future_tree.heading('prisoner_id',text='รหัสประจำตัว')
