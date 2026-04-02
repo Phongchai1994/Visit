@@ -33,11 +33,7 @@ class MenuFrame(ctk.CTkFrame):
         title_frame.grid(row=0, column=0, sticky='ew', padx=32, pady=(24, 12))
         title_frame.grid_columnconfigure(0, weight=1)
         
-        ctk.CTkLabel(title_frame,
-            text='เมนูจัดการข้อมูลผู้ต้องขัง',
-            font=('TH SarabunPSK', 24, 'bold'),
-            text_color='#2d3a4b'
-        ).pack()
+
 
         def modern_button(parent, text, command, icon=None):
             return ctk.CTkButton(
@@ -57,61 +53,97 @@ class MenuFrame(ctk.CTkFrame):
         button_container = ctk.CTkFrame(card, fg_color='transparent')
         button_container.grid(row=1, column=0, sticky='nsew', padx=32, pady=20)
         button_container.grid_columnconfigure(0, weight=1)
+        
+        if user_session.is_admin():  
+            ctk.CTkLabel(title_frame,
+                text='เมนูจัดการข้อมูลผู้ต้องขัง',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack()
+            # Prisoner management section
+            prisoner_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            prisoner_section.pack(fill='x', pady=(0, 20))
 
-        # Prisoner management section
-        prisoner_section = ctk.CTkFrame(button_container, fg_color='transparent')
-        prisoner_section.pack(fill='x', pady=(0, 20))
-        
-        modern_button(prisoner_section, 'ลงทะเบียนผู้ต้องขัง', lambda: self.main_frame.show_page('ลงทะเบียนผู้ต้องขัง')).pack(pady=4, fill='x')
-        # modern_button('ค้นหาผู้ต้องขัง', lambda: self.main_frame.show_page('ค้นหาผู้ต้องขัง')).pack(pady=4, fill='x')
-        # modern_button('ย้ายแดน,ปรับชั้น', lambda: self.main_frame.show_page('ย้ายแดน,ปรับชั้น')).pack(pady=4, fill='x')
-        modern_button(prisoner_section, 'ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=4, fill='x')
-        
-        if user_session.is_admin():
+            modern_button(prisoner_section, 'ลงทะเบียนผู้ต้องขัง', lambda: self.main_frame.show_page('ลงทะเบียนผู้ต้องขัง')).pack(pady=4, fill='x')
+            modern_button(prisoner_section, 'ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=4, fill='x')
+
             ctk.CTkLabel(button_container,
                 text='เมนูจัดการข้อมูลญาติ',
                 font=('TH SarabunPSK', 24, 'bold'),
                 text_color='#2d3a4b'
             ).pack(pady=(12, 12))
 
-            # Relative management section
             relative_section = ctk.CTkFrame(button_container, fg_color='transparent')
             relative_section.pack(fill='x', pady=(0, 20))
-            
+
             modern_button(relative_section, 'ญาติทั้งหมด', lambda: self.main_frame.show_page('ญาติทั้งหมด')).pack(pady=4, fill='x')
             modern_button(relative_section, 'ลงทะเบียนลายนิ้วมือ', lambda: self.main_frame.show_page('ลงทะเบียนลายนิ้วมือ')).pack(pady=4, fill='x')
-        
-        if user_session.is_admin():
+
             ctk.CTkLabel(button_container,
-                text='การเยี่ยมญาติ',
+                text='การจองเยี่ยมญาติ',
                 font=('TH SarabunPSK', 24, 'bold'),
                 text_color='#2d3a4b'
             ).pack(pady=(12, 12))
 
             # Visit management section
             visit_section = ctk.CTkFrame(button_container, fg_color='transparent')
-            visit_section.pack(fill='x', pady=(0, 20))
-        
+            visit_section.pack(fill='x', pady=(0, 20))   
 
             modern_button(visit_section, 'จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=4, fill='x')
             modern_button(visit_section, 'จองเยี่ยมญาติ\nด้วยเลขบัตรประชาชน', lambda: self.main_frame.show_page('จองเยี่ยมญาติด้วยเลขบัตรประชาชน')).pack(pady=4, fill='x')
-            modern_button(visit_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
-            modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('รายงานประจำเดือน')).pack(pady=4, fill='x')
-        else:
+           
             ctk.CTkLabel(button_container,
-                text='การเยี่ยมญาติ',
+                text='การรายงาน',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack(pady=(12, 12))
+
+            report_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            report_section.pack(fill='x', pady=(0, 20)) 
+            
+            modern_button(report_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
+            modern_button(report_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('รายงานประจำเดือน')).pack(pady=4, fill='x')
+            modern_button(report_section, 'รายงานเยี่ยมพิเศษ', lambda: self.main_frame.show_page('รายงานเยี่ยมพิเศษ')).pack(pady=4, fill='x')
+     
+        elif user_session.is_user():
+            ctk.CTkLabel(title_frame,
+                text='เมนูจัดการข้อมูลผู้ต้องขัง',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack()
+            # Prisoner management section
+            prisoner_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            prisoner_section.pack(fill='x', pady=(0, 20))
+
+            modern_button(prisoner_section, 'ลงทะเบียนผู้ต้องขัง', lambda: self.main_frame.show_page('ลงทะเบียนผู้ต้องขัง')).pack(pady=4, fill='x')
+            modern_button(prisoner_section, 'ผู้ต้องขังทั้งหมด', lambda: self.main_frame.show_page('ผู้ต้องขังทั้งหมด')).pack(pady=4, fill='x')
+
+            ctk.CTkLabel(button_container,
+                text='การรายงาน',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack(pady=(12, 12))
+
+            report_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            report_section.pack(fill='x', pady=(0, 20)) 
+            
+            modern_button(report_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
+            modern_button(report_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('รายงานประจำเดือน')).pack(pady=4, fill='x')
+            modern_button(report_section, 'รายงานเยี่ยมพิเศษ', lambda: self.main_frame.show_page('รายงานเยี่ยมพิเศษ')).pack(pady=4, fill='x')
+
+        elif user_session.is_visit():
+            ctk.CTkLabel(button_container,
+                text='การจองเยี่ยมญาติ',
                 font=('TH SarabunPSK', 24, 'bold'),
                 text_color='#2d3a4b'
             ).pack(pady=(12, 12))
 
             # Visit management section
             visit_section = ctk.CTkFrame(button_container, fg_color='transparent')
-            visit_section.pack(fill='x', pady=(0, 20))
+            visit_section.pack(fill='x', pady=(0, 20))   
 
-            modern_button(visit_section, 'รายงานประจำวัน', lambda: self.main_frame.show_page('รายงาน')).pack(pady=4, fill='x')
-            modern_button(visit_section, 'รายงานประจำเดือน', lambda: self.main_frame.show_page('รายงานประจำเดือน')).pack(pady=4, fill='x')
-
-
+            modern_button(visit_section, 'จองเยี่ยมญาติ', lambda: self.main_frame.show_page('จองเยี่ยม')).pack(pady=4, fill='x')
+           
 
         ctk.CTkLabel(button_container,
             text='Developer by Mr.Phongchai',

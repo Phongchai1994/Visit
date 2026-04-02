@@ -40,6 +40,9 @@ class UserSession:
         """ตรวจสอบว่าเป็น user หรือไม่"""
         return self.user_type == 'user'
     
+    def is_visit(self):
+        return self.user_type == 'visit'
+    
     def get_user_info(self):
         """ได้ข้อมูลผู้ใช้ในรูปแบบ dict"""
         return {

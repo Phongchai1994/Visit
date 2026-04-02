@@ -246,13 +246,13 @@ class App_Prisoners(ctk.CTk):
     def refresh_all_data(self):
         """รีเฟรชข้อมูลทั้งหมดในโปรแกรม"""
         try:
-            print("เริ่มรีเฟรชข้อมูลทั้งหมด...")
+            # print("เริ่มรีเฟรชข้อมูลทั้งหมด...")
             
             # ✅ รีเฟรชข้อมูลใน main_frame
             try:
                 if hasattr(self.main_frame, 'refresh_data'):
                     self.main_frame.refresh_data()
-                    print("รีเฟรช MainFrame สำเร็จ")
+                    # print("รีเฟรช MainFrame สำเร็จ")
                 else:
                     print("MainFrame ไม่มี method refresh_data")
             except Exception as e:
@@ -262,7 +262,7 @@ class App_Prisoners(ctk.CTk):
             try:
                 if hasattr(self.menu_frame, 'refresh_data'):
                     self.menu_frame.refresh_data()
-                    print("รีเฟรช MenuFrame สำเร็จ")
+                    # print("รีเฟรช MenuFrame สำเร็จ")
                 else:
                     print("MenuFrame ไม่มี method refresh_data")
             except Exception as e:
@@ -271,14 +271,14 @@ class App_Prisoners(ctk.CTk):
             # ✅ อัปเดต status bar
             try:
                 self.update_status_bar()
-                print("อัปเดต Status Bar สำเร็จ")
+                # print("อัปเดต Status Bar สำเร็จ")
             except Exception as e:
                 print(f"Error updating status bar: {e}")
             
             # ✅ อัปเดตหัวข้อ
             try:
                 self.update_title()
-                print("อัปเดตหัวข้อสำเร็จ")
+                # print("อัปเดตหัวข้อสำเร็จ")
             except Exception as e:
                 print(f"Error updating title: {e}")
             
@@ -291,7 +291,7 @@ class App_Prisoners(ctk.CTk):
                 f"ฐานข้อมูล: {db_name}\n"
                 f"เวลา: {current_time}")
             
-            print("รีเฟรชข้อมูลทั้งหมดเสร็จสิ้น")
+            # print("รีเฟรชข้อมูลทั้งหมดเสร็จสิ้น")
             
         except Exception as e:
             error_msg = f"เกิดข้อผิดพลาดในการรีเฟรช: {str(e)}"
@@ -314,19 +314,19 @@ class App_Prisoners(ctk.CTk):
     def refresh_database_connection(self):
         """รีเฟรชการเชื่อมต่อฐานข้อมูลใหม่"""
         try:
-            print(f"กำลังอัปเดตการเชื่อมต่อฐานข้อมูล: {self.db_path}")
+            # print(f"กำลังอัปเดตการเชื่อมต่อฐานข้อมูล: {self.db_path}")
             
             # ✅ Force reload config ให้แน่ใจว่าได้ path ใหม่
             from manage.database import load_config
             current_path = load_config()
-            print(f"Current config path: {current_path}")
-            print(f"New path: {self.db_path}")
+            # print(f"Current config path: {current_path}")
+            # print(f"New path: {self.db_path}")
             
             # ✅ อัปเดต path ให้กับ main_frame
             try:
                 if hasattr(self.main_frame, 'update_database_path'):
                     self.main_frame.update_database_path(self.db_path)
-                    print("อัปเดต path ใน MainFrame สำเร็จ")
+                    # print("อัปเดต path ใน MainFrame สำเร็จ")
                 else:
                     print("MainFrame ไม่มี method update_database_path")
             except Exception as e:
@@ -336,7 +336,7 @@ class App_Prisoners(ctk.CTk):
             try:
                 if hasattr(self.menu_frame, 'update_database_path'):
                     self.menu_frame.update_database_path(self.db_path)
-                    print("อัปเดต path ใน MenuFrame สำเร็จ")
+                    # print("อัปเดต path ใน MenuFrame สำเร็จ")
                 else:
                     print("MenuFrame ไม่มี method update_database_path")
             except Exception as e:
@@ -346,14 +346,14 @@ class App_Prisoners(ctk.CTk):
             try:
                 if hasattr(self.main_frame, 'refresh_data'):
                     self.main_frame.refresh_data()
-                    print("รีเฟรชข้อมูลใน MainFrame สำเร็จ")
+                    # print("รีเฟรชข้อมูลใน MainFrame สำเร็จ")
             except Exception as e:
                 print(f"Error refreshing MainFrame data: {e}")
             
             # ✅ อัปเดต status bar
             try:
                 self.update_status_bar()
-                print("อัปเดต Status Bar สำเร็จ")
+                # print("อัปเดต Status Bar สำเร็จ")
             except Exception as e:
                 print(f"Error updating status bar: {e}")
             
@@ -623,7 +623,7 @@ class SimpleLoginApp:
         """ตรวจสอบ username และ password"""
         # ✅ ข้อมูล Login (ในการใช้งานจริงควรเก็บในฐานข้อมูลและเข้ารหัส)
         users_db = SQLiteDB().get_users()
-        print(f'ข้อมูลผู้ใช้ในฐานข้อมูล: {users_db}')
+        # print(f'ข้อมูลผู้ใช้ในฐานข้อมูล: {users_db}')
         if username in users_db:
             # password_hash = hashlib.sha256(password.encode('utf-8')).digest()
 
@@ -631,7 +631,7 @@ class SimpleLoginApp:
             password_hash = hashlib.sha256(password.encode('utf-8')).digest()
             # print(f'รหัสผ่านที่แปลงเป็น hash: {password_hash}')
             if users_db[username]['password'] == password_hash:
-                print(f'ประเภทผู้ใช้: {users_db[username]["user_type"]}')
+                # print(f'ประเภทผู้ใช้: {users_db[username]["user_type"]}')
                 return users_db[username]['user_type']
         return None
     

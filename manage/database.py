@@ -36,10 +36,11 @@ def check_key_on_db():
     return result[0] if result else None
 
 def require_valid_key(func):
-    KEY = 'E54F2JN5F2'
+    KEY = 'E54F2JN5F3'
     KEY_DB = check_key_on_db()
     def wrapper(self, *args, **kwargs):
         if KEY_DB != KEY:
+            messagebox.showerror("แจ้งอัพเดท","กรุณาอัพเดทโปรแกรม")
             raise PermissionError("KEY ไม่ถูกต้อง ไม่สามารถใช้งาน method นี้ได้")
         return func(self, *args, **kwargs)
     return wrapper
@@ -53,9 +54,41 @@ class SQLiteDB:
         self.conn = None
         self.cursor = None
         self.key = self.check_key()
+        self.create_table()
         # โปรแกรมถอดรหัส และเข้ารหัส
         # self.EN_DB = load_config()  # โหลดข้อมูลจาก ไฟล์ config.json
         # self.DE_DB = TEMP_DIR / 'visit_report.db'
+    def create_table(self):
+        # ตารางจองเยี่ยมวันหยุดพิเศษ
+        def visit_spacial_table():
+            self.connect()
+            try:
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "visit_spacial" (
+                        "visit_id" INTEGER NOT NULL,
+                        "time_stamp" TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+                        "date_visit" TEXT NOT NULL,
+                        "time_visit" TEXT NOT NULL,
+                        "prisoner_id" INTEGER NOT NULL,
+                        "relative_id_1" INTEGER,
+                        "relative_id_2" INTEGER,
+                        "relative_id_3" INTEGER,
+                        "relative_id_4" INTEGER,
+                        "relative_id_5" INTEGER,
+                        "channel" INTEGER,
+                        PRIMARY KEY("visit_id" AUTOINCREMENT)
+                    )
+                ''')
+                # print('สร้างตาราง visit_spacial สำเร็จ')
+                return True
+            except Exception as e:
+                print(f'ข้อผิดพลาด: {e}')
+                return False
+            finally:
+                self.close()
+
+        # เรียกใช้การสร้างตาราง
+        visit_spacial_table()
 
     def msgbox(self,e):
         messagebox.showerror('ฐานข้อมูล',f'{e}')
@@ -97,13 +130,172 @@ class SQLiteDB:
             return False
         finally:
             self.close()
+    # ถึงข้อมูลช่องด้วย วันที่ และเวลา ของตารางเยี่ยมพิเศษ
+    @require_valid_key
+    def get_chanel_on_visit_spacial(self,time_,date_):
+        self.connect()
+        try:
+
+            self.cursor.execute('SELECT count (*) FROM visit_spacial WHERE time_visit = ? AND date_visit = ?',(time_,date_))
+            count = self.cursor.fetchone()[0]
+            return count      
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    # ตารางเยี่ยมพิเศษ ตรวจสอบว่าผู้ต้องขังได้เยี่ยมหรือยัง ต่อวัน
+    @require_valid_key
+    def check_visit_spacial_log(self,prisoner_id,date):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT count (*) FROM visit_spacial WHERE prisoner_id = ? AND date_visit = ?',(prisoner_id,date))
+            count = self.cursor.fetchone()[0]
+            return count      
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    # ตารางเยี่ยมพิเศษ เพิ่มข้อมูลการเยี่ยมลงในตาราง
+    @require_valid_key
+    def add_visit_to_visit_spacial(self,query,data):
+        self.connect()
+        try:
+            self.cursor.execute(query,data)
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    # ตารางเยี่ยมพิเศษ ดึงข้อมูล ช่องเยี่ยม
+    @require_valid_key
+    def get_chanel_blank_on_visit_spacial(self,time,date):
+        # print(f'time = {time} date = {date}')
+        self.connect()
+        try:
+            self.cursor.execute('SELECT channel FROM visit_spacial WHERE date_visit = ? AND time_visit = ?',(date,time))
+            data = [row[0] for row in self.cursor.fetchall() if row[0] is not None]
+            # print(f'data = {data}')
+            return data
+        
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    # ตารางเยี่ยมพิเศษ ดึงข้อมูล ปี เดือน วัน และส่งกลับค่าเดียว
+    @require_valid_key
+    def get_date_on_visit_spacial(self):
+        self.connect()
+        try:
+            self.cursor.execute("SELECT DISTINCT strftime('%Y', date_visit) FROM visit_spacial ORDER BY 1")
+            years = [row[0] for row in self.cursor.fetchall()]
+            self.cursor.execute("SELECT DISTINCT strftime('%m', date_visit) FROM visit_spacial ORDER BY 1")
+            months = [row[0] for row in self.cursor.fetchall()]
+            self.cursor.execute("SELECT DISTINCT strftime('%d', date_visit) FROM visit_spacial ORDER BY 1")
+            days = [row[0] for row in self.cursor.fetchall()]
+            return {'years': years, 'months': months, 'days': days}
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    # ตารางเยี่ยมพิเศษ ดึงข้อมูลการเยี่ยมรอบพิเศษ
+    @require_valid_key
+    def get_visits_on_visit_spacial(self,data_visit):
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                SELECT
+                                    visit_spacial.visit_id,
+                                    visit_spacial.time_stamp,
+                                    visit_spacial.date_visit,
+                                    visit_spacial.time_visit,
+                                    prisoners_.f_name || " " || prisoners_.l_name AS prisoner_name,
+                                    prisoners_.dan,
+                                    COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
+                                    COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
+                                    COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
+                                    COALESCE(r4.title || " " || r4.f_name || " " || r4.l_name, '-') AS relative_4,
+                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5,
+                                    visit_spacial.channel
+                                FROM
+                                    visit_spacial
+                                JOIN prisoners_ ON visit_spacial.prisoner_id = prisoners_.prisoner_id
+                                LEFT JOIN relatives AS r1 ON visit_spacial.relative_id_1 = r1.relative_id
+                                LEFT JOIN relatives AS r2 ON visit_spacial.relative_id_2 = r2.relative_id
+                                LEFT JOIN relatives AS r3 ON visit_spacial.relative_id_3 = r3.relative_id
+                                LEFT JOIN relatives AS r4 ON visit_spacial.relative_id_4 = r4.relative_id
+                                LEFT JOIN relatives AS r5 ON visit_spacial.relative_id_5 = r5.relative_id
+                                WHERE 
+                                    visit_spacial.date_visit = ? AND visit_spacial.time_visit = ? ''',
+                                    (data_visit[0],data_visit[1])
+                                )
+            result = self.cursor.fetchall()
+            return result
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
+    # รตารางเยี่ยมพิเศษ ค้นหาทั้งหมด
+    @require_valid_key
+    def get_visit_all_on_visit_spacial(self,round_date):
+        self.connect()
+        try:
+            self.cursor.execute('''
+                                SELECT
+                                    visit_spacial.visit_id,
+                                    visit_spacial.time_stamp,
+                                    visit_spacial.date_visit,
+                                    visit_spacial.time_visit,
+                                    prisoners_.f_name || " " || prisoners_.l_name AS prisoner_name,
+                                    COALESCE(r1.title || " " || r1.f_name || " " || r1.l_name, '-') AS relative_1,
+                                    COALESCE(r2.title || " " || r2.f_name || " " || r2.l_name, '-') AS relative_2,
+                                    COALESCE(r3.title || " " || r3.f_name || " " || r3.l_name, '-') AS relative_3,
+                                    COALESCE(r4.title || " " || r4.f_name || " " || r4.l_name, '-') AS relative_4,
+                                    COALESCE(r5.title || " " || r5.f_name || " " || r5.l_name, '-') AS relative_5,
+                                    visit_spacial.channel
+                                FROM
+                                    visit_spacial
+                                JOIN prisoners_ ON visit_spacial.prisoner_id = prisoners_.prisoner_id
+                                LEFT JOIN relatives AS r1 ON visit_spacial.relative_id_1 = r1.relative_id
+                                LEFT JOIN relatives AS r2 ON visit_spacial.relative_id_2 = r2.relative_id
+                                LEFT JOIN relatives AS r3 ON visit_spacial.relative_id_3 = r3.relative_id
+                                LEFT JOIN relatives AS r4 ON visit_spacial.relative_id_4 = r4.relative_id
+                                LEFT JOIN relatives AS r5 ON visit_spacial.relative_id_5 = r5.relative_id
+                                WHERE 
+                                    visit_spacial.date_visit = ?''',
+                                    (round_date,)
+                                )
+            result = self.cursor.fetchall()
+            return result
+        except Exception as e:
+            self.msgbox(e)
+            return False
+        finally:
+            self.close()
+
 
     # เพิ่มข้อมูลผู้ต้องขังใส่ตาราง prisoners_
     @require_valid_key
     def add_data(self,data):
         self.connect()
         try :
-            print('กำลังบันทึกข้อมูล')
+            # print('กำลังบันทึกข้อมูล')
             self.cursor.execute('INSERT INTO prisoners_ (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status) VALUES (?,?,?,?,?,?,?,?,?)',data)
             return True
         except Exception as e:
@@ -120,7 +312,7 @@ class SQLiteDB:
         try:
             # บันทึกข้อมูล ในตารางญาติ
             self.cursor.execute('INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel) VALUES (?,?,?,?,?,?)',(data[0],data[1],data[2],data[3],data[4],data[5]))
-            print('บันทึกข้อมูลตาราง relatives')
+            # print('บันทึกข้อมูลตาราง relatives')
             return True
         except Exception as e:
             print(e)
@@ -138,7 +330,7 @@ class SQLiteDB:
         try:
             # บันทึกข้อมูลใน relation
             self.cursor.execute('INSERT INTO relations (prisoner_id,relative_id,relation) VALUES (?,?,?)',(id,data[0],relation))
-            print('เชื่อมข้อมูลระหว่าง prisoner_id และ relative_id และระบุความสัมพันธ์')
+            # print('เชื่อมข้อมูลระหว่าง prisoner_id และ relative_id และระบุความสัมพันธ์')
             return True
         except Exception as e:
             print(e)
@@ -575,7 +767,7 @@ class SQLiteDB:
     def get_count_visit_on_round(self,round_time,date_current):
         self.decode_db()
         self.connect()
-        print(round_time,date_current)
+        # print(round_time,date_current)
 
         try:
             self.cursor.execute('SELECT count (*) FROM visits WHERE time_visit = ? AND date_visit = ?',(round_time,date_current))
@@ -594,7 +786,7 @@ class SQLiteDB:
         self.connect()
         try:
             disciplinary_values = None if disciplinary == 'ไม่มี' else disciplinary
-            print(id,level,dan,type_data,status,disciplinary)
+            # print(id,level,dan,type_data,status,disciplinary)
             self.cursor.execute('''UPDATE 
                                     prisoners_ 
                                 SET 
@@ -638,7 +830,7 @@ class SQLiteDB:
     # ลบข้อมูลญาติ
     @require_valid_key
     def delete_relation_from_prisoner_and_relative(self,prisoner_id,relative_id):
-        print(prisoner_id,relative_id)
+        # print(prisoner_id,relative_id)
         self.connect()
         try:
             self.cursor.execute('DELETE FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id))
@@ -654,7 +846,7 @@ class SQLiteDB:
     def delete_prisoner(self,id):
         self.connect()
         try:
-            print(type(id))
+            # print(type(id))
             self.cursor.execute('DELETE FROM prisoners_ WHERE prisoner_id = ?',(id,))
             return True
         except Exception as e:
@@ -759,7 +951,7 @@ class SQLiteDB:
     # ดึงข้อมูลตารางเยี่ยม โดยใช้ visit_id
     @require_valid_key
     def prisoner_id_on_table_visits(self,visit_id):
-        print(f'visit_id on db = {visit_id}')
+        # print(f'visit_id on db = {visit_id}')
         self.connect()
         try:
             self.cursor.execute('SELECT prisoner_id FROM visits WHERE visit_id = ?',(visit_id,))
