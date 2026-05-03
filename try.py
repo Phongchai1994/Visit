@@ -1,30 +1,30 @@
-from datetime import datetime,timedelta
-import time as t
-import sqlite3
-from prisoners.main_app import CALCULATE_NEXT_DAY
-from manage.database import SQLiteDB
-import hashlib
+# from datetime import datetime,timedelta
+# import time as t
+# import sqlite3
+# from prisoners.main_app import CALCULATE_NEXT_DAY
+# from manage.database import SQLiteDB
+# import hashlib
 
-db = SQLiteDB()
+# db = SQLiteDB()
 
-db_path = "Z:/db/visit_report.db"
-conn = sqlite3.connect(db_path)
-cursor = conn.cursor()
-
-
-username = "user_visit"
-password = "066986"  # ต้องเป็น string
-
-password_blob = hashlib.sha256(password.encode("utf-8")).digest()  # bytes = BLOB
+# db_path = "Z:/db/visit_report.db"
+# conn = sqlite3.connect(db_path)
+# cursor = conn.cursor()
 
 
-cursor.execute(
-    "INSERT INTO users (username, password, user_type, fullname) VALUES (?, ?, ?, ?)",
-    (username, password_blob, "visit", "สำหรับจองเยี่ยม")
-)
+# username = "user_visit"
+# password = "066986"  # ต้องเป็น string
 
-conn.commit()
-conn.close()
+# password_blob = hashlib.sha256(password.encode("utf-8")).digest()  # bytes = BLOB
+
+
+# cursor.execute(
+#     "INSERT INTO users (username, password, user_type, fullname) VALUES (?, ?, ?, ?)",
+#     (username, password_blob, "visit", "สำหรับจองเยี่ยม")
+# )
+
+# conn.commit()
+# conn.close()
 
 # def get_chanel_blank_on_visit_spacial(time,date):
 #     cursor.execute('SELECT channel FROM visit_spacial WHERE date_visit = ? AND time_visit = ?',(date,time))

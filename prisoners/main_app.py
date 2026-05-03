@@ -1,32 +1,53 @@
 import customtkinter as ctk
 import tkinter as tk
+import time as t
+import emoji, threading, os, tempfile, time, difflib
+
+
 from tkinter import ttk,messagebox
 from manage.database import SQLiteDB
-import emoji
 from pyzkfp import ZKFP2
-import threading
-import time as t
 from datetime import datetime,timedelta
 from prisoners.card_reader import ThaiIDReader
-import os
-import tempfile
-import time
-
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape,A4
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from escpos.printer import Usb
+from PIL import Image
 from user_session import user_session, require_admin, require_login
-
-import os
-import tempfile
-import time
-
-import difflib
 
 pdfmetrics.registerFont(TTFont("TH SarabunPSK", "THSarabun.ttf"))
 
+class PRINT_RECIPT:
+    VENDOR_ID = 0x04b8
+    PRODUCT_ID = 0x0e27
+
+    def __init__(self):
+        self.printer = Usb(self.VENDOR_ID, self.PRODUCT_ID)
+        self.logo = Image.open('logo.png')
+        self.logo = self.logo.resize((200,200))
+        self.logo = self.logo.convert('1')
+
+    def print_recipt(self,data):
+        try:
+            # จัดให้อยู่ตรงกลางและพิมพ์โลโก้
+            self.printer.set(align='center')
+            self.printer.image(self.logo)  # ต้องมีไฟล์ logo.png อยู่ในโฟลเดอร์เดียวกับสคริปต์
+
+            # กลับมาชิดซ้ายและขยายตัวอักษร
+            self.printer.set(align='center')
+            self.printer.text("งานเยี่ยมญาติ เรือนจำจังหวัดจันทบุรี\nเยี่ยมผู้ต้องขัง\ผู้ต้องกักขัง\n")
+            self.printer.text(f'ราย {data[0]} xxx\nใน {data[2]}\nเวลา {data[3]}\nช่องเยี่ยมที่ {data[4]}\nรายชื่อเข้าเยี่ยม\n')
+            # สมมติว่ารายชื่อผู้เข้าเยี่ยม เริ่มที่ data[5] เป็นต้นไป
+            for i, name in enumerate(data[6:], start=1):
+                self.printer.text(f"{i}. {name}\n")
+            self.printer.text(f"{data[5]}\nกรุณามาก่อนเวลาเยี่ยมอย่างน้อย 15 นาที")
+            self.printer.cut()
+        except Exception as e:
+            messagebox.showerror('เครื่องพิมพ์ใบเสร็จ',f'ไม่สามารถพิมพ์ได้ : {e}')
+            
 class RESERVE_SPACIAL:
 
     IDX_DATE = 0
@@ -304,6 +325,7 @@ class RESERVE_SPACIAL:
     
     def confirm_visit(self):
         def insert_to_db():
+            PRINT_RECIPT().print_recipt(print_data)
             submit.pack_forget()
             data_to_db = [self.data_reserve[self.IDX_DATE][1],self.data_reserve[self.IDX_ROUND],self.id]
             for follower in self.data_reserve[self.IDX_FOLLOWERS]:
@@ -338,6 +360,7 @@ class RESERVE_SPACIAL:
 
         for widget in self.frame_confirm_visit.winfo_children():
             widget.destroy()
+        print_data = []
 
         self.frame_follower_visit.pack_forget()
         self.frame_confirm_visit.pack(fill = 'both',expand = True)
@@ -345,7 +368,17 @@ class RESERVE_SPACIAL:
         ctk.CTkLabel(
             self.frame_confirm_visit,
             text=f'จองเยี่ยม\n{self.name} {self.surname}\n{self.data_reserve[self.IDX_DATE][0]}\nเวลา {self.data_reserve[self.IDX_ROUND]} น.\nช่องเยี่ยมที่ {self.data_reserve[self.IDX_CHANEL]}\nผู้เข้าเยี่ยม',font=('TH SarabunPSK',35)).pack(pady = 5)
-
+        print_data.extend(
+            [
+                self.name,
+                self.surname,
+                self.data_reserve[self.IDX_DATE][0],
+                self.data_reserve[self.IDX_ROUND],
+                self.data_reserve[self.IDX_CHANEL],
+                None,
+                self.relative_dict.get(int(self.national_id))
+            ]
+        )
         for index, follower_tuple in enumerate(self.data_reserve[self.IDX_FOLLOWERS]):
             rid = follower_tuple[0]
             ctk.CTkLabel(
@@ -353,7 +386,9 @@ class RESERVE_SPACIAL:
                 text=f'คนที่ {index + 1 } {self.relative_dict.get(rid)}',
                 font=('TH SarabunPSK', 35)
             ).pack(pady = 5)
-        
+
+            print_data.append(f'{index + 1 } {self.relative_dict.get(rid)}')
+
         submit = ctk.CTkButton(self.frame_confirm_visit,
                             text='ยืนยันการจองเยี่ยม',
                             command=insert_to_db,
@@ -959,6 +994,7 @@ class RESERVE:
     
     # ยืนยันข้อมูล
     def confirm_visit(self,round_time_strtime,reserve_date,channel):
+        print_data = []
         thai_months = [
             "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
             "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -979,10 +1015,21 @@ class RESERVE:
         thai_date = self.get_thai_date(self.today)
 
         ctk.CTkLabel(self.frame_confirm_visit,text=f'จองเยี่ยม\n{self.name} {self.surname}\n{thai_date}\nเวลา {self.round_visit_var.get()} น.\nช่องเยี่ยมที่ {channel}\nโดย {self.relative_dict.get(int(self.national_id))}\nผู้ติดตาม',font=('TH SarabunPSK',35)).pack(pady = 5)
+        print_data.extend(
+            [
+                self.name,
+                self.surname,
+                thai_date,
+                self.round_visit_var.get(),
+                channel,
+                f'สิทธ์การเยี่ยมคงเหลือ เดือน {today_month_th} เหลือ {self.count_reserve - 1} ครั้ง',
+                self.relative_dict.get(int(self.national_id))
+            ]
+        )
         for index,row in enumerate(select_fl_id):
             prepare_data.append(row)
             ctk.CTkLabel(self.frame_confirm_visit,text=f'คนที่ {index +1} {self.relative_dict.get(row)}',font=('TH SarabunPSK',35)).pack(pady = 5)
-
+            print_data.append(self.relative_dict.get(row))
         select_fl_id.clear()
 
         if len(prepare_data) > 8:
@@ -993,6 +1040,8 @@ class RESERVE:
             alert = ALERT(self.frame_follower_visit,msg=['เลือกผู้ติดตามได้ไม่เกิน 4 คน','กรุณาเลือกใหม่'])
         
         def on_confirm():
+            PRINT_RECIPT().print_recipt(print_data)
+
             # ซ่อนปุ่มเพื่อป้องกันการกดซ้ำ แล้วค่อยบันทึกข้อมูล
             submit.grid_forget()
             self.insert_reserve_visit_to_db(prepare_data,channel)
@@ -1038,7 +1087,7 @@ class RESERVE:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
                 if result:
                     self.insert_succress()
-                    return
+                    return True
         elif len(prepare_data) == 7:
             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4) VALUES (?,?,?,?,?,?,?)"
             result = self.db.add_visits(query,prepare_data)
@@ -1046,7 +1095,7 @@ class RESERVE:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
                 if result:
                     self.insert_succress()
-                    return
+                    return True
         elif len(prepare_data) == 6:
             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3) VALUES (?,?,?,?,?,?)"
             result = self.db.add_visits(query,prepare_data)
@@ -1054,7 +1103,7 @@ class RESERVE:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
                 if result:
                     self.insert_succress()
-                    return
+                    return True
         elif len(prepare_data) == 5:
             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2) VALUES (?,?,?,?,?)"
             result = self.db.add_visits(query,prepare_data)
@@ -1062,7 +1111,7 @@ class RESERVE:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
                 if result:
                     self.insert_succress()
-                    return
+                    return True
         elif len(prepare_data) == 4:
             query = "INSERT INTO visits (date_visit,time_visit,prisoner_id,relative_id_1) VALUES (?,?,?,?)"
             result = self.db.add_visits(query,prepare_data)
@@ -1070,7 +1119,7 @@ class RESERVE:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
                 if result:
                     self.insert_succress()
-                    return
+                    return True
         return True
     
     def insert_succress(self):

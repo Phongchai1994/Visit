@@ -1,7 +1,0 @@
-customtkinter
-cryptography
-reportlab
-pandas
-pyscard
-pyzkfp
-emoji
