@@ -5,8 +5,9 @@ from tkinter import messagebox
 import json
 from pathlib import Path
 import tempfile
-from datetime import datetime
-TODAYS = datetime.today()
+import datetime
+
+TODAYS = datetime.datetime.today()
 TODAYS_STR = TODAYS.strftime("%Y-%m-%d")
 
 
@@ -360,6 +361,92 @@ class SQLiteDB:
             self.close()
             self.encode_db()
 
+    @require_valid_key
+    def get_join_tabel_print_recipt(self,id):
+        '''
+        data[0] = ชื่อ ผตข *
+        data[1] = นามสกุล ผตช*
+        data[2] = วันที่*
+        data[3] = เวลาเยี่ยม 10:00:00*
+        data[4] = ช่องเยี่ยม*
+        data[5] = สิทธิ์การเยี่ยมคงเหลือ เดือน ... ครั้ง ...
+        data[6] = รายชื่อเข้าเยี่ยม
+        '''
+        def get_thai_month(date_str):
+            thai_months = [
+                "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+            ]
+            month = int(date_str.split("-")[1])
+            return thai_months[month]
+        def date_to_thai(date_str):
+            thai_months = [
+                "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+            ]
+            thai_days = [
+                "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์", "วันอาทิตย์"
+            ]
+            year, month, day = map(int, date_str.split("-"))
+            dt = datetime.date(year, month, day)
+            day_name = thai_days[dt.weekday()]  # weekday(): 0=Monday ... 6=Sunday
+            month_th = thai_months[month]
+            year_th = year + 543
+            return f"{day_name} ที่ {day} {month_th} {year_th}"
+        self.connect()
+        try:
+            self.cursor.execute('SELECT date_visit,time_visit,prisoner_id,relative_id_1,relative_id_2,relative_id_3,relative_id_4,relative_id_5,channel FROM visits WHERE visit_id = ?',(id,))
+            data = self.cursor.fetchone()
+            date = data[0]
+            time = data[1]
+            prisoner_id = data[2]
+            channel = data[8]
+            relative_ids = [v for v in data[2:7] if v is not None]
+            placeholders = ','.join(['?'] * len(relative_ids))
+            sql = f'''
+                SELECT 
+                    p.f_name,
+                    p.l_name,
+                    p.level,
+                    r.f_name,
+                    r.l_name
+                FROM relations rel
+                JOIN prisoners_ p ON rel.prisoner_id = p.prisoner_id
+                JOIN relatives r ON rel.relative_id = r.relative_id
+                WHERE rel.prisoner_id = ?
+                AND rel.relative_id IN ({placeholders})
+            '''
+            params = [prisoner_id] + relative_ids
+            self.cursor.execute(sql, params)
+            result = self.cursor.fetchall()
+            prisoner_fname = result[0][0] if result else ""
+            prisoner_lname = result[0][1] if result else ""
+            level = result[0][2]
+            relatives_names = [f"{row[3]} {row[4]}" for row in result]
+            check_visit = self.get_count_visit(prisoner_id,date,date[:7])
+            count_reserve = check_visit[1]
+            if level == 'เยี่ยม' :
+                count_reserve = 8 - count_reserve
+            if level == 'ดีมาก' :
+                count_reserve = 6 - count_reserve
+            if level == 'ดี' :
+                count_reserve = 4 - count_reserve
+            if level == 'กลาง' or level == 'ระหว่างพิจารณาคดี' :
+                count_reserve = 3 - count_reserve
+            if level == 'ปรับปรุง' :
+                count_reserve = 2 - count_reserve
+            if level == 'ปรับปรุงมาก' :
+                count_reserve = 1 - count_reserve
+            month = get_thai_month(date)
+            thai_date = date_to_thai(date)
+            return [prisoner_fname, prisoner_lname] + [thai_date] + [time] + [channel] + [f'สิทธิ์การเยี่ยมคงเหลือ เดือน {month} เหลือ {count_reserve} ครั้ง'] + relatives_names
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
     # ดึงข้อมูลผู้ต้องขัง 1 คน ในตาราง prisoners_ ด้วย prisoner_id
     @require_valid_key
     def get_data_one(self,prisoner_id):
@@ -522,6 +609,9 @@ class SQLiteDB:
     # ดึงตารางข้อมูลผู้ต้องขัง อ้างอิงด้วย เลขบัตรประชาชนญาติ
     @require_valid_key
     def get_join_relatives_and_prisoners(self,relative_id):
+        '''
+        ดึงตารางข้อมูลผู้ต้องขัง อ้างอิงด้วย เลขบัตรประชาชนญาติ
+        '''
         self.decode_db()
         self.connect()
         try:

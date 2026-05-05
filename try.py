@@ -1,14 +1,14 @@
-# from datetime import datetime,timedelta
+from datetime import datetime,timedelta
 # import time as t
 # import sqlite3
 # from prisoners.main_app import CALCULATE_NEXT_DAY
 # from manage.database import SQLiteDB
-# import hashlib
+# # import hashlib
 
 # db = SQLiteDB()
 
-# db_path = "Z:/db/visit_report.db"
-# conn = sqlite3.connect(db_path)
+# db_path = "C:/Users/ADMINS/Visit-Turnstile/utility/visit_report.db"
+# conn = db.connect(db_path)
 # cursor = conn.cursor()
 
 
@@ -51,3 +51,34 @@
 # print(now)
 
 
+# from escpos.printer import Usb
+# from PIL import Image
+
+# VENDOR_ID = 0x04b8
+# PRODUCT_ID = 0x0e27
+
+# printer = Usb(VENDOR_ID, PRODUCT_ID)
+# printer.profile.media['width']['pixels'] = 576
+# print(printer.profile.media)
+# logo = Image.open('logo.png')
+# logo = logo.resize((200,200))
+# logo = logo.convert('1')
+
+# printer.set(align='center')
+# printer.image(logo)
+# printer.set(width=1, height=1)
+# printer.text("ข้อความขนาดปกติ\n")
+
+# # ขนาดใหญ่ขึ้น 2 เท่า
+# printer.set(width=2, height=2)
+# printer.text("ข้อความขนาดใหญ่\n")
+
+# # กลับไปขนาดปกติ
+# printer.set(width=1, height=1)
+# printer.cut()
+
+
+today_now = datetime.today().date().isoformat()
+month_now = today_now[:7]
+date = "2025-05-04"
+print(today_now)

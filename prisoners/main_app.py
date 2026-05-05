@@ -26,27 +26,53 @@ class PRINT_RECIPT:
 
     def __init__(self):
         self.printer = Usb(self.VENDOR_ID, self.PRODUCT_ID)
+        self.printer.profile.media['width']['pixels'] = 576
         self.logo = Image.open('logo.png')
         self.logo = self.logo.resize((200,200))
         self.logo = self.logo.convert('1')
 
     def print_recipt(self,data):
+        '''
+        data[0] = ชื่อ ผตข
+        data[1] = นามสกุล ผตช
+        data[2] = วันที่ 
+        data[3] = เวลาเยี่ยม 10:00:00
+        data[4] = ช่องเยี่ยม
+        data[5] = สิทธิ์การเยี่ยมคงเหลือ เดือน ... ครั้ง ...
+        data[6] = รายชื่อเข้าเยี่ยม
+        '''
+        now = datetime.now()
         try:
+            round_map = {
+                "09:30:00": "รอบที่ 1 เวลา 09:30:00",
+                "10:00:00": "รอบที่ 2 เวลา 10:00:00",
+                "10:30:00": "รอบที่ 3 เวลา 10:30:00",
+                "11:00:00": "รอบที่ 4 เวลา 11:00:00",
+                "13:15:00": "รอบที่ 5 เวลา 13:15:00",
+                "13:45:00": "รอบที่ 6 เวลา 13:45:00",
+                "14:15:00": "รอบที่ 7 เวลา 14:15:00"
+            }
+            round_reserve = round_map.get(data[3], "")
+
             # จัดให้อยู่ตรงกลางและพิมพ์โลโก้
             self.printer.set(align='center')
             self.printer.image(self.logo)  # ต้องมีไฟล์ logo.png อยู่ในโฟลเดอร์เดียวกับสคริปต์
 
             # กลับมาชิดซ้ายและขยายตัวอักษร
             self.printer.set(align='center')
-            self.printer.text("งานเยี่ยมญาติ เรือนจำจังหวัดจันทบุรี\nเยี่ยมผู้ต้องขัง\ผู้ต้องกักขัง\n")
-            self.printer.text(f'ราย {data[0]} xxx\nใน {data[2]}\nเวลา {data[3]}\nช่องเยี่ยมที่ {data[4]}\nรายชื่อเข้าเยี่ยม\n')
+            self.printer.text("เรือนจำจังหวัดจันทบุรี (งานเยี่ยมญาติ)\nเลขที่ 5 ถ.แผ่นดินทอง 3 ต.ตลาด อ.เมือง\nจ.จันทบุรี 22000\nโทร 039327099 ต่อ 114\nเยี่ยมผู้ต้องขัง/ผู้ต้องกักขัง\n")
+            self.printer.text(f'ราย {data[0]} {data[1][0]}xx\nใน {data[2]}\n{round_reserve} น.\nช่องเยี่ยมที่ {data[4]}\nรายชื่อเข้าเยี่ยม\n')
             # สมมติว่ารายชื่อผู้เข้าเยี่ยม เริ่มที่ data[5] เป็นต้นไป
             for i, name in enumerate(data[6:], start=1):
                 self.printer.text(f"{i}. {name}\n")
-            self.printer.text(f"{data[5]}\nกรุณามาก่อนเวลาเยี่ยมอย่างน้อย 15 นาที")
+            self.printer.text(f"{data[5]}\nกรุณามาก่อนเวลาเยี่ยมอย่างน้อย 15 นาที\n")
+            self.printer.text(f'พิมพ์เมื่อ {now.strftime("%d/%m/%Y %H:%M:%S")} น.')
             self.printer.cut()
+            return True
         except Exception as e:
             messagebox.showerror('เครื่องพิมพ์ใบเสร็จ',f'ไม่สามารถพิมพ์ได้ : {e}')
+        finally:
+            self.printer.close()
             
 class RESERVE_SPACIAL:
 
@@ -1178,7 +1204,7 @@ class MORING_ROUNDS:
             close_time = datetime.strptime(close, "%H:%M:%S").time()
             if now < close_time:
                 available.append((text, start))
-        return available   
+        return available
     
     def round(self):
         available = []
@@ -5658,7 +5684,6 @@ class MainFrame(ctk.CTkFrame):
                 # # print(f'round_date = {round_date} and round_time = {round_time}')
                 data = [round_date, round_time]
                 result = self.db.get_visits_on_db(data)
-                # print(f'data on get visits = {result}')
             else:
                 # print(f'Searching for visits with keyword: {keyword}')
                 if keyword == '':
@@ -5667,9 +5692,6 @@ class MainFrame(ctk.CTkFrame):
                 # เพิ่มโค้ดค้นหาด้วย keyword
 
                 all_results = self.db.get_visits_all_on_db()
-
-                # print(f'ค้นหาด้วย keyword = {keyword} และ all_results = {all_results}')
-                # กรองข้อมูลด้วย keyword (ค้นหาชื่อผู้ต้องขัง)
 
                 if all_results and isinstance(all_results, (list, tuple)):
                     
@@ -5681,20 +5703,18 @@ class MainFrame(ctk.CTkFrame):
                     result = []
             # เรียงผลลัพธ์ตาม channel ก่อนใส่ลงตาราง
             result = _sort_rows_by_channel(result)
-            
+
             for row in tree.get_children():
                 tree.delete(row)
-            
+
             # ตรวจสอบว่า result เป็น list หรือไม่ ถ้าเป็น False (error) จะไม่ iterate
             if result and isinstance(result, (list, tuple)):
                 for row in result:
-                    # แทนที่ค่า None ด้วย "-"
                     processed_row = ["-" if value is None else value for value in row]
                     tree.insert('', 'end', values=processed_row)
             else:
-                # print()"No data found or error occurred")
-                # แสดงข้อความว่าไม่พบข้อมูล
                 tree.insert('', 'end', values=('ไม่พบข้อมูล', '', '', '', '', '', '', '', '', '', ''))
+
             tree_container.grid(row=2, column=0, sticky='nsew')
             tree.grid(row=0, column=0, sticky='new', padx=6, pady=(8, 0))
             # ปุ่มพิมพ์แบบลอยขวา
@@ -5715,25 +5735,17 @@ class MainFrame(ctk.CTkFrame):
                 def move_round():
                     round_selected = time_visit.get()
                     date_current = datetime.now().strftime("%Y-%m-%d")
-                    # print(date_current)
-                    # print(f'move round {round_selected}')
                     result_count_round_visit = self.db.get_count_visit_on_round(round_selected, date_current)
-                    # print(f'จำนวนคนที่จองรอบ {result_count_round_visit}')
                     channel_on_db = self.db.get_channel(date_current,round_selected)
-                    # print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
                     sorted_channel_on_db = sorted(channel_on_db)
                     channel_empty = 1
 
                     for index,value in enumerate(sorted_channel_on_db):
-                        # print(f'index,value {index}{value}')
                         if index+1 != int(value):
                             channel_empty = index + 1
-                            # print(f'channel ช่องว่าง = {channel_empty}')
                             break
                         elif index == len(sorted_channel_on_db) - 1:
                             channel_empty = index + 2
-                            # print(f'channel ตัวสุดท้าย = {channel_empty}')
-                    # print(f'ค่าที่เติม = {channel_empty}')
                     if result_count_round_visit >=15:
                         alert = ALERT(move_round_pupup,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
                         alert.after(3000,lambda: (alert.destroy(),move_round_pupup.destroy()))
@@ -5747,8 +5759,6 @@ class MainFrame(ctk.CTkFrame):
                                 get_visits()
 
                 popup_window_right_click.destroy()
-                # print('ย้ายรอบ')
-                # print('fn move_round ********* ',type(values[3]),values[3])
                 if values[3] == '12:00:00':
                     alert = ALERT(self,msg=['เรือนจำชั่วคราวไม่สามารถย้ายรอบได้'],button=True)
                     return
@@ -5992,6 +6002,12 @@ class MainFrame(ctk.CTkFrame):
                 add_entry_and_btn_if_empty(data_visit_no_4, 6)
                 add_entry_and_btn_if_empty(data_visit_no_5, 7)
 
+            def print_recipt():
+                visit_id = values[0]
+                data_on_visits = self.db.get_join_tabel_print_recipt(visit_id) #('2026-05-06', '13:15:00', 6530800007, 1560100345135, 3220500011802, 3220100069242, None, None, 2)
+                if PRINT_RECIPT().print_recipt(data_on_visits):
+                    popup_window_right_click.destroy()
+
             nonlocal popup_window_right_click
             try:
                 popup_window_right_click.destroy()
@@ -6016,6 +6032,10 @@ class MainFrame(ctk.CTkFrame):
             ctk.CTkButton(popup_window_right_click, text='เพิ่มชื่อญาติเยี่ยม', fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", command=add_visit, **btn_style).pack(padx=10, pady=(10,5))
             ctk.CTkButton(popup_window_right_click, text='ย้ายรอบ', fg_color="#f1c40f", hover_color="#f39c12", text_color="#2d3a4b", command=move_round, **btn_style).pack(padx=10, pady=(10,5))
             ctk.CTkButton(popup_window_right_click, text='ยกเลิกรอบ', fg_color='#e74c3c', hover_color='#c0392b', text_color="#fff", command=remove_round, **btn_style).pack(padx=10, pady=(10,5))
+            # เส้นคั่นแนวนอน
+            ctk.CTkFrame(popup_window_right_click, height=2, fg_color="#e0e0e0").pack(fill='x', padx=20, pady=2)
+            ctk.CTkButton(popup_window_right_click, text='พิมพ์ใบเสร็จ', fg_color="#4f8cff", hover_color="#343b44", text_color="#fff", command=print_recipt, **btn_style).pack(padx=10, pady=(10,5))
+
             popup_window_right_click.after(100, lambda: popup_window_right_click.focus_force())
             popup_window_right_click.bind('<FocusOut>', lambda e: popup_window_right_click.destroy())
         
