@@ -88,8 +88,29 @@ class SQLiteDB:
             finally:
                 self.close()
 
+        def log_error():
+            self.connect()
+            try:
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "log_error" (
+                        log_id INTEGER NOT NULL,
+                        time_stamp TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+                        function_name TEXT,
+                        error_message TEXT,
+                        extra_info TEXT,
+                        PRIMARY KEY("log_id" AUTOINCREMENT)
+                    )
+                ''')
+                print('สร้างตาราง log_error สำเร็จ')
+                return True
+            except Exception as e:
+                print(f'ข้อผิดพลาด: {e}')
+                return False
+            finally:
+                self.close()
         # เรียกใช้การสร้างตาราง
         visit_spacial_table()
+        log_error()
 
     def msgbox(self,e):
         messagebox.showerror('ฐานข้อมูล',f'{e}')
@@ -132,6 +153,28 @@ class SQLiteDB:
         finally:
             self.close()
     # ถึงข้อมูลช่องด้วย วันที่ และเวลา ของตารางเยี่ยมพิเศษ
+
+    def log_error(self,log_data):
+        '''
+        บันทึก log error ใน database
+        '''
+        self.connect()
+        try:
+            # เติม None ให้ครบ 3 ค่า
+            data = list(log_data) + [None] * (3 - len(log_data))
+            self.cursor.execute(
+                'INSERT INTO log_error (function_name, error_message, extra_info) VALUES (?, ?, ?)',
+                data[:3]
+            )
+            self.conn.commit()
+            return True
+        except Exception as e:
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
     @require_valid_key
     def get_chanel_on_visit_spacial(self,time_,date_):
         self.connect()

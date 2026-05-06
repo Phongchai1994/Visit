@@ -9,14 +9,47 @@ import sys
 import datetime
 from manage.database import SQLiteDB
 import hashlib
+# --- เพิ่มส่วนนี้ไว้ที่ส่วนบนสุดของไฟล์ main.py (หลัง import sys, os) ---
 
+def initialize_dlls():
+    if getattr(sys, 'frozen', False):
+        # รันจาก .exe (ไฟล์ถูกแตกออกมาที่นี่)
+        base_path = sys._MEIPASS
+    else:
+        # รันปกติ (.py)
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    # เนื่องจากเราใช้ dll\*;. ไฟล์ DLL จะอยู่ที่ base_path โดยตรง
+    dll_dir = base_path 
+    
+    # เพิ่ม Path เข้าไปในระบบเพื่อให้ clr และ Windows หาไฟล์เจอ
+    sys.path.append(dll_dir)
+    os.environ['PATH'] = dll_dir + os.pathsep + os.environ['PATH']
+    
+    # ตรวจสอบการมีอยู่ของไฟล์ (Optional สำหรับ DEBUG)
+    target_dll = os.path.join(dll_dir, "libzkfpcsharp.dll")
+    if os.path.exists(target_dll):
+        return True
+    return False
+
+# เรียกใช้งาน
+initialize_dlls()
+
+import clr
+try:
+    # โหลด Reference โดยใช้แค่ชื่อ (ไม่ต้องมี .dll)
+    clr.AddReference("libzkfpcsharp")
+    print("โหลด DLL สำเร็จ")
+except Exception as e:
+    # หากยังไม่ได้ ให้เช็คว่า Python และ DLL เป็น 64-bit ทั้งคู่หรือไม่
+    print(f"ไม่สามารถโหลด DLL ได้: {e}")
+
+# --- สิ้นสุดส่วนที่เพิ่ม ---
 # ✅ เพิ่ม import user_session
 from user_session import user_session, require_admin, require_login
 
 ctk.set_appearance_mode('system')
 ctk.set_default_color_theme('blue')
-
-
 
 def resource_path(relative_path):
     """ให้ path ทำงานได้ทั้งตอนรันจาก .py และ .exe"""

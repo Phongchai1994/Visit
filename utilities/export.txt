@@ -1,1 +1,10 @@
 pyinstaller --onefile --noconsole --add-binary "dll\libzkfpcsharp.dll;." --hidden-import=clr --hidden-import=System  main.py
+
+pyinstaller --onefile --noconsole ^
+  --clean ^
+  --add-data "logo.png;." ^
+  --add-data "dll\*;." ^
+  --add-data ".venv\Lib\site-packages\escpos\capabilities.json;escpos" ^
+  --hidden-import=clr ^
+  --hidden-import=System ^
+  main.py

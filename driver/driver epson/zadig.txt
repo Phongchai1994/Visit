@@ -1,0 +1,2 @@
+ - เปิด zadig → เลือกอุปกรณ์ที่ตรงกับ VID: 04B8, PID: 0E27
+ - เลือกไดรเวอร์เป็น libusb-win32 หรือ libusbK แล้วกด Install Driver
