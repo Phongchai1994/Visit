@@ -41,6 +41,9 @@ try:
     clr.AddReference("libzkfpcsharp")
     print("โหลด DLL สำเร็จ")
 except Exception as e:
+    import sys
+    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+    SQLiteDB().log_error([func_name,str(e)])
     # หากยังไม่ได้ ให้เช็คว่า Python และ DLL เป็น 64-bit ทั้งคู่หรือไม่
     print(f"ไม่สามารถโหลด DLL ได้: {e}")
 
@@ -56,6 +59,9 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS  # pyinstaller สร้าง temp folder
     except Exception:
+        import sys
+        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+        SQLiteDB().log_error([func_name,str(e)])
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
@@ -81,7 +87,7 @@ class App_Prisoners(ctk.CTk):
 
         # ✅ โหลด path ฐานข้อมูลจาก config
         self.db_path = load_config()
-        
+        self.db = SQLiteDB()
         # ✅ แสดงข้อมูลผู้ใช้ในหัวข้อ
         if user_session.is_logged_in:
             title = f'โปรแกรมจองเยี่ยมญาติ - {user_session.username} ({user_session.user_type.upper()})'
@@ -213,35 +219,10 @@ class App_Prisoners(ctk.CTk):
                 text_color="#2d3a4b"  # สีเข้มสไตล์โมเดิล
             )
             status_label.pack(side='left', padx=5, pady=2)
-            
-            # # ✅ เพิ่มปุ่ม Refresh ใน Status Bar
-            # refresh_btn = ctk.CTkButton(
-            #     status_container,
-            #     text="🔄 รีเฟรช",
-            #     width=90,
-            #     height=25,
-            #     font=("TH SarabunPSK", 12, "bold"),
-            #     fg_color="#4f8cff",
-            #     hover_color="#3d7bd6",
-            #     command=self.refresh_all_data
-            # )
-            # refresh_btn.pack(side='right', padx=5, pady=2)
-            
-            # # ✅ เพิ่มปุ่มตรวจสอบฐานข้อมูล
-            # check_db_btn = ctk.CTkButton(
-            #     status_container,
-            #     text="📊 ตรวจสอบ DB",
-            #     width=110,
-            #     height=25,
-            #     font=("TH SarabunPSK", 12, "bold"),
-            #     fg_color="#26a69a",
-            #     hover_color="#1e8e85",
-            #     command=self.check_database_connection
-            # )
-            # check_db_btn.pack(side='right', padx=5, pady=2)
-            
-            
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             print(f"Error creating status bar: {e}")
 
     def select_database(self):
@@ -289,6 +270,9 @@ class App_Prisoners(ctk.CTk):
                 else:
                     print("MainFrame ไม่มี method refresh_data")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error refreshing MainFrame: {e}")
             
             # ✅ รีเฟรชข้อมูลใน menu_frame
@@ -299,6 +283,9 @@ class App_Prisoners(ctk.CTk):
                 else:
                     print("MenuFrame ไม่มี method refresh_data")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error refreshing MenuFrame: {e}")
             
             # ✅ อัปเดต status bar
@@ -306,6 +293,9 @@ class App_Prisoners(ctk.CTk):
                 self.update_status_bar()
                 # print("อัปเดต Status Bar สำเร็จ")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error updating status bar: {e}")
             
             # ✅ อัปเดตหัวข้อ
@@ -313,6 +303,9 @@ class App_Prisoners(ctk.CTk):
                 self.update_title()
                 # print("อัปเดตหัวข้อสำเร็จ")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error updating title: {e}")
             
             # ✅ แสดงข้อความยืนยัน
@@ -327,6 +320,9 @@ class App_Prisoners(ctk.CTk):
             # print("รีเฟรชข้อมูลทั้งหมดเสร็จสิ้น")
             
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             error_msg = f"เกิดข้อผิดพลาดในการรีเฟรช: {str(e)}"
             print(error_msg)
             messagebox.showerror("ข้อผิดพลาด", error_msg)
@@ -363,6 +359,9 @@ class App_Prisoners(ctk.CTk):
                 else:
                     print("MainFrame ไม่มี method update_database_path")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error updating MainFrame database path: {e}")
             
             # ✅ อัปเดต path ให้กับ menu_frame
@@ -373,6 +372,9 @@ class App_Prisoners(ctk.CTk):
                 else:
                     print("MenuFrame ไม่มี method update_database_path")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error updating MenuFrame database path: {e}")
             
             # ✅ รีเฟรชข้อมูลที่แสดงอยู่
@@ -381,6 +383,9 @@ class App_Prisoners(ctk.CTk):
                     self.main_frame.refresh_data()
                     # print("รีเฟรชข้อมูลใน MainFrame สำเร็จ")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error refreshing MainFrame data: {e}")
             
             # ✅ อัปเดต status bar
@@ -388,11 +393,17 @@ class App_Prisoners(ctk.CTk):
                 self.update_status_bar()
                 # print("อัปเดต Status Bar สำเร็จ")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error updating status bar: {e}")
             
             print(f"Database path updated to: {self.db_path}")
             
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             error_msg = f"เกิดข้อผิดพลาดในการอัปเดตฐานข้อมูล: {str(e)}"
             print(error_msg)
             messagebox.showerror("ข้อผิดพลาด", error_msg)
@@ -412,6 +423,9 @@ class App_Prisoners(ctk.CTk):
             self.create_status_bar()
             
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             print(f"Error updating status bar: {e}")
             # หากเกิดข้อผิดพลาด ให้สร้าง status bar ใหม่เลย
             self.create_status_bar()
@@ -445,6 +459,9 @@ class App_Prisoners(ctk.CTk):
                 f"{table_info}")
             
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             messagebox.showerror("ข้อผิดพลาด", f"เกิดข้อผิดพลาดในการเชื่อมต่อ:\n{str(e)}")
 
     # ✅ เพิ่มฟังก์ชันสำหรับ Admin
@@ -470,7 +487,7 @@ class SimpleLoginApp:
     def __init__(self):
         # ตรวจสอบและบังคับเลือกฐานข้อมูลก่อนเข้าสู่ระบบ
         self.ensure_database_selected()
-
+        self.db = SQLiteDB()
         # ...existing code...
 
     def ensure_database_selected(self):
@@ -481,6 +498,9 @@ class SimpleLoginApp:
                 with open(config_path, 'r', encoding='utf-8') as f:
                     db_path = json.load(f).get('db_path', '')
             except Exception:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 db_path = ''
         if not db_path or not os.path.exists(db_path):
             messagebox.showwarning("เลือกฐานข้อมูล", "กรุณาเลือกไฟล์ฐานข้อมูลก่อนเข้าสู่ระบบ")

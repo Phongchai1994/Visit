@@ -83,6 +83,9 @@ class SQLiteDB:
                 # print('สร้างตาราง visit_spacial สำเร็จ')
                 return True
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.log_error([func_name,str(e)])
                 print(f'ข้อผิดพลาด: {e}')
                 return False
             finally:
@@ -104,6 +107,9 @@ class SQLiteDB:
                 print('สร้างตาราง log_error สำเร็จ')
                 return True
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.log_error([func_name,str(e)])
                 print(f'ข้อผิดพลาด: {e}')
                 return False
             finally:
@@ -126,6 +132,9 @@ class SQLiteDB:
             self.cursor = self.conn.cursor()
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(f"Database connection error: {e}")
             messagebox.showerror('เชื่อมต่อฐานข้อมูลไม่สำเร็จ',str(e))
             self.conn = None
@@ -147,6 +156,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT key FROM check_')
             return self.cursor.fetchone()[0]
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -169,6 +181,9 @@ class SQLiteDB:
             self.conn.commit()
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -184,6 +199,9 @@ class SQLiteDB:
             count = self.cursor.fetchone()[0]
             return count      
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -199,6 +217,9 @@ class SQLiteDB:
             count = self.cursor.fetchone()[0]
             return count      
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -213,6 +234,9 @@ class SQLiteDB:
             self.cursor.execute(query,data)
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -231,6 +255,9 @@ class SQLiteDB:
             return data
         
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -250,6 +277,9 @@ class SQLiteDB:
             days = [row[0] for row in self.cursor.fetchall()]
             return {'years': years, 'months': months, 'days': days}
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -290,6 +320,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -328,6 +361,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -343,6 +379,9 @@ class SQLiteDB:
             self.cursor.execute('INSERT INTO prisoners_ (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status) VALUES (?,?,?,?,?,?,?,?,?)',data)
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -359,6 +398,9 @@ class SQLiteDB:
             # print('บันทึกข้อมูลตาราง relatives')
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             return False
         finally:
@@ -377,6 +419,9 @@ class SQLiteDB:
             # print('เชื่อมข้อมูลระหว่าง prisoner_id และ relative_id และระบุความสัมพันธ์')
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             return False
         finally:
@@ -397,6 +442,9 @@ class SQLiteDB:
             self.all_data = self.cursor.fetchall()
             return [[value if value is not None else "" for value in row] for row in self.all_data]
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด {e}')
             return []
@@ -484,6 +532,9 @@ class SQLiteDB:
             thai_date = date_to_thai(date)
             return [prisoner_fname, prisoner_lname] + [thai_date] + [time] + [channel] + [f'สิทธิ์การเยี่ยมคงเหลือ เดือน {month} เหลือ {count_reserve} ครั้ง'] + relatives_names
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -511,6 +562,9 @@ class SQLiteDB:
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -540,6 +594,9 @@ class SQLiteDB:
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(e)
             return False
@@ -568,6 +625,9 @@ class SQLiteDB:
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -596,6 +656,9 @@ class SQLiteDB:
             data =  self.cursor.fetchall()
             return data
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -619,6 +682,9 @@ class SQLiteDB:
                                 ''',(prisoner_id,national_id))
             return self.cursor.fetchall()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(f'ERROR : {e}')
             self.msgbox(e)
             return False
@@ -634,6 +700,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(e)
             return False
@@ -686,6 +755,9 @@ class SQLiteDB:
             print(f'database เสียหาย : {e}')
             return False
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -701,6 +773,9 @@ class SQLiteDB:
             self.cursor.execute(query,data)
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'Error : {e}')
             return False
@@ -720,6 +795,9 @@ class SQLiteDB:
                                 ''', (channel, data[0], data[1], data[2], data[3]))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -758,6 +836,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -799,6 +880,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -815,6 +899,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT relative_id,f_name,l_name FROM relatives')
             return self.cursor.fetchall()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -857,6 +944,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -871,6 +961,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT title,f_name,l_name FROM relatives WHERE relative_id = ?',(id,))
             return self.cursor.fetchall()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -889,6 +982,9 @@ class SQLiteDB:
             count_month = self.cursor.fetchone()[0]
             return count_today,count_month
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -907,6 +1003,9 @@ class SQLiteDB:
             count = self.cursor.fetchone()[0]
             return count
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)  
             return False
         finally:
@@ -936,6 +1035,9 @@ class SQLiteDB:
                                     prisoner_id = ?''',(sex,f_name,l_name,lawsuit,level,dan,type_data,status,disciplinary_values,id))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -954,6 +1056,9 @@ class SQLiteDB:
             result = self.cursor.fetchall()
             return result if result else []
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาดใน get_all_relatives: {e}')
             return []
@@ -969,6 +1074,9 @@ class SQLiteDB:
             self.cursor.execute('DELETE FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -983,6 +1091,9 @@ class SQLiteDB:
             self.cursor.execute('DELETE FROM prisoners_ WHERE prisoner_id = ?',(id,))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -996,6 +1107,9 @@ class SQLiteDB:
             self.cursor.execute('UPDATE relatives SET title = ?, f_name = ?, l_name = ?, address = ?, tel = ? WHERE relative_id = ?',(*data, id))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(e)
             return False
@@ -1010,6 +1124,9 @@ class SQLiteDB:
             self.cursor.execute('UPDATE visits SET time_visit = ?, channel = ? WHERE visit_id = ?',(new_round,new_channel,visit_id))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -1024,6 +1141,9 @@ class SQLiteDB:
             self.cursor.execute('DELETE FROM visits WHERE visit_id = ?',(visit_id,))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -1038,6 +1158,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT * FROM visits WHERE visit_id = ?',(visit_id,))
             return self.cursor.fetchone()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             return False
         finally:
@@ -1060,6 +1183,9 @@ class SQLiteDB:
                                 ''',(prisoner_id,))
             return self.cursor.fetchall()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(f'ERROR : {e}')
             self.msgbox(e)
             return False
@@ -1075,6 +1201,9 @@ class SQLiteDB:
             count = self.cursor.fetchone()[0]
             return count
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             self.msgbox(e)
             return False
@@ -1091,6 +1220,9 @@ class SQLiteDB:
             data = self.cursor.fetchone()[0]
             return data
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             self.msgbox(e)
             return False
@@ -1107,6 +1239,9 @@ class SQLiteDB:
             # print(data)
             return data
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             self.msgbox(e)
             return False
@@ -1124,6 +1259,9 @@ class SQLiteDB:
                 self.cursor.execute(query)
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             self.msgbox(e)
             return False
@@ -1138,6 +1276,9 @@ class SQLiteDB:
             self.cursor.execute('UPDATE visits SET relative_id_1 = ?,relative_id_2 = ?,relative_id_3 = ?,relative_id_4 = ?,relative_id_5 =? WHERE visit_id = ?',(data))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             print(e)
             self.msgbox(e)
             return False
@@ -1152,6 +1293,9 @@ class SQLiteDB:
             self.cursor.execute('UPDATE relations SET relation = ? WHERE prisoner_id = ? AND relative_id = ?',(relation,prisoner_id,relative_id))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -1166,6 +1310,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT relation FROM relations WHERE prisoner_id = ? AND relative_id = ?',(prisoner_id,relative_id))
             return self.cursor.fetchone()[0]
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -1180,6 +1327,9 @@ class SQLiteDB:
             data = [row[0] for row in self.cursor.fetchall() if row[0] is not None]
             return data
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -1193,6 +1343,9 @@ class SQLiteDB:
             self.cursor.execute('UPDATE visits SET channel = ? WHERE visit_id = ?',(channel,visit_id))
             return True
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -1207,6 +1360,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT * FROM visits WHERE date_visit = ?',(date,))
             return self.cursor.fetchall()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -1220,6 +1376,9 @@ class SQLiteDB:
             self.cursor.execute('SELECT date FROM holidays')
             return self.cursor.fetchall()
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False
@@ -1238,6 +1397,9 @@ class SQLiteDB:
                     'fullname': fullname
                 }
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
             self.msgbox(e)
             print(f'เกิดข้อผิดพลาด : {e}')
             return False

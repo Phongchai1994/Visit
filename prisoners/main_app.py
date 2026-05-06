@@ -473,12 +473,13 @@ class RESERVE_SPACIAL:
         submit.pack(side = 'bottom',pady = 20)
         
 class RESERVE:
-    def __init__(self, main_window, prisoner_data,national_id,to_day,to_month,reserve_now):
+    def __init__(self, main_window, prisoner_data,national_id,to_day,to_month,reserve_now,on_success=None):
         self.status = reserve_now
         self.main_window = main_window
         self.national_id = national_id
         self.follower_vars = []
         self.next_screen = ctk.CTkToplevel(self.main_window)
+        self.on_success = on_success
         
         # สร้างหน้าต่างใหม่
         self.next_screen.configure(fg_color='#f4f7fa')
@@ -534,6 +535,7 @@ class RESERVE:
 
 
         self.main()
+
 
     def main(self):
         if self.check_disciplinary():
@@ -1108,6 +1110,9 @@ class RESERVE:
                 self.insert_reserve_visit_to_db(prepare_data, channel)
                 print("insert_reserve_visit_to_db success")
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f"Error in on_confirm: {e}")
 
         submit = ctk.CTkButton(self.frame_confirm_visit,
@@ -1188,9 +1193,12 @@ class RESERVE:
     
     def insert_succress(self):
         alert = ALERT(self.next_screen,['จองเยี่ยมสำเร็จ'],button=True)
+        alert.after(5000, alert._on_ok)
         result =alert.show()
         if result:
             self.on_close()
+            if self.on_success:
+                self.on_success()
         return True
     
     def get_thai_date(self,date_str):
@@ -2266,6 +2274,9 @@ class MainFrame(ctk.CTkFrame):
                     info = self.thai_id_reader.get_person_info()
                     id_relative.set(info['cid'])
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     messagebox.showerror('ข้อผิดพลาด', 'ไม่สามารถอ่านบัตรประชาชนได้ กรุณากรอกข้อมูลด้วยตนเอง')
                     pass
                 if not id_relative.get():
@@ -3689,6 +3700,9 @@ class MainFrame(ctk.CTkFrame):
                     self.thai_id_reader.read_card()
                     info = self.thai_id_reader.get_person_info()
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     # print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
                     messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน และเสียบบัตรประชาชน')
                     return
@@ -3760,6 +3774,9 @@ class MainFrame(ctk.CTkFrame):
                     self.zkfp2.Init()
                     self.zkfp2.OpenDevice(0)
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     messagebox.showerror('การเชื่อมต่อเครื่อง','กรุณาเชื่อมต่อเครื่องสแกนนิ้ว')
                     return
                 nonlocal is_thread_running
@@ -3803,6 +3820,9 @@ class MainFrame(ctk.CTkFrame):
                                 messagebox.showerror('ผิดพลาด', 'ไม่สามารถบันทึกข้อมูลลายนิ้วมือได้')
                                 return
                     except Exception as e:
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
                         messagebox.showerror('ผิดพลาด', f'เกิดข้อผิดพลาด: {e}')
                     finally:
                         is_thread_running = False
@@ -3865,10 +3885,13 @@ class MainFrame(ctk.CTkFrame):
         regis_fp_entry.bind('<Return>',lambda event:get_data_manual())
 
         popup_register_fingerprint.protocol("WM_DELETE_WINDOW", on_close)
+
 ##############################################################################################################################################################################
     # รายการจองเยี่ยม
 ##############################################################################################################################################################################
     def reserve_to_visit(self):
+        reserve_instance = None
+
         # เคลียร์วิดเจ็ตที่ถูกสร้างแบบไดนามิก
         def clear_dynamic_widgets():
             try:
@@ -3906,24 +3929,41 @@ class MainFrame(ctk.CTkFrame):
 
         def config_label():
             nonlocal nationnal_id, idle_bind_set
-            cancel_idle_timer() # ยกเลิก timer ทุกครั้งที่กลับหน้าหลัก
-            # เคลียร์วิดเจ็ต/เฟรมที่แสดงอยู่
+            cancel_idle_timer()
             clear_dynamic_widgets()
-            # เลิก bind อีเวนต์ (ถ้ามี)
+            # เช็คว่าหน้าต่าง popup_reserve_to_visit ยังอยู่
+            if not popup_reserve_to_visit.winfo_exists():
+                return
+            # เช็คว่า date_label ยังอยู่
+            try:
+                if date_label.winfo_exists():
+                    date_label.pack(fill='both', expand=True)
+            except Exception:
+                pass
+            try:
+                main_frame_label.grid_forget()
+            except Exception:
+                pass
+            try:
+                button_reserve_now.grid_forget()
+                button_reserve_future.grid_forget()
+                button_reserve_spacial.grid_forget()
+                button_cancel.grid_forget()
+            except Exception:
+                pass
+            try:
+                button_visitor.grid(row=0, rowspan=3, column=0, columnspan=2, sticky='ew', padx=20, pady=20)
+            except Exception:
+                pass
+            try:
+                update_time_label()
+            except Exception:
+                pass
+            nationnal_id = None
+            hide_progress()
             if idle_bind_set:
                 unbind_idle_events()
                 idle_bind_set = False
-            nationnal_id = None
-            hide_progress()
-            date_label.pack(fill='both', expand=True)
-            main_frame_label.grid_forget()
-            button_reserve_now.grid_forget()
-            button_reserve_future.grid_forget()
-            button_reserve_spacial.grid_forget()
-            button_cancel.grid_forget()
-            button_visitor.grid(row=0,rowspan = 3 , column=0, columnspan=2, sticky='ew', padx=20, pady=20)
-
-            update_time_label()
 
         # ----- Idle timer helpers (30s) -----
         idle_after_id = None
@@ -3940,26 +3980,18 @@ class MainFrame(ctk.CTkFrame):
 
         def on_idle_timeout():
             cancel_idle_timer()
+            if reserve_instance and hasattr(reserve_instance, "on_close"):
+                try:
+                    reserve_instance.on_close()  # ปิด self.next_screen
+                except Exception:
+                    pass
             if popup_reserve_to_visit.winfo_exists():
-                # เคลียร์วิดเจ็ตเมื่อไม่มีการใช้งาน
-                clear_dynamic_widgets()
                 config_label()
 
         def reset_idle_timer():
             nonlocal idle_after_id
             cancel_idle_timer()
-            idle_after_id = popup_reserve_to_visit.after(40000,on_idle_timeout)
-        
-        def test():
-            main_frame_label.configure(text='กรุณาวางนิ้วมือบนเครื่องสแกนลายนิ้วมือ')
-            main_frame_label.grid(row=0, column=0, columnspan=2, sticky='ew', padx=20, pady=20)
-
-            nonlocal nationnal_id
-            nationnal_id = '1560100345135'
-            button_visitor.grid_forget()
-
-            hide_progress()
-            get_relative()
+            idle_after_id = popup_reserve_to_visit.after(30000,on_idle_timeout)
 
         def get_relative():
             print(f'national id in {nationnal_id}')
@@ -4041,6 +4073,7 @@ class MainFrame(ctk.CTkFrame):
             button_cancel.grid(row=3, column=0, columnspan=2,sticky='nsew', padx=200, pady=100)
 
             def reserve_now():
+                nonlocal reserve_instance
                 cancel_idle_timer()
                 button_reserve_now.grid_forget()
                 button_reserve_future.grid_forget()
@@ -4048,15 +4081,17 @@ class MainFrame(ctk.CTkFrame):
                 button_cancel.grid_forget()
 
                 def reserve_visit(prisoner_data):
+                    nonlocal reserve_instance
                     today_now = datetime.today().date().isoformat()
                     month_now = today_now[:7]
-                    reserve = RESERVE(
+                    reserve_instance = RESERVE(
                         main_window=popup_reserve_to_visit, 
                         prisoner_data=prisoner_data,
                         national_id=nationnal_id,
                         to_day=today_now,
                         to_month=month_now,
-                        reserve_now=True
+                        reserve_now=True,
+                        on_success = config_label
                     )
             
                     # ปิดอัตโนมัติถ้าไม่มีการใช้งาน 20 วินาที
@@ -4065,7 +4100,7 @@ class MainFrame(ctk.CTkFrame):
                     def cancel_idle():
                         if idle_after_id["id"]:
                             try:
-                                reserve.next_screen.after_cancel(idle_after_id["id"])
+                                reserve_instance.next_screen.after_cancel(idle_after_id["id"])
                                 # popup_reserve_to_visit.after_cancel(idle_after_id)
                             except Exception:
                                 pass
@@ -4074,7 +4109,7 @@ class MainFrame(ctk.CTkFrame):
                     def on_idle_timeout():
                         cancel_idle()
                         try:
-                            reserve.on_close()
+                            reserve_instance.on_close()
                             config_label()
                         except Exception:
                             pass
@@ -4082,8 +4117,8 @@ class MainFrame(ctk.CTkFrame):
                     def reset_idle(_=None):
                         cancel_idle()
                         try:
-                            if reserve.next_screen and reserve.next_screen.winfo_exists():
-                                idle_after_id["id"] = reserve.next_screen.after(20000, on_idle_timeout)
+                            if reserve_instance.next_screen and reserve_instance.next_screen.winfo_exists():
+                                idle_after_id["id"] = reserve_instance.next_screen.after(25000, on_idle_timeout)
                         except Exception:
                             pass
 
@@ -4091,7 +4126,7 @@ class MainFrame(ctk.CTkFrame):
                     reset_idle()
                     for seq in ("<Any-KeyPress>", "<Button>", "<Motion>", "<MouseWheel>"):
                         try:
-                            reserve.next_screen.bind_all(seq, reset_idle, add="+")
+                            reserve_instance.next_screen.bind_all(seq, reset_idle, add="+")
                         except Exception:
                             pass
 
@@ -4099,90 +4134,85 @@ class MainFrame(ctk.CTkFrame):
                     def _cleanup(_e=None):
                         try:
                             for seq in ("<Any-KeyPress>", "<Button>", "<Motion>", "<MouseWheel>"):
-                                reserve.next_screen.unbind_all(seq)
+                                reserve_instance.next_screen.unbind_all(seq)
                         except Exception:
                             pass
                         cancel_idle()
 
                     try:
-                        reserve.next_screen.bind("<Destroy>", _cleanup, add="+")
+                        reserve_instance.next_screen.bind("<Destroy>", _cleanup, add="+")
                     except Exception:
                         pass
 
-                def item_select(_):
+                def handle_prisoner_button(prisoner_data):
                     try:
                         cancel_idle_timer()
-                        for i in tree.selection():
-                            prisoner_data = tree.item(i)['values']
-                            break
                         if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
                             self.open_nextscreen_window = reserve_visit(prisoner_data)
                         else:
                             self.open_nextscreen_window.lift()
                     except Exception as e:
-                        print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
-
-                def resize_tree_column():
-                    tree_container.update_idletasks()
-                    total_width = tree_container.winfo_width()
-                    for col, ratio in column_ratios.items():
-                        tree.column(col,width=int(total_width * ratio),anchor='w')
-
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
+                        print(f'เกิดข้อผิดพลาด handle_prisoner_button: {e}')
+                                
+                if prisoners_data != []:
+                    print(prisoners_data)
+                else:
+                    alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {nationnal_id}'],button=True)
+                    return
+                
                 # Add a beautiful frame for the treeview
-                tree_container = ctk.CTkFrame(
+                button_container = ctk.CTkFrame(
                     main_frame,
                     fg_color="#f8fbff",
                     corner_radius=18,
                     border_width=2,
-                    border_color="#3a7ca5"
+                    border_color="#ff5e00"
                 )
-                tree_container.grid_rowconfigure(1,weight=1)
-                tree_container.grid_columnconfigure(0,weight=1)
+                button_container.grid_columnconfigure(0, weight=1)
+                button_container.grid_columnconfigure(1, weight=1)
+                col_count = 2  # จำนวนคอลัมน์
+                row_idx = 0
+                col_idx = 0
+                allowed_dan_by_dan = {
+                    "จันทร์" : ['6','รจช'],
+                    "อังคาร" : ['5','รจช'],
+                    "พุธ" : ['1','2','3','4','7','รจช'],
+                    "พฤหัสบดี" : ['5','6','รจช'],
+                    "ศุกร์" : ['1','2','3','4','7','รจช']        
+                }
+                try:
+                    allower_dan = allowed_dan_by_dan.get(day,[])
+                except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
+                    print(f'เกิดข้อผิดพลาด {e}')
 
-                # กำหนด style สำหรับ treeview 
-                style = ttk.Style()
-                style.theme_use('clam')
-                style.configure('Treeview',
-                    font =('TH SarabunPSK', 30),
-                    rowheight = 50,
-                    background="#f8fbff",
-                    fieldbackground="#f8fbff",
-                    bordercolor="#3a7ca5",
-                    borderwidth=1
-                )
-                style.configure('Treeview.Heading',
-                    font = ('TH SarabunPSK', 30, 'bold'),
-                    background="#3a7ca5",
-                    foreground="#ffffff",
-                    borderwidth=2
-                )
-                style.map('Treeview', background=[('selected', '#b3d1ff')])
+                for index, row in enumerate(prisoners_data):
+                    if row[4] not in allower_dan or row[6] != 'อยู่':
+                        continue
+                    btn = ctk.CTkButton(
+                        button_container,
+                        text=f"จองเยี่ยม {row[1]} {row[2]}",
+                        font=('TH SarabunPSK', 54, 'bold'),
+                        corner_radius=16,
+                        command=lambda r=row: handle_prisoner_button(r),
+                        height=150
+                    )
+                    btn.grid(row=row_idx, column=col_idx, padx=16, pady=8, sticky='nsew')  # เพิ่ม padding และ sticky
+                    col_idx += 1
+                    if col_idx >= col_count:
+                        col_idx = 0
+                        row_idx += 1
+                
 
-                tree = ttk.Treeview(
-                    tree_container,
-                    columns=('prisoner_id','f_name','l_name','level','dan','relation'),
-                    show='tree headings',
-                    height=18,
-                    style='Treeview'
-                )
-                tree.heading('#0', text='')  # tree column (ซ่อนได้ถ้าไม่ต้องการหัวข้อ)
-                tree.column('#0', width=30, minwidth=20)  # ปรับขนาดช่องลูกศร
-
-                tree.heading('prisoner_id',text='รหัสประจำตัว')
-                tree.heading('f_name',text='ชื่อ')
-                tree.heading('l_name',text='นามสกุล')
-                tree.heading('level',text='ชั้น')
-                tree.heading('dan',text='แดน')
-                tree.heading('relation',text='ความสัมพันธ์')
-                tree.column('prisoner_id', anchor='center')
-                tree.column('f_name', anchor='center')
-                tree.column('l_name', anchor='center')
-                tree.column('level', anchor='center')
-                tree.column('dan', anchor='center')
-                tree.column('relation', anchor='center')
-                scrollbar = ttk.Scrollbar(tree_container,orient='vertical',command=tree.yview)
-                tree.configure(yscrollcommand=scrollbar.set)
-
+                if len(button_container.winfo_children()) == 0:
+                    alert = ALERT(popup_reserve_to_visit, ['ไม่มีข้อมูลผู้ต้องขัง\nที่สามารถจองเยี่ยมได้'], button=True)
+                else:
+                    button_container.grid(row=1, column=0, columnspan=2, padx=40, pady=10, sticky="nsew")
                 
                 btn_cancel = ctk.CTkButton(
                     main_frame,
@@ -4193,7 +4223,7 @@ class MainFrame(ctk.CTkFrame):
                     text_color="#000000",
                     corner_radius=16,
                     command=lambda: (
-                        tree_container.grid_forget(),
+                        button_container.grid_forget(),
                         btn_cancel.grid_forget(),
                         get_relative()
                     )
@@ -4206,58 +4236,10 @@ class MainFrame(ctk.CTkFrame):
                     padx=200,
                     pady=100
                     )
-                
-                column_ratios = {
-                    'prisoner_id': 0.15,
-                    'f_name': 0.18,
-                    'l_name': 0.18,
-                    'level': 0.15,
-                    'dan': 0.17,
-                    'relation': 0.17,
-                }
-
-                # print('จองเยี่ยมวันนี้')
-                allowed_dan_by_dan = {
-                    "จันทร์" : ['6','รจช'],
-                    "อังคาร" : ['5','รจช'],
-                    "พุธ" : ['1','2','3','4','7','รจช'],
-                    "พฤหัสบดี" : ['5','6','รจช'],
-                    "ศุกร์" : ['1','2','3','4','7','รจช']        
-                }
-                allower_dan = allowed_dan_by_dan.get(day,[])
-                # print(allower_dan)
-
-                if prisoners_data != []:
-                    print(prisoners_data)
-                else:
-                    alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {nationnal_id}'],button=True)
-                    return
-                
-                for row in tree.get_children():
-                    tree.delete(row)
-
-                for index,row in enumerate(prisoners_data):
-                    if row[4] not in allower_dan or row[6] != 'อยู่':
-                        continue
-                        # เพิ่ม parent row
-                    parent_id = tree.insert('', 'end', text='', values=row)
-                    # เพิ่ม child dummy (เพื่อให้แสดงลูกศร แม้ไม่มีข้อมูลลูกจริง)
-                    tree.insert(parent_id, 'end', text='', values=[''] * len(row))
-
-                if len(tree.get_children()) == 0:
-                    alert = ALERT(popup_reserve_to_visit,['ไม่พบข้อมูลผู้ต้องขังที่เยี่ยมได้\nกรุณาตรวจสอบวันและเวลาเยี่ยม'],button=False)
-                    alert.after(3000,lambda: (alert.destroy()))
-                else:
-                    tree.grid(row=1,column=0,columnspan=2,sticky='nsew')
-                    tree_container.grid(row = 1,column=0,columnspan = 2,padx=20, pady=10, sticky="nsew")
-
-                tree_container.bind('<Configure>',lambda e: resize_tree_column())
-                tree.bind('<<TreeviewSelect>>',item_select)
 
             def reserve_future():
+                nonlocal reserve_instance
                 cancel_idle_timer()
-                # main_frame.rowconfigure((1),weight=0,uniform='main_frame')
-                # main_frame.rowconfigure((3),weight=1,uniform='main_frame')
                 button_reserve_now.grid_forget()
                 button_reserve_future.grid_forget()
                 button_reserve_spacial.grid_forget()
@@ -4265,18 +4247,21 @@ class MainFrame(ctk.CTkFrame):
                 name_next_day = days[current_time.tm_wday+1]
 
                 def reserve_visit(prisoner_data):
+                    nonlocal reserve_instance
+
                     cal_next_day = CALCULATE_NEXT_DAY()
                     today_future = cal_next_day.get_next_day()
                     month_future = today_future[:7]
                     # print(f'จองเยี่ยมล่วงหน้า {today_future} {month_future}')
 
-                    reserve = RESERVE(
+                    reserve_instance = RESERVE(
                         main_window=popup_reserve_to_visit,
                         prisoner_data=prisoner_data,
                         national_id=nationnal_id,
                         to_day=today_future,
                         to_month=month_future,
-                        reserve_now=False
+                        reserve_now=False,
+                        on_success=config_label
                     )
                     # ปิดอัตโนมัติถ้าไม่มีการใช้งาน 20 วินาที
                     idle_after_id = {"id": None}
@@ -4284,7 +4269,7 @@ class MainFrame(ctk.CTkFrame):
                     def cancel_idle():
                         if idle_after_id["id"]:
                             try:
-                                reserve.next_screen.after_cancel(idle_after_id["id"])
+                                reserve_instance.next_screen.after_cancel(idle_after_id["id"])
                             except Exception:
                                 pass
                             idle_after_id["id"] = None
@@ -4292,7 +4277,7 @@ class MainFrame(ctk.CTkFrame):
                     def on_idle_timeout():
                         cancel_idle()
                         try:
-                            reserve.on_close()
+                            reserve_instance.on_close()
                             config_label()
                         except Exception:
                             pass
@@ -4300,8 +4285,8 @@ class MainFrame(ctk.CTkFrame):
                     def reset_idle(_=None):
                         cancel_idle()
                         try:
-                            if reserve.next_screen and reserve.next_screen.winfo_exists():
-                                idle_after_id["id"] = reserve.next_screen.after(20000, on_idle_timeout)
+                            if reserve_instance.next_screen and reserve_instance.next_screen.winfo_exists():
+                                idle_after_id["id"] = reserve_instance.next_screen.after(25000, on_idle_timeout)
                         except Exception:
                             pass
 
@@ -4309,7 +4294,7 @@ class MainFrame(ctk.CTkFrame):
                     reset_idle()
                     for seq in ("<Any-KeyPress>", "<Button>", "<Motion>", "<MouseWheel>"):
                         try:
-                            reserve.next_screen.bind_all(seq, reset_idle, add="+")
+                            reserve_instance.next_screen.bind_all(seq, reset_idle, add="+")
                         except Exception:
                             pass
 
@@ -4317,13 +4302,13 @@ class MainFrame(ctk.CTkFrame):
                     def _cleanup(_e=None):
                         try:
                             for seq in ("<Any-KeyPress>", "<Button>", "<Motion>", "<MouseWheel>"):
-                                reserve.next_screen.unbind_all(seq)
+                                reserve_instance.next_screen.unbind_all(seq)
                         except Exception:
                             pass
                         cancel_idle()
 
                     try:
-                        reserve.next_screen.bind("<Destroy>", _cleanup, add="+")
+                        reserve_instance.next_screen.bind("<Destroy>", _cleanup, add="+")
                     except Exception:
                         pass
 
@@ -4335,6 +4320,9 @@ class MainFrame(ctk.CTkFrame):
                         else:
                             self.open_nextscreen_window.lift()
                     except Exception as e:
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
                         print(f'เกิดข้อผิดพลาด handle_prisoner_button: {e}')
 
                 # Ensure previous widgets are hidden to avoid overlap
@@ -4342,7 +4330,6 @@ class MainFrame(ctk.CTkFrame):
                     if isinstance(widget, ctk.CTkLabel) and widget.cget("text").startswith("จองเยี่ยมล่วงหน้า"):
                         widget.grid_forget()
 
-                
                 cal_next_day = CALCULATE_NEXT_DAY()
                 next_day = cal_next_day.get_next_day()
                 dt = datetime.strptime(next_day, '%Y-%m-%d')
@@ -4364,10 +4351,17 @@ class MainFrame(ctk.CTkFrame):
                 future_button_container = ctk.CTkFrame(
                     main_frame,
                     fg_color="#f8fbff",
-                    # corner_radius=18,
-                    # border_width=2,
-                    # border_color="#3a7ca5"
+                    corner_radius=18,
+                    border_width=2,
+                    border_color="#00ff15"
                 )
+
+                # กำหนด column ให้ขยายเต็ม container
+                future_button_container.grid_columnconfigure(0, weight=1)
+                future_button_container.grid_columnconfigure(1, weight=1)
+                col_count = 2  # จำนวนคอลัมน์
+                row_idx = 0
+                col_idx = 0
 
                 allowed_dan_by_dan={
                     "เสาร์" : [],
@@ -4381,25 +4375,25 @@ class MainFrame(ctk.CTkFrame):
                 try:
                     allowed_dan = allowed_dan_by_dan.get(weekday)
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     print(f'เกิดข้อผิดพลาด {e}')
-                # กำหนด column ให้ขยายเต็ม container
-                future_button_container.grid_columnconfigure(0, weight=1)
-                future_button_container.grid_columnconfigure(1, weight=1)
-                col_count = 2  # จำนวนคอลัมน์
-                row_idx = 0
-                col_idx = 0
+                    
+
 
                 for index, row in enumerate(prisoners_data):
                     if row[4] not in allowed_dan or row[6] != 'อยู่':
                         continue
                     btn = ctk.CTkButton(
                         future_button_container,
-                        text=f"เลือก {row[1]} {row[2]}",
-                        font=('TH SarabunPSK', 32, 'bold'),
+                        text=f"จองเยี่ยม {row[1]} {row[2]}",
+                        font=('TH SarabunPSK', 54, 'bold'),
                         corner_radius=16,
-                        command=lambda r=row: handle_prisoner_button(r)
+                        command=lambda r=row: handle_prisoner_button(r),
+                        height=150
                     )
-                    btn.grid(row=row_idx, column=col_idx, padx=16, pady=8, sticky='ew')  # เพิ่ม padding และ sticky
+                    btn.grid(row=row_idx, column=col_idx, padx=16, pady=8, sticky='nsew')  # เพิ่ม padding และ sticky
                     col_idx += 1
                     if col_idx >= col_count:
                         col_idx = 0
@@ -4414,7 +4408,7 @@ class MainFrame(ctk.CTkFrame):
                 btn_cancel = ctk.CTkButton(
                     main_frame,
                     text='ย้อนกลับ',
-                    font=('TH SarabunPSK', 32, 'bold'),
+                    font=('TH SarabunPSK', 54, 'bold'),
                     fg_color="#eec337",
                     hover_color="#dad099",
                     text_color="#000000",
@@ -4434,10 +4428,9 @@ class MainFrame(ctk.CTkFrame):
                     padx=200,
                     pady=100
                     )
-
-
-            
+  
             def reserve_spacial():
+                nonlocal reserve_instance
                 cancel_idle_timer()
                 # main_frame.rowconfigure((1),weight=0,uniform='main_frame')
                 # main_frame.rowconfigure((3),weight=1,uniform='main_frame')
@@ -4477,7 +4470,7 @@ class MainFrame(ctk.CTkFrame):
                         cancel_idle()
                         try:
                             if reserve.next_screen and reserve.next_screen.winfo_exists():
-                                idle_after_id["id"] = reserve.next_screen.after(20000, on_idle_timeout)
+                                idle_after_id["id"] = reserve.next_screen.after(25000, on_idle_timeout)
                         except Exception:
                             pass
 
@@ -4502,28 +4495,19 @@ class MainFrame(ctk.CTkFrame):
                         reserve.next_screen.bind("<Destroy>", _cleanup, add="+")
                     except Exception:
                         pass
-
-                def item_select(_):
-                    cancel_idle_timer()
-                    # print('item_select() called')
+                
+                def handle_prisoner_button(prisoner_data):
                     try:
-                        for i in spacial_tree.selection():
-                            prisoner_data = spacial_tree.item(i)['values']
-                            break
+                        cancel_idle_timer()
                         if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
                             self.open_nextscreen_window = reserve_visit(prisoner_data)
                         else:
                             self.open_nextscreen_window.lift()
                     except Exception as e:
-                        print(f'เกิดข้อผิดพลาด item_select() : {e}')
-
-
-                def resize_tree_column():
-                    spacial_tree_container.update_idletasks()
-                    total_width = spacial_tree_container.winfo_width()
-                    for col, ratio in column_ratios.items():
-                        spacial_tree.column(col,width=int(total_width * ratio),anchor='w')
-               
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
+                        print(f'เกิดข้อผิดพลาด handle_prisoner_button: {e}')
 
                 # Ensure previous widgets are hidden to avoid overlap
                 for widget in popup_reserve_to_visit.grid_slaves():
@@ -4534,59 +4518,39 @@ class MainFrame(ctk.CTkFrame):
                 main_frame_label.configure(text = f'{old_text}\nจองเยี่ยม วันหยุดพิเศษ')
                 
                 # Add a beautiful frame for the treeview
-                spacial_tree_container = ctk.CTkFrame(
+                spacial_container = ctk.CTkFrame(
                     main_frame,
                     fg_color="#f8fbff",
-                    # corner_radius=18,
-                    # border_width=2,
-                    # border_color="#3a7ca5"
+                    corner_radius=18,
+                    border_width=2,
+                    border_color="#ff0000"
                 )
-                spacial_tree_container.grid_rowconfigure(1,weight=1)
-                spacial_tree_container.grid_columnconfigure(0,weight=1)
+                spacial_container.grid_columnconfigure(0,weight=1)
+                spacial_container.grid_columnconfigure(1,weight=1)
+                col_count = 2  # จำนวนคอลัมน์
+                row_idx = 0
+                col_idx = 0
+                for index,row in enumerate(prisoners_data):
+                    if row[4] not in row[6] != 'อยู่':
+                        continue
+                    btn = ctk.CTkButton(
+                        spacial_container,
+                        text=f"จองเยี่ยม {row[1]} {row[2]}",
+                        font=('TH SarabunPSK', 54, 'bold'),
+                        corner_radius=16,
+                        command=lambda r=row: handle_prisoner_button(r),
+                        height=150
+                    )
+                    btn.grid(row=row_idx, column=col_idx, padx=16, pady=8, sticky='nsew')  # เพิ่ม padding และ sticky
+                    col_idx += 1
+                    if col_idx >= col_count:
+                        col_idx = 0
+                        row_idx += 1
 
-                # กำหนด style สำหรับ treeview 
-                style = ttk.Style()
-                style.theme_use('clam')
-                style.configure('Treeview',
-                    font =('TH SarabunPSK', 30),
-                    rowheight = 50,
-                    background="#f8fbff",
-                    fieldbackground="#f8fbff",
-                    bordercolor="#3a7ca5",
-                    borderwidth=1
-                )
-                style.configure('Treeview.Heading',
-                    font = ('TH SarabunPSK', 30, 'bold'),
-                    background="#3a7ca5",
-                    foreground="#ffffff",
-                    borderwidth=2
-                )
-                style.map('Treeview', background=[('selected', '#b3d1ff')])
-
-                spacial_tree = ttk.Treeview(
-                    spacial_tree_container,
-                    columns=('prisoner_id','f_name','l_name','level','dan','relation'),
-                    show='headings',
-                    height=18,
-                    style='Treeview'
-                )
-                spacial_tree.heading('prisoner_id',text='รหัสประจำตัว')
-                spacial_tree.heading('f_name',text='ชื่อ')
-                spacial_tree.heading('l_name',text='นามสกุล')
-                spacial_tree.heading('level',text='ชั้น')
-                spacial_tree.heading('dan',text='แดน')
-                spacial_tree.heading('relation',text='ความสัมพันธ์')
-
-                spacial_tree.column('prisoner_id', anchor='center')
-                spacial_tree.column('f_name', anchor='center')
-                spacial_tree.column('l_name', anchor='center')
-                spacial_tree.column('level', anchor='center')
-                spacial_tree.column('dan', anchor='center')
-                spacial_tree.column('relation', anchor='center')
-                scrollbar = ttk.Scrollbar(spacial_tree_container,orient='vertical',command=spacial_tree.yview)
-                spacial_tree.configure(yscrollcommand=scrollbar.set)
-                scrollbar.grid(row=0,column=1,sticky='ns',padx=(0, 4), pady=4)
-
+                if len(spacial_container.winfo_children()) == 0:
+                    alert = ALERT(popup_reserve_to_visit, ['ไม่มีข้อมูลผู้ต้องขัง\nที่สามารถจองเยี่ยมได้'], button=True)
+                else:
+                    spacial_container.grid(row=1, column=0, columnspan=2, padx=40, pady=10, sticky="nsew")
                 btn_cancel = ctk.CTkButton(
                     main_frame,
                     text='ย้อนกลับ',
@@ -4596,7 +4560,7 @@ class MainFrame(ctk.CTkFrame):
                     text_color="#000000",
                     corner_radius=16,
                     command=lambda: (
-                        spacial_tree_container.grid_forget(),
+                        spacial_container.grid_forget(),
                         btn_cancel.grid_forget(),
                         get_relative()
                     )
@@ -4609,44 +4573,37 @@ class MainFrame(ctk.CTkFrame):
                     padx=200,
                     pady=100
                     )
-                # ดึงข้อมูลผู้ต้องขังที่สามารถจองล่วงหน้าได้ (ตัวอย่าง: ใช้ prisoners_data เดิม)
 
-                # กำหนดความกว้าง column
-                column_ratios = {
-                    'prisoner_id': 0.15,
-                    'f_name': 0.18,
-                    'l_name': 0.18,
-                    'level': 0.15,
-                    'dan': 0.17,
-                    'relation': 0.17,
-                }
-
-                if prisoners_data != []:
-                    print(prisoners_data)
-                    # ถ้าไม่มีข้อมูลผู้ต้องขังที่สามารถจองล่วงหน้าได้
-                    spacial_tree.insert('', 'end', values=('ไม่มีข้อมูล', '', '', '', '', ''))
-                else:
+                if prisoners_data == []:
                     alert = ALERT(popup_reserve_to_visit, [f'ไม่พบข้อมูล\n{nationnal_id}'], button=True)
-                    
                     return
                 
-                for row in spacial_tree.get_children():
-                    spacial_tree.delete(row)
+                idle_after_id = {"id": None}
 
-                for index, row in enumerate(prisoners_data):
-                    if row[4] not in row[6] != 'อยู่':
-                        continue
-                    spacial_tree.insert('', 'end', values=row)
+                def cancel_idle():
+                    if idle_after_id["id"]:
+                        try:
+                            spacial_container.after_cancel(idle_after_id["id"])
+                        except Exception:
+                            pass
+                        idle_after_id["id"] = None
 
-                if len(spacial_tree.get_children()) == 0:
-                    alert = ALERT(popup_reserve_to_visit, ['ไม่มีข้อมูลผู้ต้องขัง\nที่สามารถจองล่วงหน้าได้'], button=True)
-                    
-                else:
-                    spacial_tree_container.grid(row=1, column=0, columnspan=2, padx=40, pady=10, sticky="nsew")
-                    spacial_tree.grid(row=0, column=0, sticky='nsew', padx=(0, 8), pady=6)
+                def on_idle_timeout():
+                    cancel_idle()
+                    config_label()
 
-                spacial_tree.bind('<<TreeviewSelect>>', item_select)
-                spacial_tree_container.bind('<Configure>',lambda e: resize_tree_column())
+                def reset_idle(_=None):
+                    cancel_idle()
+                    idle_after_id["id"] = spacial_container.after(40000, on_idle_timeout)
+
+                # ผูก event กับทุกปุ่มใน future_button_container
+                for btn in spacial_container.winfo_children():
+                    btn.bind("<Any-KeyPress>", reset_idle)
+                    btn.bind("<Button>", reset_idle)
+                    btn.bind("<Motion>", reset_idle)
+                    btn.bind("<MouseWheel>", reset_idle)
+                reset_idle()
+                
             
             return
 
@@ -4665,6 +4622,9 @@ class MainFrame(ctk.CTkFrame):
                 self.zkfp2.CloseDevice()
                 # print'Close Device')
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 print(f'ปิดอุปกรณ์ลายนิ้วมือไม่สำเร็จ : {e}')
             try:
                 popup_reserve_to_visit.destroy()
@@ -4678,6 +4638,9 @@ class MainFrame(ctk.CTkFrame):
                 self.zkfp2.Init()
                 self.zkfp2.OpenDevice(0)
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 messagebox.showerror('การเชื่อมต่อเครื่อง', 'กรุณาตรวจสอบการเชื่อมต่อเครื่องสแกนลายนิ้วมือ')
                 on_close()
                 return
@@ -4786,8 +4749,12 @@ class MainFrame(ctk.CTkFrame):
             scan_progressbar.start()
 
         def hide_progress():
-            scan_progressbar.stop()
-            scan_progressbar.grid_remove()
+            try:
+                if scan_progressbar.winfo_exists():
+                    scan_progressbar.stop()
+                    scan_progressbar.grid_remove()
+            except Exception:
+                pass
 
         def run():
             import time
@@ -4800,6 +4767,9 @@ class MainFrame(ctk.CTkFrame):
                 try:
                     capture = self.zkfp2.AcquireFingerprint()
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     messagebox.showerror('Error เครื่องสแกน', 'กรุณาตรวจสอบเครื่องสแกน')
                     capture = None
                 if capture:
@@ -4872,6 +4842,9 @@ class MainFrame(ctk.CTkFrame):
                     national_id_entry.delete(0, 'end')
                     national_id_entry.insert(0, info['cid'])
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     # print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
                     messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
                     return
@@ -4945,6 +4918,9 @@ class MainFrame(ctk.CTkFrame):
                         else:
                             self.open_nextscreen_window.lift()
                     except Exception as e:
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
                         print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
 
                 def resize_tree_column():
@@ -5083,6 +5059,9 @@ class MainFrame(ctk.CTkFrame):
                         else:
                             self.open_nextscreen_window.lift()
                     except Exception as e:
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
                         print(f'เกิดข้อผิดพลาด item_select(_) : {e}')
 
                 def resize_tree_column():
@@ -5236,6 +5215,9 @@ class MainFrame(ctk.CTkFrame):
                         else:
                             self.open_nextscreen_window.lift()
                     except Exception as e:
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
                         print(f'เกิดข้อผิดพลาด item_select() reserve_future: {e}')
 
                 def resize_tree_column():
@@ -5367,6 +5349,9 @@ class MainFrame(ctk.CTkFrame):
                 try:
                     allowed_dan = allowed_dan_by_dan.get(weekday)
                 except Exception as e:
+                    import sys
+                    func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                    self.db.log_error([func_name,str(e)])
                     print(f'เกิดข้อผิดพลาด {e}')
                 
                 if prisoners_data != []:
@@ -5593,6 +5578,9 @@ class MainFrame(ctk.CTkFrame):
                 except Exception:
                     pass
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
             # try:
             #     # สร้าง pdf
@@ -5778,6 +5766,9 @@ class MainFrame(ctk.CTkFrame):
                         self.thai_id_reader.read_card()
                         info = self.thai_id_reader.get_person_info()
                     except Exception as e:
+                        import sys
+                        func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                        self.db.log_error([func_name,str(e)])
                         # print(f'เกิดข้อผิดพลาดในการอ่านบัตรประชาชน : {e}')
                         messagebox.showerror('Error การอ่านบัตรประชาชน','กรุณาตรวจสอบการเชื่อมต่อเครื่องอ่านบัตรประชาชน')
                         return 
@@ -6310,6 +6301,9 @@ class MainFrame(ctk.CTkFrame):
                 except Exception:
                     pass
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
 
         def get_visits():
@@ -6634,6 +6628,9 @@ class MainFrame(ctk.CTkFrame):
                 except Exception:
                     pass
             except Exception as e:
+                import sys
+                func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+                self.db.log_error([func_name,str(e)])
                 messagebox.showerror('ข้อผิดพลาด', f'ไม่สามารถพิมพ์ได้ :\n{e}')
             # try:
             #     # สร้าง pdf
@@ -7346,6 +7343,9 @@ class MainFrame(ctk.CTkFrame):
             # print("รีเฟรชข้อมูลใน MainFrame เสร็จสิ้น")
             
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             print(f"Error in MainFrame refresh_data: {e}")
 
     def update_database_path(self, new_path):
@@ -7374,4 +7374,7 @@ class MainFrame(ctk.CTkFrame):
             # print(f"Database path อัปเดตเป็น: {new_path}")
             
         except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.db.log_error([func_name,str(e)])
             print(f"Error updating database path in MainFrame: {e}")
