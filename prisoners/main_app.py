@@ -535,7 +535,37 @@ class RESERVE:
 
 
         self.main()
+    def start_countdown(self, seconds=25):
+        self.countdown_seconds = seconds
 
+        # ยกเลิก after เดิมถ้ามี
+        if hasattr(self, 'countdown_after_id') and self.countdown_after_id:
+            try:
+                self.next_screen.after_cancel(self.countdown_after_id)
+            except Exception:
+                pass
+            self.countdown_after_id = None
+
+        # สร้างหรืออัปเดต Label สำหรับแสดงเวลานับถอยหลัง
+        if hasattr(self, 'countdown_label') and self.countdown_label.winfo_exists():
+            self.countdown_label.configure(text=f"หน้าต่างนี้จะปิดใน {self.countdown_seconds} วินาที")
+        else:
+            self.countdown_label = ctk.CTkLabel(
+                self.next_screen,
+                text=f"จะปิดใน {self.countdown_seconds} วินาที",
+                font=('TH SarabunPSK', 28, 'bold')
+            )
+            self.countdown_label.pack(side='bottom', pady=10)
+
+        def update():
+            self.countdown_seconds -= 1
+            if self.countdown_seconds > 0:
+                self.countdown_label.configure(text=f"หน้าต่างนี้จะปิดใน {self.countdown_seconds} วินาที")
+                self.countdown_after_id = self.next_screen.after(1000, update)
+            else:
+                self.on_close()  # ปิด self.next_screen
+
+        self.countdown_after_id = self.next_screen.after(1000, update)
 
     def main(self):
         if self.check_disciplinary():
@@ -548,6 +578,8 @@ class RESERVE:
 
     def on_close(self):
         self.next_screen.destroy()
+        if self.on_success:
+            self.on_success()
 
     def check_disciplinary(self):
         # ตรวจสอบวินัย
@@ -613,6 +645,7 @@ class RESERVE:
     
     # เลือกรอบเยี่ยม
     def select_round(self):
+        self.start_countdown(25)
         # แสดงหน้าต่างเมื่อจะใช้งานจริง
         self.next_screen.deiconify() 
 
@@ -980,6 +1013,8 @@ class RESERVE:
         submit.pack(side='bottom', pady=10)
 
     def select_follower(self):
+        self.start_countdown(25)
+
         for widget in self.frame_follower_visit.winfo_children():
             widget.destroy()
         self.frame_select_round.pack_forget()
@@ -1054,6 +1089,8 @@ class RESERVE:
     
     # ยืนยันข้อมูล
     def confirm_visit(self,round_time_strtime,reserve_date,channel):
+        self.start_countdown(25)
+
         print_data = []
         thai_months = [
             "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -4613,9 +4650,12 @@ class MainFrame(ctk.CTkFrame):
             day = days[current_time.tm_wday]
             month = months[current_time.tm_mon - 1]
             text = f"วัน {day} ที่ {current_time.tm_mday} {month} {(current_time.tm_year)+543} เวลา {t.strftime('%H:%M:%S')}"
-            date_label.configure(text=text)
-            if popup_reserve_to_visit.winfo_exists():
-                popup_reserve_to_visit.after(1000, update_time_label)
+            try:
+                if popup_reserve_to_visit.winfo_exists() and date_label.winfo_exists():
+                    date_label.configure(text=text)
+                    popup_reserve_to_visit.after(1000, update_time_label)
+            except Exception:
+                pass
 
         def on_close(e=None):
             try:
