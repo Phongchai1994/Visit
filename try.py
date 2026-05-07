@@ -78,7 +78,13 @@ from datetime import datetime,timedelta
 # printer.cut()
 
 
-today_now = datetime.today().date().isoformat()
-month_now = today_now[:7]
-date = "2025-05-04"
-print(today_now)
+# today_now = datetime.today().date().isoformat()
+# month_now = today_now[:7]
+# date = "2025-05-04"
+# print(today_now)
+
+from sound.play_sound import PlaySound
+
+
+sound = PlaySound('sound/1.wav')
+sound.start()
