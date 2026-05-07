@@ -21,6 +21,13 @@ from sound.play_sound import PlaySound
 
 pdfmetrics.registerFont(TTFont("TH SarabunPSK", "THSarabun.ttf"))
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 class PRINT_RECIPT:
     VENDOR_ID = 0x04b8
     PRODUCT_ID = 0x0e27
@@ -648,9 +655,9 @@ class RESERVE:
     def select_round(self):
         self.start_countdown(25)
         # แสดงหน้าต่างเมื่อจะใช้งานจริง
-        self.next_screen.deiconify() 
-        sound_round = PlaySound('sound/6.wav')
-        sound_round.start()
+        self.next_screen.deiconify()
+        sound_6 = resource_path('sound/6.wav')
+        PlaySound(sound_6).start()
         morning = MORING_ROUNDS()
         afternoon = AFTERNOON_ROUNDS()
         for widget in self.frame_select_round.winfo_children():
@@ -1023,9 +1030,8 @@ class RESERVE:
         self.frame_confirm_visit.pack_forget()
         date_current = datetime.now().strftime("%Y-%m-%d")
 
-
-        sound_round = PlaySound('sound/7.wav')
-        sound_round.start()
+        sound_7 = resource_path('sound/7.wav')
+        PlaySound(sound_7).start()
         # date time จากการเลือกรอบเยี่ยม
         round_time = self.round_visit_var.get()
         round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
@@ -1094,9 +1100,8 @@ class RESERVE:
     # ยืนยันข้อมูล
     def confirm_visit(self,round_time_strtime,reserve_date,channel):
         self.start_countdown(25)
-
-        sound_round = PlaySound('sound/8.wav')
-        sound_round.start()
+        sound_8 = resource_path('sound/8.wav')
+        PlaySound(sound_8).start()
         print_data = []
         thai_months = [
             "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -1235,9 +1240,8 @@ class RESERVE:
         return True
     
     def insert_succress(self):
-        
-        sound_round = PlaySound('sound/9.wav')
-        sound_round.start()
+        sound_9 = resource_path('sound/9.wav')
+        PlaySound(sound_9).start()
         alert = ALERT(self.next_screen,['จองเยี่ยมสำเร็จ'],button=True)
         alert.after(5000, alert._on_ok)
         result =alert.show()
@@ -4070,9 +4074,8 @@ class MainFrame(ctk.CTkFrame):
                 return
             relative_name = f'{relative_data[1]}{relative_data[2]} {relative_data[3]}'
             main_frame_label.configure(text=f'ยินดีต้อนรับ\n{relative_name}')
-
-            sound_thread = PlaySound('sound/3.wav')
-            sound_thread.start()
+            sound_3 = resource_path('sound/3.wav')
+            PlaySound(sound_3).start()
             button_reserve_now.configure(
                 text='จองเยี่ยมวันนี้',
                 font=('TH SarabunPSK', 64, 'bold'),
@@ -4285,8 +4288,9 @@ class MainFrame(ctk.CTkFrame):
                     padx=200,
                     pady=100
                     )
-                sound_now = PlaySound('sound/4.wav')
-                sound_now.start()
+                
+                sound_4 = resource_path('sound/4.wav')
+                PlaySound(sound_4).start()
 
             def reserve_future():
                 nonlocal reserve_instance
@@ -4479,8 +4483,8 @@ class MainFrame(ctk.CTkFrame):
                     padx=200,
                     pady=100
                     )
-                sound_now = PlaySound('sound/5.wav')
-                sound_now.start()
+                sound_5 = resource_path('sound/5.wav')
+                PlaySound(sound_5).start()
   
             def reserve_spacial():
                 nonlocal reserve_instance
@@ -4688,8 +4692,8 @@ class MainFrame(ctk.CTkFrame):
                 pass
 
         def open_device():
-            sound_thread = PlaySound('sound/1.wav')
-            sound_thread.start()
+            sound_1 = resource_path('sound/1.wav')
+            PlaySound(sound_1).start()
             main_frame_label.configure(text='กรุณาวางนิ้วมือบนเครื่องสแกนลายนิ้วมือ')
             # print(f'nationnal_id in opendevice {nationnal_id}')
             try:
@@ -4831,8 +4835,8 @@ class MainFrame(ctk.CTkFrame):
                     messagebox.showerror('Error เครื่องสแกน', 'กรุณาตรวจสอบเครื่องสแกน')
                     capture = None
                 if capture:
-                    sound_thread = PlaySound('sound/2.wav')
-                    sound_thread.start()
+                    sound_2 = resource_path('sound/2.wav')
+                    PlaySound(sound_2).start()
                     scanned = True
                     # print'สแกนสำเร็จ', type(capture_current))
                     main_frame_label.configure(text='กำลังตรวจสอบลายนิ้วมือ...')

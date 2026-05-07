@@ -4,6 +4,7 @@ pyinstaller --onefile --noconsole ^
   --clean ^
   --add-data "logo.png;." ^
   --add-data "dll\*;." ^
+  --add-data "sound;sound" ^
   --add-data ".venv\Lib\site-packages\escpos\capabilities.json;escpos" ^
   --hidden-import=clr ^
   --hidden-import=System ^

@@ -81,6 +81,13 @@ def save_config(file_path):
     with open(config_path, 'w', encoding='utf-8') as f:
         json.dump({'db_path': file_path}, f)
 
+def export_log_to_txt(ex_log, filename="log_error_export.txt"):
+    with open(filename, "w", encoding="utf-8") as f:
+        for row in ex_log:
+            f.write(str(row) + "\n")
+    messagebox.showinfo("Export Log", f"บันทึก log สำเร็จที่ {filename}")
+
+
 class App_Prisoners(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -149,6 +156,7 @@ class App_Prisoners(ctk.CTk):
         
         help_menu = tk.Menu(menu_bar, tearoff=0, bg='#f8fbff', fg='#2d3a4b')
         help_menu.add_command(label='เกี่ยวกับ')
+        help_menu.add_command(label='Ex Log', command=self.export_log)
         menu_bar.add_cascade(label='ช่วยเหลือ', menu=help_menu)
         self.config(menu=menu_bar)
         
@@ -158,6 +166,9 @@ class App_Prisoners(ctk.CTk):
         self.bind('<Control-R>', lambda e: self.refresh_all_data())
         self.reload_db()
 
+    def export_log(self):
+        ex_log = self.db.get_log()
+        export_log_to_txt(ex_log)
     def reload_db(self):
         
         import importlib

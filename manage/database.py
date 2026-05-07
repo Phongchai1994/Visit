@@ -38,8 +38,8 @@ def check_key_on_db():
 
 def require_valid_key(func):
     KEY = 'E54F2JN5F3'
-    KEY_DB = check_key_on_db()
     def wrapper(self, *args, **kwargs):
+        KEY_DB = check_key_on_db()  # <-- เรียกทุกครั้งที่ใช้งาน
         if KEY_DB != KEY:
             messagebox.showerror("แจ้งอัพเดท","กรุณาอัพเดทโปรแกรม")
             raise PermissionError("KEY ไม่ถูกต้อง ไม่สามารถใช้งาน method นี้ได้")
@@ -180,6 +180,21 @@ class SQLiteDB:
             )
             self.conn.commit()
             return True
+        except Exception as e:
+            import sys
+            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
+            self.log_error([func_name,str(e)])
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    def get_log(self):
+        self.connect()
+        try:
+            self.cursor.execute('SELECT * FROM log_error ORDER BY time_stamp DESC')
+            return self.cursor.fetchall()    
         except Exception as e:
             import sys
             func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
