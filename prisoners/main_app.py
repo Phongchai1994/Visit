@@ -653,6 +653,18 @@ class RESERVE:
     
     # เลือกรอบเยี่ยม
     def select_round(self):
+        number_of_visits = 14 # กำหนดช่องเยี่ยม
+        morning_rounds = [
+            ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00'),
+            ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00'),
+            ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00'),
+            ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00'),
+            ]
+        afternoon_rounds = [
+            ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00'),
+            ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00'),
+            ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00'),
+            ]
         self.start_countdown(25)
         # แสดงหน้าต่างเมื่อจะใช้งานจริง
         self.next_screen.deiconify()
@@ -695,56 +707,71 @@ class RESERVE:
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
 
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)                                                                                                          
             elif self.thai_day == 'อังคาร' and str(self.dan) == '5':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
                 
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5) 
             elif self.thai_day == 'พุธ' and str(self.dan) == '1' and self.type != 'ผู้ต้องกักขัง':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พุธ' and str(self.dan) == '1' and self.type == 'ผู้ต้องกักขัง':
                 # 🔹 ให้เฉพาะรอบ 4
@@ -752,6 +779,8 @@ class RESERVE:
                     ('เวลา 11.00 - 11.15', '11:00:00', '10:45:00')
                 ]
                 for text, start, close in rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     close_time = datetime.strptime(close, "%H:%M:%S").time()
                     if now < close_time:
                         ctk.CTkRadioButton(
@@ -759,18 +788,22 @@ class RESERVE:
                             text=text,
                             variable=self.round_visit_var,
                             value=start,
-                            font=('TH SarabunPSK', 35, 'bold')
+                            font=('TH SarabunPSK', 35, 'bold'),
+                            state=state
                         ).pack(pady=5)
             elif self.thai_day == 'พุธ' and str(self.dan) in ['2','3','4','7'] and self.type != 'ผู้ต้องกักขัง':                    
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5) 
             elif self.thai_day == 'พุธ' and str(self.dan) in ['4','7'] and self.type == 'ผู้ต้องกักขัง':
                 #  🔹 รอบบ่าย ให้เฉพาะรอบ 7
@@ -778,6 +811,8 @@ class RESERVE:
                     ('เวลา 14.15 - 14.30', '14:15:00', '13:15:00')
                 ]
                 for text, start, close in rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     close_time = datetime.strptime(close, "%H:%M:%S").time()
                     if now < close_time:
                         ctk.CTkRadioButton(
@@ -785,40 +820,50 @@ class RESERVE:
                             text=text,
                             variable=self.round_visit_var,
                             value=start,
-                            font=('TH SarabunPSK', 35, 'bold')
+                            font=('TH SarabunPSK', 35, 'bold'),
+                            state=state
                         ).pack(pady=5)
             elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '5':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)               
             elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '6':
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'ศุกร์' and str(self.dan) == '1' and self.type != 'ผู้ต้องกักขัง':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'ศุกร์' and str(self.dan) == '1' and self.type == 'ผู้ต้องกักขัง':
                 # 🔹 ให้เฉพาะรอบ 4
@@ -826,6 +871,8 @@ class RESERVE:
                     ('เวลา 11.00 - 11.15', '11:00:00', '10:45:00')
                 ]
                 for text, start, close in rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     close_time = datetime.strptime(close, "%H:%M:%S").time()
                     if now < close_time:
                         ctk.CTkRadioButton(
@@ -833,18 +880,22 @@ class RESERVE:
                             text=text,
                             variable=self.round_visit_var,
                             value=start,
-                            font=('TH SarabunPSK', 35, 'bold')
+                            font=('TH SarabunPSK', 35, 'bold'),
+                            state=state
                         ).pack(pady=5)
             elif self.thai_day == 'ศุกร์' and str(self.dan) in ['2','3','4','7'] and self.type != 'ผู้ต้องกักขัง':                    
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon.get_available_rounds(now):
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'ศุกร์' and str(self.dan) in ['4','7'] and self.type == 'ผู้ต้องกักขัง':
                 #  🔹 รอบบ่าย ให้เฉพาะรอบ 7
@@ -852,6 +903,8 @@ class RESERVE:
                     ('เวลา 14.15 - 14.30', '14:15:00', '13:15:00')
                 ]
                 for text, start, close in rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     close_time = datetime.strptime(close, "%H:%M:%S").time()
                     if now < close_time:
                         ctk.CTkRadioButton(
@@ -859,22 +912,10 @@ class RESERVE:
                             text=text,
                             variable=self.round_visit_var,
                             value=start,
-                            font=('TH SarabunPSK', 35, 'bold')
+                            font=('TH SarabunPSK', 35, 'bold'),
+                            state=state
                         ).pack(pady=5)
         else:
-            morning_rounds = [
-                ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00'),
-                ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00'),
-                ('รอบที่ 3 เวลา 10.30 - 10.45', '10:30:00'),
-                ('รอบที่ 4 เวลา 11.00 - 11.15', '11:00:00'),
-                ]
-
-            afternoon_rounds = [
-                ('รอบที่ 5 เวลา 13.15 - 13.30', '13:15:00'),
-                ('รอบที่ 6 เวลา 13.45 - 14.00', '13:45:00'),
-                ('รอบที่ 7 เวลา 14.15 - 14.30', '14:15:00'),
-                ]
-
             if self.dan == 'รจช':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง)
                 rounds = [
@@ -893,78 +934,99 @@ class RESERVE:
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
 
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'อังคาร' and str(self.dan) == '5':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
 
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พุธ' and str(self.dan) == '1':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พุธ' and str(self.dan) in ['2','3','4','7']:
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '5':
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '6':
                 # 🔹 รอบบ่าย
@@ -975,30 +1037,37 @@ class RESERVE:
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif str(self.dan) == '1':
 
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
             elif str(self.dan) in ['2','3','4','7']:
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
                     ctk.CTkRadioButton(
                         self.frame_select_round,
                         text=text,
                         variable=self.round_visit_var,
                         value=start,
-                        font=('TH SarabunPSK', 35, 'bold')
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
                     ).pack(pady=5)
         # 🔸 ปุ่ม
         submit = ctk.CTkButton(
@@ -1030,12 +1099,9 @@ class RESERVE:
         self.frame_confirm_visit.pack_forget()
         date_current = datetime.now().strftime("%Y-%m-%d")
 
-        sound_7 = resource_path('sound/7.wav')
-        PlaySound(sound_7).start()
         # date time จากการเลือกรอบเยี่ยม
         round_time = self.round_visit_var.get()
         round_time_strtime = (datetime.strptime(round_time,"%H:%M:%S")).strftime("%H:%M:%S")
-        count_visit = self.db.get_count_visit_on_round(round_time,self.today)
         channel_on_db = self.db.get_channel(self.today,round_time_strtime)
         # # print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
         sorted_channel_on_db = sorted(channel_on_db)
@@ -1052,10 +1118,13 @@ class RESERVE:
                 # # print(f'channel ตัวสุดท้าย = {channel}')
         # # print(f'ค่าที่เติม = {channel}')
         
-        if count_visit > 14:
-            count_alert = ALERT(self.next_screen,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
-            self.select_round()
-            return
+        # if count_visit > 13:
+        #     count_alert = ALERT(self.next_screen,['รอบเต็ม\nกรุณาเลือกรอบใหม่'],text_color='red',button=True)
+        #     self.select_round()
+        #     return
+
+        sound_7 = resource_path('sound/7.wav')
+        PlaySound(sound_7).start()
 
         self.frame_follower_visit.pack(fill = 'both',expand = True)
         text_from_round = f'จองเยี่ยม\n{self.name} {self.surname}\nเยี่ยมเวลา {self.round_visit_var.get()} น.'
@@ -1242,7 +1311,7 @@ class RESERVE:
     def insert_succress(self):
         sound_9 = resource_path('sound/9.wav')
         PlaySound(sound_9).start()
-        alert = ALERT(self.next_screen,['จองเยี่ยมสำเร็จ'],button=True)
+        alert = ALERT(self.next_screen,['จองเยี่ยมสำเร็จ'],button=False)
         alert.after(5000, alert._on_ok)
         result =alert.show()
         if result:
