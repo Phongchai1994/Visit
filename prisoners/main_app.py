@@ -1219,13 +1219,13 @@ class RESERVE:
         def on_confirm():
             print("on_confirm called")
             try:
-                str_print_data = [str(x) for x in print_data]
-                PRINT_RECIPT().print_recipt(str_print_data)
-                print("print_recipt success")
                 submit.grid_forget()
                 print("submit hidden")
-                self.insert_reserve_visit_to_db(prepare_data, channel)
-                print("insert_reserve_visit_to_db success")
+                if self.insert_reserve_visit_to_db(prepare_data, channel):
+                    str_print_data = [str(x) for x in print_data]
+                    PRINT_RECIPT().print_recipt(str_print_data)
+                    print('print success')
+
             except Exception as e:
                 import sys
                 func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
@@ -1306,18 +1306,23 @@ class RESERVE:
                 if result:
                     self.insert_succress()
                     return True
-        return True
+        return False
     
     def insert_succress(self):
         sound_9 = resource_path('sound/9.wav')
         PlaySound(sound_9).start()
         alert = ALERT(self.next_screen,['จองเยี่ยมสำเร็จ'],button=False)
         alert.after(5000, alert._on_ok)
+        print('alert 1 ')
         result =alert.show()
         if result:
             self.on_close()
+            
+            print('alert 2 ')
             if self.on_success:
                 self.on_success()
+                
+                print('alert 3 ')
         return True
     
     def get_thai_date(self,date_str):
