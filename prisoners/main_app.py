@@ -2479,10 +2479,14 @@ class MainFrame(ctk.CTkFrame):
                     messagebox.showerror('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบทุกช่อง')
                     return
                 result = self.db.get_data_relation(prisoner_id)
+                print(f'result = {result}')
                 check_data = (prisoner_id, int(national_id_number))
                 if not result:
+                    print('result = []')
+                    print(prisoner_id,data,relation)
                     result_db_relatives = self.db.add_data_ralative_to_relatives(prisoner_id, data, relation)
                     result_db_relations = self.db.add_data_relation_to_ralations(prisoner_id, data, relation)
+                    print(result_db_relatives)
                     continue_save = messagebox.askyesno('แจ้งเตือนการบันทึกข้อมูล', f'บันทึกข้อมูล "{popup_combo_title_relative.get().strip()}{popup_entry_fname_relative.get().strip()} {popup_entry_lname_relative.get().strip()}" สำเร็จ ต้องการเพิ่มญาติอีกหรือไม่')
                     if continue_save:
                         clear_popup_regis()

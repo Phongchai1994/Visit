@@ -408,14 +408,22 @@ class SQLiteDB:
     def add_data_ralative_to_relatives(self,id,data,relation):
         self.connect()
         try:
+            # ตรวจสอบว่า relative_id มีอยู่แล้วหรือไม่
+            self.cursor.execute('SELECT COUNT(*) FROM relatives WHERE relative_id = ?', (data[0],))
+            if self.cursor.fetchone()[0] > 0:
+                # relative_id นี้มีอยู่แล้ว
+                print('ข้อมูลซ้ำ: relative_id นี้มีอยู่แล้ว')
+                return False
             # บันทึกข้อมูล ในตารางญาติ
-            self.cursor.execute('INSERT INTO relatives (relative_id,title,f_name,l_name,address,tel) VALUES (?,?,?,?,?,?)',(data[0],data[1],data[2],data[3],data[4],data[5]))
-            # print('บันทึกข้อมูลตาราง relatives')
+            self.cursor.execute(
+                'INSERT INTO relatives (relative_id, title, f_name, l_name, address, tel) VALUES (?, ?, ?, ?, ?, ?)',
+                (data[0], data[1], data[2], data[3], data[4], data[5])
+            )
             return True
         except Exception as e:
             import sys
-            func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
-            self.log_error([func_name,str(e)])
+            func_name = sys._getframe().f_code.co_name
+            self.log_error([func_name, str(e)])
             print(e)
             return False
         finally:
