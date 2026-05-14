@@ -1,4 +1,4 @@
-from datetime import datetime,timedelta
+# from datetime import datetime,timedelta
 # import time as t
 # import sqlite3
 # from prisoners.main_app import CALCULATE_NEXT_DAY
@@ -83,8 +83,78 @@ from datetime import datetime,timedelta
 # date = "2025-05-04"
 # print(today_now)
 
-from sound.play_sound import PlaySound
+# from sound.play_sound import PlaySound
 
 
-sound = PlaySound('sound/1.wav')
-sound.start()
+# sound = PlaySound('sound/1.wav')
+# sound.start()
+import psycopg2
+from psycopg2 import Error
+
+
+# 1. ตั้งค่าการเชื่อมต่อ
+# เลือก IP ให้ตรงกับเครือข่ายที่เครื่องลูกกำลังใช้อยู่
+# - 10.112.61.120 (วงข้อมูลผู้ต้องขัง)
+# - 192.168.1.144 (วงทั่วไป)
+# - 100.115.50.52 (วง Tailscale VPN)
+
+DB_HOST = '192.168.1.144'
+DB_PORT = '5432'
+DB_NAME = 'report_visit'
+DB_USER = 'postgres'
+DB_PASS = 'Pkt190994'
+
+def get_connection():
+    try:
+        connection = psycopg2.connect(
+            host = DB_HOST,
+            port = DB_PORT,
+            database = DB_NAME,
+            user = DB_USER,
+            password = DB_PASS
+        )
+        return connection
+    except Error as e:
+        print(f'เชื่อมต่อข้อมูลไม่สำเร็จ {e}')
+        return None
+    
+def view_prisoner():
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM "prisoners_"')
+            records = cursor.fetchall()
+
+            print('รายชื่อ')
+            for row in records:
+                print(records)
+        except Error as e:
+            print(f'เกิดข้อผิดพลาด {e}')
+        finally:
+            cursor.close()
+            conn.close()
+
+def insert_data(prisoner_id, sex, f_name, l_name, lawsuit, level, dan, p_type):
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            insert_query = '''
+                INSERT INTO "prisoners_" (prisoner_id,sex,f_name,l_name,lawsuit,level,dan,type,status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''' 
+            data_putle = (prisoner_id, sex, f_name, l_name, lawsuit, level, dan, p_type, "อยู่")
+            cursor.execute(insert_query, data_putle)
+            conn.commit()
+            print(f'\n บันทึกข้อมูลเรียบร้อย')
+        except Error as e:
+            print(f'ผิดพลาด {e}')
+            conn.rollback()
+        finally:
+            cursor.close()
+            conn.close()
+
+if __name__ == "__main__":
+    insert_data(11111111, 'ชาย', 'ทดสอบ', 'query', 'ยาเสพติด', 'ดี', '5', 'ผู้ต้องขัง')
+    view_prisoner()
