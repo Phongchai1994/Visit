@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import sys
 from manage.encryption_utils import decrypt_file,encrypt_file
 from tkinter import messagebox
 import json
@@ -114,9 +115,102 @@ class SQLiteDB:
                 return False
             finally:
                 self.close()
+        
+        def create_all_tables():
+            """สร้างตารางทั้งหมดตาม Structure ที่กำหนด"""
+            self.connect()
+            try:
+                # 1. ตาราง prisoners_
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "prisoners_" (
+                        "prisoner_id" INTEGER NOT NULL,
+                        "sex" TEXT NOT NULL,
+                        "f_name" TEXT NOT NULL,
+                        "l_name" TEXT NOT NULL,
+                        "lawsuit" TEXT NOT NULL,
+                        "level" TEXT NOT NULL,
+                        "dan" TEXT NOT NULL,
+                        "type" TEXT,
+                        "status" TEXT,
+                        "disciplinary" TEXT,
+                        PRIMARY KEY("prisoner_id")
+                    )
+                ''')
+
+                # 2. ตาราง relatives
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "relatives" (
+                        "relative_id" INTEGER NOT NULL UNIQUE,
+                        "title" TEXT NOT NULL,
+                        "f_name" TEXT NOT NULL,
+                        "l_name" TEXT NOT NULL,
+                        "address" TEXT NOT NULL,
+                        "tel" TEXT NOT NULL,
+                        "fingerprint" BLOB,
+                        PRIMARY KEY("relative_id")
+                    )
+                ''')
+
+                # 3. ตาราง relations
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "relations" (
+                        "id" INTEGER NOT NULL UNIQUE,
+                        "prisoner_id" INTEGER NOT NULL,
+                        "relative_id" INTEGER NOT NULL,
+                        "relation" TEXT NOT NULL,
+                        PRIMARY KEY("id" AUTOINCREMENT)
+                    )
+                ''')
+
+                # 4. ตาราง visits
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "visits" (
+                        "visit_id" INTEGER NOT NULL,
+                        "time_stamp" TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+                        "date_visit" TEXT NOT NULL,
+                        "time_visit" TEXT NOT NULL,
+                        "prisoner_id" INTEGER NOT NULL,
+                        "relative_id_1" INTEGER,
+                        "relative_id_2" INTEGER,
+                        "relative_id_3" INTEGER,
+                        "relative_id_4" INTEGER,
+                        "relative_id_5" INTEGER,
+                        "channel" INTEGER,
+                        PRIMARY KEY("visit_id" AUTOINCREMENT)
+                    )
+                ''')
+
+                # 5. ตาราง visit_spacial (จากตัวอย่างแรกที่คุณให้มา)
+                self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS "visit_spacial" (
+                        "visit_id" INTEGER NOT NULL,
+                        "time_stamp" TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+                        "date_visit" TEXT NOT NULL,
+                        "time_visit" TEXT NOT NULL,
+                        "prisoner_id" INTEGER NOT NULL,
+                        "relative_id_1" INTEGER,
+                        "relative_id_2" INTEGER,
+                        "relative_id_3" INTEGER,
+                        "relative_id_4" INTEGER,
+                        "relative_id_5" INTEGER,
+                        "channel" INTEGER,
+                        PRIMARY KEY("visit_id" AUTOINCREMENT)
+                    )
+                ''')
+
+                print("สร้างตารางทั้งหมดในระบบเรียบร้อยแล้ว")
+                return True
+            except Exception as e:
+                func_name = sys._getframe().f_code.co_name
+                self.log_error([func_name, str(e)])
+                print(f"เกิดข้อผิดพลาดในการสร้างตาราง: {e}")
+                return False
+            finally:
+                self.close()
         # เรียกใช้การสร้างตาราง
         visit_spacial_table()
         log_error()
+        create_all_tables()
 
     def msgbox(self,e):
         messagebox.showerror('ฐานข้อมูล',f'{e}')
@@ -165,6 +259,59 @@ class SQLiteDB:
         finally:
             self.close()
     # ถึงข้อมูลช่องด้วย วันที่ และเวลา ของตารางเยี่ยมพิเศษ
+
+    def get_dashboard_summary(self,date_str):
+        """ดึงข้อมูลสรุป Dashboard"""
+        self.connect()
+        try:
+            # 1. ผู้ต้องขังทั้งหมด (สถานะปกติ)
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE status = 'อยู่' AND type = 'ผู้ต้องขัง'")
+            prisoner_normal = self.cursor.fetchone()[0]
+
+            # 2. ผู้ต้องกักขังทั้งหมด
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE type = 'ผู้ต้องกักขัง' AND status = 'อยู่'")
+            prisoner_detained = self.cursor.fetchone()[0]
+
+            # 3. ผิดวินัยกี่คน
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE disciplinary = 'ผิดวินัย'")
+            prisoner_disciplinary = self.cursor.fetchone()[0]
+
+            # 4. ญาติทั้งหมด
+            self.cursor.execute("SELECT COUNT(*) FROM relatives")
+            relatives_total = self.cursor.fetchone()[0]
+
+            # 5. วันนี้มีผู้ต้องขังได้เยี่ยมกี่คน (ไม่ซ้ำ)
+            self.cursor.execute("SELECT COUNT(DISTINCT prisoner_id) FROM visits WHERE date_visit = ?",(date_str,))
+            prisoner_visited_today = self.cursor.fetchone()[0]
+
+            # 6. วันนี้ญาติเข้าเยี่ยมกี่คน (รวมทุกช่อง)
+            self.cursor.execute("""
+                SELECT COUNT(*) FROM (
+                    SELECT relative_id_1 AS rid FROM visits WHERE date_visit = ? AND relative_id_1 IS NOT NULL
+                    UNION ALL SELECT relative_id_2 FROM visits WHERE date_visit = ? AND relative_id_2 IS NOT NULL
+                    UNION ALL SELECT relative_id_3 FROM visits WHERE date_visit = ? AND relative_id_3 IS NOT NULL
+                    UNION ALL SELECT relative_id_4 FROM visits WHERE date_visit = ? AND relative_id_4 IS NOT NULL
+                    UNION ALL SELECT relative_id_5 FROM visits WHERE date_visit = ? AND relative_id_5 IS NOT NULL
+                ) WHERE rid IS NOT NULL
+            """,(date_str,date_str,date_str,date_str,date_str))
+            relatives_visited_today = self.cursor.fetchone()[0]
+
+            return {
+                "prisoner_normal": prisoner_normal,
+                "prisoner_detained": prisoner_detained,
+                "prisoner_disciplinary": prisoner_disciplinary,
+                "relatives_total": relatives_total,
+                "prisoner_visited_today": prisoner_visited_today,
+                "relatives_visited_today": relatives_visited_today
+            }
+        except Exception as e:
+            func_name = sys._getframe().f_code.co_name
+            self.log_error([func_name, str(e)])
+            self.msgbox(e)
+            print(f'เกิดข้อผิดพลาด : {e}')
+            return None
+        finally:
+            self.close()
 
     def log_error(self,log_data):
         '''

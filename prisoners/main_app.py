@@ -17,6 +17,7 @@ from escpos.printer import Usb
 from PIL import Image
 from user_session import user_session, require_admin, require_login
 from sound.play_sound import PlaySound
+from prisoners.dashboard import DashboardApp
 
 
 pdfmetrics.registerFont(TTFont("TH SarabunPSK", "THSarabun.ttf"))
@@ -71,11 +72,13 @@ class PRINT_RECIPT:
         '''
         data[0] = ชื่อ ผตข
         data[1] = นามสกุล ผตช
-        data[2] = วันที่ 
-        data[3] = เวลาเยี่ยม 10:00:00
-        data[4] = ช่องเยี่ยม
-        data[5] = สิทธิ์การเยี่ยมคงเหลือ เดือน ... ครั้ง ...
-        data[6] = รายชื่อเข้าเยี่ยม
+        data[2] = ชั้น   
+        data[3] = แดน
+        data[4] = วันที่ 
+        data[5] = เวลาเยี่ยม 10:00:00
+        data[6] = ช่องเยี่ยม
+        data[7] = สิทธิ์การเยี่ยมคงเหลือ เดือน ... ครั้ง ...
+        data[8] = รายชื่อเข้าเยี่ยม
         '''
         now = datetime.now()
         try:
@@ -88,7 +91,7 @@ class PRINT_RECIPT:
                 "13:45:00": "รอบที่ 6 เวลา 13:45:00",
                 "14:15:00": "รอบที่ 7 เวลา 14:15:00"
             }
-            round_reserve = round_map.get(data[3], "")
+            round_reserve = round_map.get(data[5], "")
 
             # จัดให้อยู่ตรงกลางและพิมพ์โลโก้
             self.printer.set(align='center')
@@ -98,11 +101,11 @@ class PRINT_RECIPT:
             # กลับมาชิดซ้ายและขยายตัวอักษร
             self.printer.set(align='center')
             self.printer.text("เรือนจำจังหวัดจันทบุรี (งานเยี่ยมญาติ)\nเลขที่ 5 ถ.แผ่นดินทอง 3 ต.ตลาด อ.เมือง\nจ.จันทบุรี 22000\nโทร 039327099 ต่อ 114\nเยี่ยมผู้ต้องขัง/ผู้ต้องกักขัง\n")
-            self.printer.text(f'ราย {data[0]} {data[1][0]}xx\nใน {data[2]}\n{round_reserve} น.\nช่องเยี่ยมที่ {data[4]}\nรายชื่อเข้าเยี่ยม\n')
-            # สมมติว่ารายชื่อผู้เข้าเยี่ยม เริ่มที่ data[5] เป็นต้นไป
-            for i, name in enumerate(data[6:], start=1):
+            self.printer.text(f'ราย {data[0]} {data[1][0]}xx\nชั้น {data[2]} แดน {data[3]}\nใน {data[4]}\n{round_reserve} น.\nช่องเยี่ยมที่ {data[6]}\nรายชื่อเข้าเยี่ยม\n')
+            # สมมติว่ารายชื่อผู้เข้าเยี่ยม เริ่มที่ data[7] เป็นต้นไป
+            for i, name in enumerate(data[8:], start=1):
                 self.printer.text(f"{i}. {name}\n")
-            self.printer.text(f"{data[5]}\nกรุณามาก่อนเวลาเยี่ยมอย่างน้อย 15 นาที\n")
+            self.printer.text(f"{data[7]}\nกรุณามาก่อนเวลาเยี่ยมอย่างน้อย 15 นาที\n")
             self.printer.text(f'พิมพ์เมื่อ {now.strftime("%d/%m/%Y %H:%M:%S")} น.')
             self.printer.cut()
             return True
@@ -438,6 +441,8 @@ class RESERVE_SPACIAL:
             [
                 self.name,
                 self.surname,
+                self.level,
+                self.dan,
                 self.data_reserve[self.IDX_DATE][0],
                 self.data_reserve[self.IDX_ROUND],
                 self.data_reserve[self.IDX_CHANEL],
@@ -1196,6 +1201,8 @@ class RESERVE:
             [
                 self.name,
                 self.surname,
+                self.level,
+                self.dan,
                 thai_date,
                 self.round_visit_var.get(),
                 channel,
@@ -1467,6 +1474,9 @@ class MainFrame(ctk.CTkFrame):
         
         self.zkfp2 = ZKFP2()
         self.thai_id_reader = ThaiIDReader()
+
+        # สร้าง Frame dashboard #
+        self.dashboard_frame = ctk.CTkFrame(self, fg_color='#ffffff', corner_radius=20, border_width=2, border_color="#B9D6E2")
 
         # สร้าง Frame ลงทะเบียนผู้ต้องขัง #
         self.register_frame = ctk.CTkFrame(self, fg_color='#ffffff', corner_radius=20, border_width=2, border_color='#FFB3B3')
@@ -7392,7 +7402,97 @@ class MainFrame(ctk.CTkFrame):
         tree_container.bind('<Configure>',lambda e: resize_tree_column())
         # tree.bind('<Button-3>',on_right_click)
         popup_window_right_click = None
+##############################################################################################################################################################################
+    # function แสดงหน้าตามปุ่มกดจากหน้า Menu Frame
+##############################################################################################################################################################################
+    def dashboard_data(self):
+        # ลบ widget เดิมใน dashboard_frame
+        for widget in self.dashboard_frame.winfo_children():
+            widget.destroy()
+        now = datetime.now()
+        today_str = now.strftime("%Y-%m-%d")
+        summary = self.db.get_dashboard_summary(today_str)
+        
+        self.dashboard_frame.configure(fg_color="#f4f7fa")
+        self.dashboard_frame.grid_columnconfigure(0, weight=1)
+        self.dashboard_frame.grid_rowconfigure(1, weight=1)
 
+        # Header
+        header_frame = ctk.CTkFrame(self.dashboard_frame, fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed", height=90)
+        header_frame.grid(row=0, column=0, padx=32, pady=(24, 8), sticky="ew")
+        header_frame.grid_columnconfigure(0, weight=1)
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text="Dashboard สรุปภาพรวมระบบ",
+            font=("TH SarabunPSK", 38, "bold"),
+            text_color="#1f538d",
+            fg_color="#ffffff"
+        )
+        title_label.grid(row=0, column=0, sticky="w", padx=(24, 0), pady=18)
+
+        # Date Entry & Refresh Button
+        date_entry = ctk.CTkEntry(header_frame, placeholder_text="YYYY-MM-DD", font=("TH SarabunPSK", 24), width=160, fg_color="#f8fbff", border_color="#b3d1ff")
+        date_entry.insert(0, datetime.now().strftime("%Y-%m-%d"))
+        date_entry.grid(row=0, column=1, padx=(0, 10), pady=18, sticky="e")
+        btn_refresh = ctk.CTkButton(
+            header_frame, text="ดึงข้อมูล", font=("TH SarabunPSK", 24, "bold"),
+            width=100, fg_color="#4f8cff", hover_color="#2d3a4b", text_color="#fff", corner_radius=12
+        )
+        btn_refresh.grid(row=0, column=2, padx=(0, 24), pady=18, sticky="e")
+
+        # KPI Cards
+        cards_frame = ctk.CTkFrame(self.dashboard_frame, fg_color="transparent")
+        cards_frame.grid(row=1, column=0, padx=32, pady=10, sticky="nsew")
+        cards_frame.grid_columnconfigure((0, 1, 2), weight=1)
+        cards_frame.grid_rowconfigure((0, 1), weight=1)
+
+        self.dashboard_card_labels = []  # เก็บ label ของแต่ละ card
+
+        def create_card(row, col, title, value, color):
+            card = ctk.CTkFrame(cards_frame, corner_radius=18, border_width=2, border_color=color, fg_color="#ffffff")
+            card.grid(row=row, column=col, padx=16, pady=12, sticky="nsew")
+            card.grid_columnconfigure(0, weight=1)
+            lbl_title = ctk.CTkLabel(card, text=title, font=("TH SarabunPSK", 28, "bold"), text_color="#2d3a4b", fg_color="#ffffff")
+            lbl_title.grid(row=0, column=0, sticky="w", padx=18, pady=(18, 0))
+            lbl_value = ctk.CTkLabel(card, text=value, font=("TH SarabunPSK", 48, "bold"), text_color=color, fg_color="#ffffff")
+            lbl_value.grid(row=1, column=0, sticky="w", padx=18, pady=(0, 18))
+            self.dashboard_card_labels.append(lbl_value)
+
+        # สร้าง card และเก็บ label
+        self.dashboard_card_labels.clear()
+        create_card(0, 0, "ผู้ต้องขังทั้งหมด", f"{summary['prisoner_normal']:,}", "#1f538d")
+        create_card(0, 1, "ผู้ต้องกักขัง", f"{summary['prisoner_detained']:,}", "#1f538d")
+        create_card(0, 2, "ผิดวินัย", f"{summary['prisoner_disciplinary']:,}", "#c0392b")
+        create_card(1, 0, "ญาติทั้งหมดในระบบ", f"{summary['relatives_total']:,}", "#2ecc71")
+        create_card(1, 1, "ผู้ต้องขังได้รับเยี่ยม", f"{summary['prisoner_visited_today']:,}", "#f39c12")
+        create_card(1, 2, "ญาติเข้าเยี่ยม (คน)", f"{summary['relatives_visited_today']:,}", "#f39c12")
+
+        # Log/Info Area
+        log_frame = ctk.CTkTextbox(self.dashboard_frame, height=160, font=("TH SarabunPSK", 22), fg_color="#f8fbff", text_color="#1f538d", border_color="#b3d1ff")
+        log_frame.grid(row=2, column=0, padx=32, pady=(10, 24), sticky="ew")
+        log_frame.insert("0.0", "ระบบพร้อมใช้งาน... \nแสดงข้อมูลล่าสุด ณ " + datetime.now().strftime("%H:%M:%S"))
+
+        def refresh_data():
+            target_date = date_entry.get()
+            log_frame.insert("end", f"\nกำลังดึงข้อมูลของวันที่: {target_date}...")
+            summary = self.db.get_dashboard_summary(target_date)
+            if summary:
+                # อัปเดตค่าบน card
+                values = [
+                    summary['prisoner_normal'],
+                    summary['prisoner_detained'],
+                    summary['prisoner_disciplinary'],
+                    summary['relatives_total'],
+                    summary['prisoner_visited_today'],
+                    summary['relatives_visited_today'],
+                ]
+                for lbl, val in zip(self.dashboard_card_labels, values):
+                    lbl.configure(text=f"{val:,}")
+                log_frame.insert("end", f"\nอัปเดตข้อมูลสำเร็จ")
+            else:
+                log_frame.insert("end", "\nเกิดข้อผิดพลาดในการดึงข้อมูล")
+        date_entry.bind('<Return>',lambda e: refresh_data())
+        btn_refresh.configure(command=refresh_data)
 ##############################################################################################################################################################################
     # function แสดงหน้าตามปุ่มกดจากหน้า Menu Frame
 ##############################################################################################################################################################################
@@ -7404,6 +7504,9 @@ class MainFrame(ctk.CTkFrame):
         if page_name == 'ลงทะเบียนผู้ต้องขัง':
             self.register_frame.pack(fill='both',expand = True)
             self.register_prisoner()
+        elif page_name == 'DASHBOARD':
+            self.dashboard_frame.pack(fill='both', expand=True)
+            self.dashboard_data()
         elif page_name == 'ค้นหาผู้ต้องขัง':
             self.showdata_frame.pack(fill='both',expand = True)
             self.search_one_prisoner()
