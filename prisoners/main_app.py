@@ -80,6 +80,7 @@ class PRINT_RECIPT:
         data[7] = สิทธิ์การเยี่ยมคงเหลือ เดือน ... ครั้ง ...
         data[8] = รายชื่อเข้าเยี่ยม
         '''
+        print(data)
         now = datetime.now()
         try:
             round_map = {
@@ -487,6 +488,7 @@ class RESERVE_SPACIAL:
         
 class RESERVE:
     def __init__(self, main_window, prisoner_data,national_id,to_day,to_month,reserve_now,on_success=None):
+
         self.status = reserve_now
         self.main_window = main_window
         self.national_id = national_id
@@ -4298,7 +4300,7 @@ class MainFrame(ctk.CTkFrame):
                         print(f'เกิดข้อผิดพลาด handle_prisoner_button: {e}')
                                 
                 if prisoners_data != []:
-                    print(prisoners_data)
+                    print(f'fn reserve_now reserve_visit {prisoners_data}')
                 else:
                     alert = ALERT(popup_reserve_to_visit,[f'ไม่พบข้อมูล \n {nationnal_id}'],button=True)
                     return
@@ -7412,7 +7414,6 @@ class MainFrame(ctk.CTkFrame):
         now = datetime.now()
         today_str = now.strftime("%Y-%m-%d")
         summary = self.db.get_dashboard_summary(today_str)
-        
         self.dashboard_frame.configure(fg_color="#f4f7fa")
         self.dashboard_frame.grid_columnconfigure(0, weight=1)
         self.dashboard_frame.grid_rowconfigure(1, weight=1)
@@ -7446,9 +7447,9 @@ class MainFrame(ctk.CTkFrame):
         cards_frame.grid_columnconfigure((0, 1, 2), weight=1)
         cards_frame.grid_rowconfigure((0, 1), weight=1)
 
-        self.dashboard_card_labels = []  # เก็บ label ของแต่ละ card
+        self.dashboard_card_labels = {}
 
-        def create_card(row, col, title, value, color):
+        def create_card(row, col, key, title, value, color):
             card = ctk.CTkFrame(cards_frame, corner_radius=18, border_width=2, border_color=color, fg_color="#ffffff")
             card.grid(row=row, column=col, padx=16, pady=12, sticky="nsew")
             card.grid_columnconfigure(0, weight=1)
@@ -7456,41 +7457,49 @@ class MainFrame(ctk.CTkFrame):
             lbl_title.grid(row=0, column=0, sticky="w", padx=18, pady=(18, 0))
             lbl_value = ctk.CTkLabel(card, text=value, font=("TH SarabunPSK", 48, "bold"), text_color=color, fg_color="#ffffff")
             lbl_value.grid(row=1, column=0, sticky="w", padx=18, pady=(0, 18))
-            self.dashboard_card_labels.append(lbl_value)
+            self.dashboard_card_labels[key] = lbl_value
 
-        # สร้าง card และเก็บ label
-        self.dashboard_card_labels.clear()
-        create_card(0, 0, "ผู้ต้องขังทั้งหมด", f"{summary['prisoner_normal']:,}", "#1f538d")
-        create_card(0, 1, "ผู้ต้องกักขัง", f"{summary['prisoner_detained']:,}", "#1f538d")
-        create_card(0, 2, "ผิดวินัย", f"{summary['prisoner_disciplinary']:,}", "#c0392b")
-        create_card(1, 0, "ญาติทั้งหมดในระบบ", f"{summary['relatives_total']:,}", "#2ecc71")
-        create_card(1, 1, "ผู้ต้องขังได้รับเยี่ยม", f"{summary['prisoner_visited_today']:,}", "#f39c12")
-        create_card(1, 2, "ญาติเข้าเยี่ยม (คน)", f"{summary['relatives_visited_today']:,}", "#f39c12")
+        # --- สร้าง card แต่ละใบ (key ต้องไม่ซ้ำ) ---
+        create_card(0, 0, "prisoner", "ผู้ต้องขังทั้งหมด", f"{summary['prisoner_normal']:,}\nชาย {summary['prisoner_male']:,} คน\nหญิง {summary['prisoner_female']:,} คน", "#1f538d")
+        create_card(0, 1, "detained", "ผู้ต้องกักขัง", f"{summary['prisoner_detained']:,}\nชาย {summary['detained_male']:,} คน\nหญิง {summary['detained_female']:,} คน", "#1f538d")
+        create_card(0, 2, "disciplinary", "ผิดวินัย", f"{summary['prisoner_disciplinary']:,}\nชาย {summary['prisoner_disciplinary_male']} คน\nหญิง {summary['prisoner_disciplinary_female']:,} คน", "#c0392b")
+        create_card(1, 0, "relatives", "ญาติทั้งหมดในระบบ", f"{summary['relatives_total']:,}\nชาย {summary['relatives_male']:,} คน\nหญิง {summary['relatives_female']:,} คน", "#2ecc71")
+        create_card(1, 1, "visited", "ผู้ต้องขังได้รับเยี่ยม", f"{summary['prisoner_visited_today']:,}", "#f39c12")
+        create_card(1, 2, "relatives_visited", "ญาติเข้าเยี่ยม (คน)", f"{summary['relatives_visited_today']:,}\nชาย {summary['relatives_visited_male_today']:,} คน\nหญิง {summary['relatives_visited_female_today']:,} คน", "#f39c12")
 
         # Log/Info Area
         log_frame = ctk.CTkTextbox(self.dashboard_frame, height=160, font=("TH SarabunPSK", 22), fg_color="#f8fbff", text_color="#1f538d", border_color="#b3d1ff")
         log_frame.grid(row=2, column=0, padx=32, pady=(10, 24), sticky="ew")
         log_frame.insert("0.0", "ระบบพร้อมใช้งาน... \nแสดงข้อมูลล่าสุด ณ " + datetime.now().strftime("%H:%M:%S"))
 
+        # --- ฟังก์ชัน refresh ที่อัปเดตค่าทุก card ---
         def refresh_data():
             target_date = date_entry.get()
             log_frame.insert("end", f"\nกำลังดึงข้อมูลของวันที่: {target_date}...")
             summary = self.db.get_dashboard_summary(target_date)
             if summary:
-                # อัปเดตค่าบน card
-                values = [
-                    summary['prisoner_normal'],
-                    summary['prisoner_detained'],
-                    summary['prisoner_disciplinary'],
-                    summary['relatives_total'],
-                    summary['prisoner_visited_today'],
-                    summary['relatives_visited_today'],
-                ]
-                for lbl, val in zip(self.dashboard_card_labels, values):
-                    lbl.configure(text=f"{val:,}")
+                self.dashboard_card_labels["prisoner"].configure(
+                    text=f"{summary['prisoner_normal']:,}\nชาย {summary['prisoner_male']:,} คน\nหญิง {summary['prisoner_female']:,} คน"
+                )
+                self.dashboard_card_labels["detained"].configure(
+                    text=f"{summary['prisoner_detained']:,}\nชาย {summary['detained_male']:,} คน\nหญิง {summary['detained_female']:,} คน"
+                )
+                self.dashboard_card_labels["disciplinary"].configure(
+                    text=f"{summary['prisoner_disciplinary']:,}\nชาย {summary['prisoner_disciplinary_male']} คน\nหญิง {summary['prisoner_disciplinary_female']:,} คน"
+                )
+                self.dashboard_card_labels["relatives"].configure(
+                    text=f"{summary['relatives_total']:,}\nชาย {summary['relatives_male']:,} คน\nหญิง {summary['relatives_female']:,} คน"
+                )
+                self.dashboard_card_labels["visited"].configure(
+                    text=f"{summary['prisoner_visited_today']:,}"
+                )
+                self.dashboard_card_labels["relatives_visited"].configure(
+                    text=f"{summary['relatives_visited_today']:,}\nชาย {summary['relatives_visited_male_today']:,} คน\nหญิง {summary['relatives_visited_female_today']:,} คน"
+                )
                 log_frame.insert("end", f"\nอัปเดตข้อมูลสำเร็จ")
             else:
                 log_frame.insert("end", "\nเกิดข้อผิดพลาดในการดึงข้อมูล")
+
         date_entry.bind('<Return>',lambda e: refresh_data())
         btn_refresh.configure(command=refresh_data)
 ##############################################################################################################################################################################

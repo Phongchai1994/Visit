@@ -264,45 +264,122 @@ class SQLiteDB:
         """ดึงข้อมูลสรุป Dashboard"""
         self.connect()
         try:
-            # 1. ผู้ต้องขังทั้งหมด (สถานะปกติ)
+            # ผู้ต้องขังทั้งหมด (สถานะปกติ)
             self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE status = 'อยู่' AND type = 'ผู้ต้องขัง'")
             prisoner_normal = self.cursor.fetchone()[0]
 
-            # 2. ผู้ต้องกักขังทั้งหมด
+            # จำนวนผู้ต้องขังชาย
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE status = 'อยู่' AND sex = 'ชาย' AND type = 'ผู้ต้องขัง'")
+            prisoner_male = self.cursor.fetchone()[0]
+
+            # จำนวนผู้ต้องขังหญิง
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE status = 'อยู่' AND sex = 'หญิง' AND type = 'ผู้ต้องขัง'")
+            prisoner_female = self.cursor.fetchone()[0]
+
+            # ผู้ต้องกักขังทั้งหมด
             self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE type = 'ผู้ต้องกักขัง' AND status = 'อยู่'")
             prisoner_detained = self.cursor.fetchone()[0]
 
-            # 3. ผิดวินัยกี่คน
-            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE disciplinary = 'ผิดวินัย'")
+            # จำนวนผู้ต้องกักขังชาย
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE type = 'ผู้ต้องกักขัง' AND status = 'อยู่' AND sex = 'ชาย'")
+            detained_male = self.cursor.fetchone()[0]
+
+            # จำนวนผู้ต้องกักขังหญิง
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE type = 'ผู้ต้องกักขัง' AND status = 'อยู่' AND sex = 'หญิง'")
+            detained_female = self.cursor.fetchone()[0]
+
+            # ผิดวินัยกี่คน
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE disciplinary = 'ผิดวินัย' AND status = 'อยู่'")
             prisoner_disciplinary = self.cursor.fetchone()[0]
 
-            # 4. ญาติทั้งหมด
+            # ผิดวินัยชาย
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE disciplinary = 'ผิดวินัย' AND status = 'อยู่' AND sex = 'ชาย'")
+            prisoner_disciplinary_male = self.cursor.fetchone()[0]            
+            
+            # ผิดวินัยหญิง
+            self.cursor.execute("SELECT COUNT(*) FROM prisoners_ WHERE disciplinary = 'ผิดวินัย' AND status = 'อยู่' AND sex = 'หญิง'")
+            prisoner_disciplinary_female = self.cursor.fetchone()[0]
+
+            # ญาติทั้งหมด
             self.cursor.execute("SELECT COUNT(*) FROM relatives")
             relatives_total = self.cursor.fetchone()[0]
 
-            # 5. วันนี้มีผู้ต้องขังได้เยี่ยมกี่คน (ไม่ซ้ำ)
+            # ญาติชาย
+            self.cursor.execute("SELECT COUNT(*) FROM relatives WHERE title IN ('นาย','ด.ช.','เด็กชาย','พระ')")
+            relatives_male = self.cursor.fetchone()[0]            
+            
+            # ญาติหญิง
+            self.cursor.execute("SELECT COUNT(*) FROM relatives WHERE title IN ('นาง','น.ส.','นางสาว','ด.ญ.','เด็กหญิง')")
+            relatives_female = self.cursor.fetchone()[0]
+
+            # วันนี้มีผู้ต้องขังได้เยี่ยมกี่คน (ไม่ซ้ำ)
             self.cursor.execute("SELECT COUNT(DISTINCT prisoner_id) FROM visits WHERE date_visit = ?",(date_str,))
             prisoner_visited_today = self.cursor.fetchone()[0]
 
-            # 6. วันนี้ญาติเข้าเยี่ยมกี่คน (รวมทุกช่อง)
+            # วันนี้ญาติเข้าเยี่ยมกี่คน (รวมทุกช่อง)
             self.cursor.execute("""
                 SELECT COUNT(*) FROM (
-                    SELECT relative_id_1 AS rid FROM visits WHERE date_visit = ? AND relative_id_1 IS NOT NULL
-                    UNION ALL SELECT relative_id_2 FROM visits WHERE date_visit = ? AND relative_id_2 IS NOT NULL
-                    UNION ALL SELECT relative_id_3 FROM visits WHERE date_visit = ? AND relative_id_3 IS NOT NULL
-                    UNION ALL SELECT relative_id_4 FROM visits WHERE date_visit = ? AND relative_id_4 IS NOT NULL
-                    UNION ALL SELECT relative_id_5 FROM visits WHERE date_visit = ? AND relative_id_5 IS NOT NULL
-                ) WHERE rid IS NOT NULL
-            """,(date_str,date_str,date_str,date_str,date_str))
+                    SELECT relative_id_1 AS rid FROM visits WHERE date_visit = ? AND relative_id_1 IS NOT NULL AND relative_id_1 != ''
+                    UNION ALL SELECT relative_id_2 FROM visits WHERE date_visit = ? AND relative_id_2 IS NOT NULL AND relative_id_2 != ''
+                    UNION ALL SELECT relative_id_3 FROM visits WHERE date_visit = ? AND relative_id_3 IS NOT NULL AND relative_id_3 != ''
+                    UNION ALL SELECT relative_id_4 FROM visits WHERE date_visit = ? AND relative_id_4 IS NOT NULL AND relative_id_4 != ''
+                    UNION ALL SELECT relative_id_5 FROM visits WHERE date_visit = ? AND relative_id_5 IS NOT NULL AND relative_id_5 != ''
+                ) WHERE rid IS NOT NULL AND rid != ''
+            """, (date_str, date_str, date_str, date_str, date_str))
             relatives_visited_today = self.cursor.fetchone()[0]
+
+            # ญาติชาย (รวมซ้ำทุกช่อง)
+            self.cursor.execute("""
+                SELECT COUNT(*) FROM (
+                    SELECT r.title
+                    FROM (
+                        SELECT relative_id_1 AS rid FROM visits WHERE date_visit = ? AND relative_id_1 IS NOT NULL
+                        UNION ALL SELECT relative_id_2 FROM visits WHERE date_visit = ? AND relative_id_2 IS NOT NULL
+                        UNION ALL SELECT relative_id_3 FROM visits WHERE date_visit = ? AND relative_id_3 IS NOT NULL
+                        UNION ALL SELECT relative_id_4 FROM visits WHERE date_visit = ? AND relative_id_4 IS NOT NULL
+                        UNION ALL SELECT relative_id_5 FROM visits WHERE date_visit = ? AND relative_id_5 IS NOT NULL
+                    ) v
+                    JOIN relatives r ON v.rid = r.relative_id
+                    WHERE r.title IN ('นาย','ด.ช.','เด็กชาย','พระ')
+                )
+            """, (date_str, date_str, date_str, date_str, date_str))
+            relatives_visited_male_today = self.cursor.fetchone()[0]
+
+            # ญาติหญิง (รวมซ้ำทุกช่อง)
+            self.cursor.execute("""
+                SELECT COUNT(*) FROM (
+                    SELECT r.title
+                    FROM (
+                        SELECT relative_id_1 AS rid FROM visits WHERE date_visit = ? AND relative_id_1 IS NOT NULL
+                        UNION ALL SELECT relative_id_2 FROM visits WHERE date_visit = ? AND relative_id_2 IS NOT NULL
+                        UNION ALL SELECT relative_id_3 FROM visits WHERE date_visit = ? AND relative_id_3 IS NOT NULL
+                        UNION ALL SELECT relative_id_4 FROM visits WHERE date_visit = ? AND relative_id_4 IS NOT NULL
+                        UNION ALL SELECT relative_id_5 FROM visits WHERE date_visit = ? AND relative_id_5 IS NOT NULL
+                    ) v
+                    JOIN relatives r ON v.rid = r.relative_id
+                    WHERE r.title IN ('นาง','น.ส.','นางสาว','ด.ญ.','เด็กหญิง')
+                )
+            """, (date_str, date_str, date_str, date_str, date_str))
+            relatives_visited_female_today = self.cursor.fetchone()[0]
 
             return {
                 "prisoner_normal": prisoner_normal,
+                "prisoner_male": prisoner_male,
+                "prisoner_female": prisoner_female,
                 "prisoner_detained": prisoner_detained,
+                "detained_male": detained_male,
+                "detained_female": detained_female,
                 "prisoner_disciplinary": prisoner_disciplinary,
+                "prisoner_disciplinary_male": prisoner_disciplinary_male,
+                "prisoner_disciplinary_female": prisoner_disciplinary_female,
                 "relatives_total": relatives_total,
+                "relatives_male": relatives_male,
+                "relatives_female": relatives_female,
                 "prisoner_visited_today": prisoner_visited_today,
-                "relatives_visited_today": relatives_visited_today
+                "relatives_visited_today": relatives_visited_today,
+                "relatives_visited_male_today": relatives_visited_male_today,
+                "relatives_visited_female_today": relatives_visited_female_today,
+
             }
         except Exception as e:
             func_name = sys._getframe().f_code.co_name
@@ -627,6 +704,8 @@ class SQLiteDB:
         '''
         data[0] = ชื่อ ผตข *
         data[1] = นามสกุล ผตช*
+            data[2] = ชั้น   
+            data[3] = แดน
         data[2] = วันที่*
         data[3] = เวลาเยี่ยม 10:00:00*
         data[4] = ช่องเยี่ยม*
@@ -662,13 +741,14 @@ class SQLiteDB:
             time = data[1]
             prisoner_id = data[2]
             channel = data[8]
-            relative_ids = [v for v in data[2:7] if v is not None]
+            relative_ids = [v for v in data[2:8] if v is not None]
             placeholders = ','.join(['?'] * len(relative_ids))
             sql = f'''
                 SELECT 
                     p.f_name,
                     p.l_name,
                     p.level,
+                    p.dan,
                     r.f_name,
                     r.l_name
                 FROM relations rel
@@ -683,7 +763,8 @@ class SQLiteDB:
             prisoner_fname = result[0][0] if result else ""
             prisoner_lname = result[0][1] if result else ""
             level = result[0][2]
-            relatives_names = [f"{row[3]} {row[4]}" for row in result]
+            dan = result[0][3]
+            relatives_names = [f"{row[4]} {row[5]}" for row in result]
             check_visit = self.get_count_visit(prisoner_id,date,date[:7])
             count_reserve = check_visit[1]
             if level == 'เยี่ยม' :
@@ -700,7 +781,7 @@ class SQLiteDB:
                 count_reserve = 1 - count_reserve
             month = get_thai_month(date)
             thai_date = date_to_thai(date)
-            return [prisoner_fname, prisoner_lname] + [thai_date] + [time] + [channel] + [f'สิทธิ์การเยี่ยมคงเหลือ เดือน {month} เหลือ {count_reserve} ครั้ง'] + relatives_names
+            return [prisoner_fname, prisoner_lname, level, dan] + [thai_date] + [time] + [channel] + [f'สิทธิ์การเยี่ยมคงเหลือ เดือน {month} เหลือ {count_reserve} ครั้ง'] + relatives_names
         except Exception as e:
             import sys
             func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
