@@ -80,7 +80,7 @@ class PRINT_RECIPT:
         data[7] = สิทธิ์การเยี่ยมคงเหลือ เดือน ... ครั้ง ...
         data[8] = รายชื่อเข้าเยี่ยม
         '''
-        print(data)
+        print(f'data in PRINT_RECIPT {data}')
         now = datetime.now()
         try:
             round_map = {
@@ -108,15 +108,17 @@ class PRINT_RECIPT:
                 self.printer.text(f"{i}. {name}\n")
             self.printer.text(f"{data[7]}\nกรุณามาก่อนเวลาเยี่ยมอย่างน้อย 15 นาที\n")
             self.printer.text(f'พิมพ์เมื่อ {now.strftime("%d/%m/%Y %H:%M:%S")} น.')
-            self.printer.cut()
             return True
         except Exception as e:
+            print(e)
             import sys
             func_name = sys._getframe().f_code.co_name # หรือใส่ชื่อฟังก์ชันเองเป็น string ก็ได้
             self.db.log_error([func_name,str(e)])
+            return False
         finally:
+            self.printer.cut()
             self.printer.close()
-            
+
 class RESERVE_SPACIAL:
 
     IDX_DATE = 0
@@ -938,6 +940,7 @@ class RESERVE:
                     ).pack(pady=5)
 
             elif self.thai_day == 'จันทร์' and str(self.dan) == '6':
+                print('----------------------- จันทร์ แดน 6')
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
@@ -966,6 +969,8 @@ class RESERVE:
                         state=state
                     ).pack(pady=5)
             elif self.thai_day == 'อังคาร' and str(self.dan) == '5':
+                print('----------------------- อังคาร แดน 5')
+
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
@@ -994,6 +999,7 @@ class RESERVE:
                         state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พุธ' and str(self.dan) == '1':
+                print('----------------------- พุธ แดน 1')
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in morning_rounds:
@@ -1008,6 +1014,7 @@ class RESERVE:
                         state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พุธ' and str(self.dan) in ['2','3','4','7']:
+                print('----------------------- พุธ แดน 2 3 4 7')
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon_rounds:
@@ -1022,32 +1029,7 @@ class RESERVE:
                         state=state
                     ).pack(pady=5)
             elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '5':
-                # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
-                ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
-                for text, start in morning_rounds:
-                    count_visit = self.db.get_count_visit_on_round(start,self.today)
-                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
-                    ctk.CTkRadioButton(
-                        self.frame_select_round,
-                        text=text,
-                        variable=self.round_visit_var,
-                        value=start,
-                        font=('TH SarabunPSK', 35, 'bold'),
-                        state=state
-                    ).pack(pady=5)
-            elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '6':
-                # 🔹 รอบบ่าย
-                ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
-                for text, start in afternoon_rounds:
-                    ctk.CTkRadioButton(
-                        self.frame_select_round,
-                        text=text,
-                        variable=self.round_visit_var,
-                        value=start,
-                        font=('TH SarabunPSK', 35, 'bold'),
-                        state=state
-                    ).pack(pady=5)
-            elif str(self.dan) == '1':
+                print('----------------------- พฤหัสบดี แดน 5')
 
                 # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
                 ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
@@ -1062,7 +1044,39 @@ class RESERVE:
                         font=('TH SarabunPSK', 35, 'bold'),
                         state=state
                     ).pack(pady=5)
+            elif self.thai_day == 'พฤหัสบดี' and str(self.dan) == '6':
+                print('----------------------- พฤหัสบดี แดน 6')
+                # 🔹 รอบบ่าย
+                ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
+                for text, start in afternoon_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
+                    ctk.CTkRadioButton(
+                        self.frame_select_round,
+                        text=text,
+                        variable=self.round_visit_var,
+                        value=start,
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
+                    ).pack(pady=5)
+            elif str(self.dan) == '1':
+
+                print('----------------------- ศุกร์ แดน 1')
+                # 🔹 รอบเช้า (เวลาแสดง, เวลาเริ่มจริง, เวลาปิด)
+                ctk.CTkLabel(self.frame_select_round, text='รอบเช้า', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
+                for text, start in morning_rounds:
+                    count_visit = self.db.get_count_visit_on_round(start,self.today)
+                    state = 'disabled' if count_visit >= number_of_visits else 'normal'
+                    ctk.CTkRadioButton(
+                        self.frame_select_round,
+                        text=text,
+                        variable=self.round_visit_var,
+                        value=start,
+                        font=('TH SarabunPSK', 35, 'bold'),
+                        state=state
+                    ).pack(pady=5)
             elif str(self.dan) in ['2','3','4','7']:
+                print('----------------------- ศุกร์ แดน 2347')
                 # 🔹 รอบบ่าย
                 ctk.CTkLabel(self.frame_select_round, text='รอบบ่าย', font=('TH SarabunPSK', 35, 'bold')).pack(pady=10)
                 for text, start in afternoon_rounds:
@@ -1304,7 +1318,7 @@ class RESERVE:
             result = self.db.add_visits(query,prepare_data)
             if result:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
-                if result:
+                if result: 
                     self.insert_succress()
                     return True
         elif len(prepare_data) == 4:
@@ -1312,7 +1326,7 @@ class RESERVE:
             result = self.db.add_visits(query,prepare_data)
             if result:
                 result = self.db.add_channel_on_visits(prepare_data[:4],channel)
-                if result:
+                if result: 
                     self.insert_succress()
                     return True
         return False
@@ -4397,8 +4411,7 @@ class MainFrame(ctk.CTkFrame):
                     cal_next_day = CALCULATE_NEXT_DAY()
                     today_future = cal_next_day.get_next_day()
                     month_future = today_future[:7]
-                    # print(f'จองเยี่ยมล่วงหน้า {today_future} {month_future}')
-
+                    print(f'จองเยี่ยมล่วงหน้า {today_future} {month_future}')
                     reserve_instance = RESERVE(
                         main_window=popup_reserve_to_visit,
                         prisoner_data=prisoner_data,
@@ -4460,6 +4473,7 @@ class MainFrame(ctk.CTkFrame):
                 def handle_prisoner_button(prisoner_data):
                     try:
                         cancel_idle_timer()
+                        print('cancel_idle_timer()')
                         if self.open_nextscreen_window is None or not self.open_nextscreen_window.winfo_exists():
                             self.open_nextscreen_window = reserve_visit(prisoner_data)
                         else:
@@ -6128,8 +6142,10 @@ class MainFrame(ctk.CTkFrame):
                 visit_id = values[0]
                 data_on_visits = self.db.get_join_tabel_print_recipt(visit_id) #('2026-05-06', '13:15:00', 6530800007, 1560100345135, 3220500011802, 3220100069242, None, None, 2)
                 str_print_data = [str(x) for x in data_on_visits]
-                if PRINT_RECIPT().print_recipt(str_print_data):
-                    popup_window_right_click.destroy()
+                print(f'str_print_data')
+                print_re = PRINT_RECIPT().print_recipt(str_print_data)
+                print(f'print_re = {print_re}')
+                popup_window_right_click.destroy()
 
             nonlocal popup_window_right_click
             try:

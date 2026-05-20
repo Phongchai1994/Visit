@@ -105,7 +105,7 @@ class SQLiteDB:
                         PRIMARY KEY("log_id" AUTOINCREMENT)
                     )
                 ''')
-                print('สร้างตาราง log_error สำเร็จ')
+                # print('สร้างตาราง log_error สำเร็จ')
                 return True
             except Exception as e:
                 import sys
@@ -198,7 +198,7 @@ class SQLiteDB:
                     )
                 ''')
 
-                print("สร้างตารางทั้งหมดในระบบเรียบร้อยแล้ว")
+                # print("สร้างตารางทั้งหมดในระบบเรียบร้อยแล้ว")
                 return True
             except Exception as e:
                 func_name = sys._getframe().f_code.co_name
