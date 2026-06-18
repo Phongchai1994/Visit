@@ -158,4 +158,13 @@
 # if __name__ == "__main__":
 #     insert_data(11111111, 'ชาย', 'ทดสอบ', 'query', 'ยาเสพติด', 'ดี', '5', 'ผู้ต้องขัง')
 #     view_prisoner()
+import sys
+import os
+from dotenv import load_dotenv
+from manage import config
 
+print(os.getenv("PG_HOST"))
+print(os.getenv("PG_PORT"))
+print(os.getenv("PG_NAME"))
+print(os.getenv("PG_USER"))
+print(os.getenv("PG_PASS"))

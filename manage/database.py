@@ -1,4 +1,3 @@
-import sqlite3
 import os
 import sys
 from manage.encryption_utils import decrypt_file,encrypt_file
@@ -7,6 +6,10 @@ import json
 from pathlib import Path
 import tempfile
 import datetime
+import psycopg2
+from psycopg2 import Binary
+from dotenv import load_dotenv
+from manage import config
 
 TODAYS = datetime.datetime.today()
 TODAYS_STR = TODAYS.strftime("%Y-%m-%d")
@@ -14,28 +17,21 @@ TODAYS_STR = TODAYS.strftime("%Y-%m-%d")
 
 TEMP_DIR = Path(tempfile.gettempdir()) # สร้างไฟล์ชั่วคราวไว้ใน Temp
 
-
-def get_config_path():
-    return os.path.join(os.getcwd(), "config", "config.json")
-
-def load_config():
-    config_path = get_config_path()
-    if os.path.exists(config_path):
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return json.load(f).get('db_path')
-    return ''
-
 def check_key_on_db():
-    db_path = load_config()
-    if not db_path or not os.path.exists(db_path):
-        print(f"Error: Database path is invalid or file doesn't exist: {db_path}")
-        return False
-    db = sqlite3.connect(db_path)
-    cursor = db.cursor()
-    cursor.execute('SELECT key FROM check_')
-    result = cursor.fetchone()
-    db.close()
-    return result[0] if result else None
+    connection_params = {
+        'host': os.getenv("PG_HOST"),
+        'port': os.getenv("PG_PORT"),
+        'dbname': os.getenv("PG_NAME"),
+        'user': os.getenv("PG_USER"),
+        'password': os.getenv("PG_PASS")
+    }
+    with psycopg2.connect(**connection_params) as conn:
+        conn.autocommit(True)
+        with conn.cursor() as cur:
+            cur.execute('SELECT key FROM check_')
+            result = cur.fetchone()
+            conn.close()
+            return result[0] if result else None
 
 def require_valid_key(func):
     KEY = 'E54F2JN5F3'
