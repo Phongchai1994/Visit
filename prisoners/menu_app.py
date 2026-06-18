@@ -121,6 +121,22 @@ class MenuFrame(ctk.CTkFrame):
      
         elif user_session.is_user():
             ctk.CTkLabel(title_frame,
+                text='',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack()              
+            ctk.CTkLabel(button_container,
+                text='Dashboard',
+                font=('TH SarabunPSK', 24, 'bold'),
+                text_color='#2d3a4b'
+            ).pack()
+
+            dashboard_section = ctk.CTkFrame(button_container, fg_color='transparent')
+            dashboard_section.pack(fill='x', pady=(0, 20))
+
+            modern_button(dashboard_section, 'สรุปข้อมูล', lambda: self.main_frame.show_page('DASHBOARD')).pack(pady=4, fill='x')
+            
+            ctk.CTkLabel(button_container,
                 text='เมนูจัดการข้อมูลผู้ต้องขัง',
                 font=('TH SarabunPSK', 24, 'bold'),
                 text_color='#2d3a4b'

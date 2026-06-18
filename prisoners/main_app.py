@@ -2845,6 +2845,28 @@ class MainFrame(ctk.CTkFrame):
             status_data = ctk.CTkOptionMenu(search_frame,values=['อยู่','ไม่อยู่'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
             disciplinary_data = ctk.CTkOptionMenu(search_frame,values=['ไม่มี','ผิดวินัย'],font=('TH SarabunPSK',18),dropdown_font=('TH SarabunPSK',18))
 
+
+            if user_session.is_user():
+                level_data.configure(
+                    state="disabled",        # ปิดไม่ให้คลิกได้
+                    fg_color="gray",         # สีพื้นหลังเมนู
+                    button_color="gray",     # สีปุ่มลูกศร
+                    text_color="darkgray"    # สีตัวหนังสือให้ดูจางลง
+                )
+                disciplinary_data.configure(
+                    state="disabled",        # ปิดไม่ให้คลิกได้
+                    fg_color="gray",         # สีพื้นหลังเมนู
+                    button_color="gray",     # สีปุ่มลูกศร
+                    text_color="darkgray"    # สีตัวหนังสือให้ดูจางลง
+                )
+            print('user')
+            print(user_session.is_user())
+            
+            print('admin    ')
+            print(user_session.is_admin())
+
+
+
             id_data.grid(row = 1,column = 1,sticky = 'w',padx = 5)
             sex_data.grid(row = 2,column = 1,sticky = 'w',padx = 5)
             fname_data.grid(row = 3,column = 1,sticky = 'w',padx = 5)
@@ -2943,11 +2965,11 @@ class MainFrame(ctk.CTkFrame):
             all_data = []
             # print(f"กำลังโหลดข้อมูลจากฐานข้อมูล: {self.db.db_path}")
             
-            if not self.db.db_path or not os.path.exists(self.db.db_path):
-                # print(f"Error: ไม่พบไฟล์ฐานข้อมูล: {self.db.db_path}")
-                messagebox.showerror("ข้อผิดพลาด", f"ไม่พบไฟล์ฐานข้อมูล:\n{self.db.db_path}")
-                show_prisoners([])
-                return
+            # if not self.db.db_path or not os.path.exists(self.db.db_path):
+            #     # print(f"Error: ไม่พบไฟล์ฐานข้อมูล: {self.db.db_path}")
+            #     messagebox.showerror("ข้อผิดพลาด", f"ไม่พบไฟล์ฐานข้อมูล:\n{self.db.db_path}")
+            #     show_prisoners([])
+            #     return
                 
             data_result = self.db.get_data_all()
             # print(f"ผลลัพธ์จาก get_data_all: {type(data_result)}, จำนวน: {len(data_result) if isinstance(data_result, list) else 'N/A'}")
