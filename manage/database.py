@@ -1226,8 +1226,15 @@ class SQLiteDB: # เปลี่ยนชื่อคลาสหรือจ�
     @require_valid_key
     def add_relative_to_visits(self,data):
         self.connect()
+        print(data)
         try:
-            self.cursor.execute('UPDATE visits SET relative_id_1 = %s, relative_id_2 = %s, relative_id_3 = %s, relative_id_4 = %s, relative_id_5 = %s WHERE visit_id = %s', data)
+            sanitized_data = []
+            for item in data:
+                if item == '':
+                    sanitized_data.append(None)
+                else:
+                    sanitized_data.append(item)
+            self.cursor.execute('UPDATE visits SET relative_id_1 = %s, relative_id_2 = %s, relative_id_3 = %s, relative_id_4 = %s, relative_id_5 = %s WHERE visit_id = %s', sanitized_data)
             return True
         except Exception as e:
             self.conn.rollback()

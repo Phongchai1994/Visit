@@ -5883,7 +5883,7 @@ class MainFrame(ctk.CTkFrame):
             if not selected:
                 return
             values = tree.item(selected)['values']
-            # print(f'values = {values}')
+            print(f'values = {values}')
             # ฟังก์ชันสำหรับเมนูคลิกขวา
             def move_round():
 
@@ -5973,6 +5973,7 @@ class MainFrame(ctk.CTkFrame):
                     data_relative.append(data_visit_no_4.cget('text'))
                     data_relative.append(data_visit_no_5.cget('text'))
                     data_relative.append(visit_id)
+                    print(data_relative)
                     result_add_relatives =  self.db.add_relative_to_visits(data_relative)
                     if result_add_relatives:
                         alert = ALERT(add_visit_popup,[f'เพิ่มชื่อญาติเยี่ยมสำเร็จ'],text_color='black',button=True)
