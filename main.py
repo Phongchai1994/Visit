@@ -147,12 +147,12 @@ class App_Prisoners(ctk.CTk):
             admin_menu.add_separator()
             # admin_menu.add_command(label='รีเฟรชระบบ', command=self.refresh_all_data)
             menu_bar.add_cascade(label='ผู้ดูแลระบบ', menu=admin_menu)
-        
-        # ✅ เพิ่มเมนูเครื่องมือ
-        tools_menu = tk.Menu(menu_bar, tearoff=0, bg='#f8fbff', fg='#2d3a4b')
-        # tools_menu.add_command(label='รีเฟรชข้อมูล\tF5', command=self.refresh_all_data)
-        # tools_menu.add_command(label='ตรวจสอบการเชื่อมต่อ', command=self.check_database_connection)
-        menu_bar.add_cascade(label='เครื่องมือ', menu=tools_menu)
+            # ✅ เพิ่มเมนูเครื่องมือ
+            tools_menu = tk.Menu(menu_bar, tearoff=0, bg='#f8fbff', fg='#2d3a4b')
+            tools_menu.add_command(label="ตั้งค่าช่องเยี่ยม", command=self.config_channel)
+            # tools_menu.add_command(label='รีเฟรชข้อมูล\tF5', command=self.refresh_all_data)
+            # tools_menu.add_command(label='ตรวจสอบการเชื่อมต่อ', command=self.check_database_connection)
+            menu_bar.add_cascade(label='เครื่องมือ', menu=tools_menu)
         
         help_menu = tk.Menu(menu_bar, tearoff=0, bg='#f8fbff', fg='#2d3a4b')
         help_menu.add_command(label='เกี่ยวกับ')
@@ -485,6 +485,73 @@ class App_Prisoners(ctk.CTk):
     
     def system_settings(self):
         messagebox.showinfo("ตั้งค่าระบบ", "ฟีเจอร์ตั้งค่าระบบ (เฉพาะ Admin)")
+
+    def config_channel(self):
+        window = ctk.CTkToplevel(self)
+        window.title('ตั้งค่าช่องเยี่ยม')
+        window.geometry('420x300')
+        window.resizable(False, False)
+        window.transient(self)
+        window.grab_set()
+
+        ctk.CTkLabel(
+            window,
+            text='จำนวนช่องเยี่ยมที่เปิดใช้งาน',
+            font=('TH SarabunPSK', 28, 'bold')
+        ).pack(pady=(25, 8))
+
+        channel_var = tk.StringVar(
+            value=str(self.db.get_configured_channel_count())
+        )
+        ctk.CTkOptionMenu(
+            window,
+            variable=channel_var,
+            values=[str(number) for number in range(1, 20)],
+            width=180,
+            height=42,
+            font=('TH SarabunPSK', 24)
+        ).pack(pady=8)
+
+        ctk.CTkLabel(
+            window,
+            text=' ',
+            font=('TH SarabunPSK', 20),
+            text_color='gray'
+        ).pack(pady=4)
+
+        def save_channel_count():
+            channel_number = int(channel_var.get())
+            if self.db.update_configured_channel_count(channel_number):
+                messagebox.showinfo(
+                    'บันทึกสำเร็จ',
+                    f'ตั้งค่าจำนวนช่องเยี่ยมเป็น {channel_number} ช่องแล้ว',
+                    parent=window
+                )
+                window.destroy()
+            else:
+                messagebox.showerror(
+                    'บันทึกไม่สำเร็จ',
+                    'ไม่สามารถบันทึกการตั้งค่าช่องเยี่ยมได้',
+                    parent=window
+                )
+
+        ctk.CTkButton(
+            window,
+            text='บันทึก',
+            command=save_channel_count,
+            width=180,
+            height=45,
+            font=('TH SarabunPSK', 24, 'bold')
+        ).pack(pady=(18, 8))
+        ctk.CTkButton(
+            window,
+            text='ยกเลิก',
+            command=window.destroy,
+            width=180,
+            height=38,
+            fg_color='gray',
+            font=('TH SarabunPSK', 20)
+        ).pack()
     
     def logout(self):
         """ออกจากระบบ"""

@@ -198,9 +198,41 @@ class SQLiteDB: # เปลี่ยนชื่อคลาสหรือจ�
             finally:
                 self.close()
 
+        def create_config_channel():
+            if not self.connect(): return False
+            try:
+                self.cursor.execute(
+                '''
+                    CREATE TABLE IF NOT EXISTS config_channel (
+                        channel_id SERIAL PRIMARY KEY,
+                        channel_number INTEGER NOT NULL UNIQUE,
+                        channel_name TEXT,
+                        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    )
+                '''
+                )
+                self.cursor.execute('''
+                    INSERT INTO config_channel (channel_number)
+                    SELECT 14
+                    WHERE NOT EXISTS (SELECT 1 FROM config_channel)
+                ''')
+                self.conn.commit()
+                return True
+            except Exception as e:
+                self.conn.rollback()
+                func_name = sys._getframe().f_code.co_name
+                print(f"เกิดข้อผิดพลาดในการสร้างตาราง: {e}")
+                return False
+            finally:
+                self.close()
+
+
         visit_spacial_table()
         log_error()
         create_all_tables()
+        create_config_channel()
 
     def check_key(self):
         self.connect()
@@ -213,6 +245,53 @@ class SQLiteDB: # เปลี่ยนชื่อคลาสหรือจ�
             func_name = sys._getframe().f_code.co_name
             self.log_error([func_name,str(e)])
             print(f'เกิดข้อผิดพลาด : {e}')
+            return False
+        finally:
+            self.close()
+
+    def get_configured_channel_count(self):
+        if not self.connect():
+            return 14
+        try:
+            self.cursor.execute('''
+                SELECT channel_number
+                FROM config_channel
+                ORDER BY channel_id
+                LIMIT 1
+            ''')
+            result = self.cursor.fetchone()
+            return int(result[0]) if result else 14
+        except Exception as e:
+            self.conn.rollback()
+            self.log_error([sys._getframe().f_code.co_name, str(e)])
+            return 14
+        finally:
+            self.close()
+
+    def update_configured_channel_count(self, channel_number):
+        if not self.connect():
+            return False
+        try:
+            self.cursor.execute('''
+                UPDATE config_channel
+                SET channel_number = %s
+                WHERE channel_id = (
+                    SELECT channel_id
+                    FROM config_channel
+                    ORDER BY channel_id
+                    LIMIT 1
+                )
+            ''', (channel_number,))
+            if self.cursor.rowcount == 0:
+                self.cursor.execute('''
+                    INSERT INTO config_channel (channel_number)
+                    VALUES (%s)
+                ''', (channel_number,))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            self.conn.rollback()
+            self.log_error([sys._getframe().f_code.co_name, str(e)])
             return False
         finally:
             self.close()
@@ -1311,6 +1390,79 @@ class SQLiteDB: # เปลี่ยนชื่อคลาสหรือจ�
             self.conn.rollback()
             func_name = sys._getframe().f_code.co_name
             self.log_error([func_name,str(e)])
+            return False
+        finally:
+            self.close()
+
+
+    def get_config_channels(self, active_only=True):
+        if not self.connect():
+            return []
+
+        try:
+            query = '''
+                SELECT channel_id, channel_number, channel_name, is_active
+                FROM config_channel
+            '''
+            params = ()
+
+            if active_only:
+                query += ' WHERE is_active = TRUE'
+
+            query += ' ORDER BY channel_number'
+
+            self.cursor.execute(query, params)
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            self.log_error([sys._getframe().f_code.co_name, str(e)])
+            return []
+        finally:
+            self.close()
+
+    def add_config_channel(self, channel_number, channel_name=None):
+        if not self.connect():
+            return False
+
+        try:
+            self.cursor.execute('''
+                INSERT INTO config_channel
+                    (channel_number, channel_name)
+                VALUES (%s, %s)
+            ''', (channel_number, channel_name))
+            return True
+        except psycopg2.errors.UniqueViolation:
+            self.conn.rollback()
+            self.msgbox("หมายเลขช่องนี้มีอยู่แล้ว")
+            return False
+        except Exception as e:
+            self.conn.rollback()
+            self.log_error([sys._getframe().f_code.co_name, str(e)])
+            return False
+        finally:
+            self.close()
+
+    def update_config_channel(self, channel_id, channel_number, channel_name, is_active):
+        if not self.connect():
+            return False
+
+        try:
+            self.cursor.execute('''
+                UPDATE config_channel
+                SET channel_number = %s,
+                    channel_name = %s,
+                    is_active = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE channel_id = %s
+            ''', (channel_number, channel_name, is_active, channel_id))
+            return True
+        except psycopg2.errors.UniqueViolation:
+            self.conn.rollback()
+            self.msgbox("หมายเลขช่องนี้มีอยู่แล้ว")
+            return False
+        except Exception as e:
+            self.conn.rollback()
+            self.log_error([sys._getframe().f_code.co_name, str(e)])
             return False
         finally:
             self.close()

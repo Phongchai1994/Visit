@@ -260,6 +260,7 @@ class RESERVE_SPACIAL:
         content.pack(pady=5)
         
         round_visit_var = ctk.StringVar()
+        number_of_visits = self.db.get_configured_channel_count()
 
         for text,round_ in self.round_allow:
             radio = ctk.CTkRadioButton(
@@ -272,7 +273,7 @@ class RESERVE_SPACIAL:
             check_chanel = self.db.get_chanel_on_visit_spacial(round_,self.data_reserve[self.IDX_DATE][1])
             # ถ้า query คืน None/False ให้ถือเป็น 0
             count = int(check_chanel or 0)
-            if count >= 14:
+            if count >= number_of_visits:
                 radio.configure(state="disabled",text=f'{text} (รอบเต็ม)')
             radio.pack(pady=5)
 
@@ -297,8 +298,10 @@ class RESERVE_SPACIAL:
         submit.pack(side='bottom', pady=10)
 
     def select_follower(self):
-        def _find_first_available_channel(self, used_channels, max_channel=14):
+        def _find_first_available_channel(self, used_channels, max_channel=None):
             # กัน None และแปลงเป็น set ของ int
+            if max_channel is None:
+                max_channel = self.db.get_configured_channel_count()
             used = {int(ch) for ch in (used_channels or [])}
             for ch in range(1, max_channel + 1):
                 if ch not in used:
@@ -338,6 +341,7 @@ class RESERVE_SPACIAL:
         # # print(f'channel_on_db = {channel_on_db} and type = {type(channel_on_db)}')
         sorted_channel_on_db = sorted(channel_on_db)
         channel = 1
+        max_channel = self.db.get_configured_channel_count()
 
         # print(channel_on_db)
 
@@ -351,6 +355,14 @@ class RESERVE_SPACIAL:
             elif index == len(sorted_channel_on_db) - 1:
                 channel = index + 2
                 # print(f'channel ตัวสุดท้าย = {channel}')
+
+        if channel > max_channel:
+            messagebox.showwarning(
+                'ช่องเยี่ยมเต็ม',
+                f'รอบเวลา {round_time} มีผู้จองครบ {max_channel} ช่องแล้ว',
+                parent=self
+            )
+            return
 
         # print(f'ค่าที่เติม = {channel}')
         
@@ -662,7 +674,7 @@ class RESERVE:
     
     # เลือกรอบเยี่ยม
     def select_round(self):
-        number_of_visits = 14 # กำหนดช่องเยี่ยม
+        number_of_visits = self.db.get_configured_channel_count()
         morning_rounds = [
             ('รอบที่ 1 เวลา 09.30 - 09.45', '09:30:00'),
             ('รอบที่ 2 เวลา 10.00 - 10.15', '10:00:00'),
@@ -2579,11 +2591,19 @@ class MainFrame(ctk.CTkFrame):
                 def delete_rel():
                     popup_window_delete_relative.destroy()
                     # # print("ลบ:", prisoner_id, relative_id)
-                    confirm_delete = messagebox.askyesno('การลบข้อมูล', f'ต้องการลบข้อมูลของ {relative_name} หรือไม่')
+                    confirm_delete = messagebox.askyesno(
+                        'การลบข้อมูล',
+                        f'ต้องการลบข้อมูลของ {relative_name} หรือไม่',
+                        parent=popup_show_list
+                    )
                     if confirm_delete:
                         result_delete = self.db.delete_relation_from_prisoner_and_relative(prisoner_id, relative_id)
                         if result_delete:
-                            messagebox.showinfo('ลบข้อมูล', 'ลบข้อมูลของเสร็จสิ้น')
+                            messagebox.showinfo(
+                                'ลบข้อมูล',
+                                'ลบข้อมูลของเสร็จสิ้น',
+                                parent=popup_show_list
+                            )
                             result = self.db.get_join_prisoners_and_relatives_alldata(prisoner_id)
                             # # print(result)
                             for row in tree_relative.get_children():
@@ -3313,6 +3333,19 @@ class MainFrame(ctk.CTkFrame):
         }
 
         # ฟังก์ชันสำหรับแสดงเมนูคลิกขวา
+        def position_popup(popup, x, y):
+            popup.update_idletasks()
+            width = popup.winfo_reqwidth()
+            height = popup.winfo_reqheight()
+            screen_width = popup.winfo_screenwidth()
+            screen_height = popup.winfo_screenheight()
+
+            if y + height > screen_height:
+                y -= height
+            x = min(max(0, x), max(0, screen_width - width))
+            y = min(max(0, y), max(0, screen_height - height))
+            popup.geometry(f"{width}x{height}+{x}+{y}")
+
         def show_ctk_popup(event):
             # ล้าง popup เก่าถ้ามี
             nonlocal popup_window
@@ -3337,7 +3370,6 @@ class MainFrame(ctk.CTkFrame):
             # Modern card-style popup window
             popup_window = ctk.CTkToplevel()
             popup_window.overrideredirect(True)
-            popup_window.geometry(f"+{event.x_root}+{event.y_root}")
             popup_window.configure(fg_color="#ffffff", corner_radius=18, border_width=2, border_color="#e0e6ed")
             popup_window.attributes("-topmost", True)
 
@@ -3404,6 +3436,8 @@ class MainFrame(ctk.CTkFrame):
                     command=delete_rel, **btn_kwargs
                 ).pack(padx=18, pady=(4, 14))
 
+            position_popup(popup_window, event.x_root, event.y_root)
+
             # Shadow effect (optional, for modern look)
             # popup_window.attributes('-alpha', 0.98)
 
@@ -3437,7 +3471,6 @@ class MainFrame(ctk.CTkFrame):
             # สร้าง popup เมนูแบบ modern
             popup_copy_window = ctk.CTkToplevel()
             popup_copy_window.overrideredirect(True)
-            popup_copy_window.geometry(f"+{event.x_root}+{event.y_root}")
             popup_copy_window.configure(fg_color="#ffffff", corner_radius=12, border_width=1, border_color="#e0e6ed")
             popup_copy_window.attributes("-topmost", True)
 
@@ -3481,6 +3514,8 @@ class MainFrame(ctk.CTkFrame):
                 command=copy_full_name,
                 **btn_kwargs
             ).pack(padx=12, pady=(0, 10))
+
+            position_popup(popup_copy_window, event.x_root, event.y_root)
 
             popup_copy_window.bind("<FocusOut>", lambda e: popup_copy_window.destroy())
             popup_copy_window.focus_set()
