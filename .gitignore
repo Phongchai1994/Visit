@@ -1,32 +1,32 @@
-# Environment variables and secrets
-.env
-.env.*
-!.env.example
-key/
 
-# Python virtual environments and generated files
+# PyInstaller
+build/
+dist/
+*.pyc
+__pycache__/
+
+# Inno Setup
+installer_output/
+
+# Python environment
 .venv/
 venv/
-env/
-__pycache__/
-*.py[cod]
-*.pyd
 
-# Local databases and generated data
+# Environment / Secrets
+.env
+.env.*
+**/.env
+**/.env.*
+*.key
+key/
+config/config.json
+
+# Database and local data
 *.db
-*.db-*
+*.db.enc
 *.sqlite
 *.sqlite3
 
-# Local settings and editor files
-.vscode/
-.idea/
-*.code-workspace
-
-# Logs and temporary files
+# Temporary files
 *.log
 *.tmp
-*.bak
-*.swp
-Thumbs.db
-Desktop.ini
