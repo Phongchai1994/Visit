@@ -1,6 +1,6 @@
 
 #define MyAppName "Visit"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Chanthaburi Provincial Prison"
 #define MyAppExeName "Visit.exe"
 
